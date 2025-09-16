@@ -1,9 +1,16 @@
 from django.db import models
 
+class Concept(models.Model):
+    
+
+class Topic(models.Model):
+    topic_name = models.CharField(max_length=255, unique=True)
+    topic_summary =
+
 class Node(models.Model):
     node_type = models.CharField(max_length=255)
     node_name = models.CharField(max_length=255, unique=True)
-    node_desc = models.CharField(max_length=500, unique=True)
+    node_desc = models.TextField(max_length=500, unique=True)
 
     def __str__(self):
         return self.name
@@ -16,8 +23,9 @@ class Relationship(models.Model):
         ('is_subtopic', 'Is_Subtopic'),
         ('is_prerequisite', 'Is_Prerequisite'),
         ('is_corequisite', 'Is_Corequisite'),
-        ('is_equivalent', 'Is_Equivalent'),
-        ('', ''),
-        
+        ('is_contrasted_with', 'Is_Contrasted_With'),
+        ('is_applied_in', 'Is_Applied_In')
     ])
-    
+
+class ConceptSummary(models.Model):
+    summary

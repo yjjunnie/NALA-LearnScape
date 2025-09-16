@@ -27,7 +27,7 @@ class Topic(Node):
         return f'Topic: {self.name}'
     
 class Concept(Node):
-    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='topic')
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='related_topic')
     
     def __str__(self):
         return f'Concept: {self.name} of topic "{self.topic.name}" '

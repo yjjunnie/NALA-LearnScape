@@ -81,7 +81,7 @@ DATABASES = {
         'NAME': 'mysql_db',                
         'USER': 'nala_user',                
         'PASSWORD': 'nala_pw',        
-        'HOST': '127.0.0.1',                   
+        'HOST': 'db',                   
         'PORT': '3306',
     }
 }

@@ -69,7 +69,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'app.wsgi.application'
+WSGI_APPLICATION = 'nala_backend.wsgi.application'
 
 
 # Database
@@ -111,7 +111,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Singapore'
 
 USE_I18N = True
 

@@ -79,31 +79,12 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'mysql_db',                
-        'USER': 'root',                
-        'PASSWORD': 'rootpw',        
+        'USER': 'nala_user',                
+        'PASSWORD': 'nala_pw',        
         'HOST': '127.0.0.1',                   
         'PORT': '3306',
     }
 }
-
-from decouple import config
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT', default='3306'),
-    }
-}
-#in your own .env file, do:
-#DB_NAME=mysql_db
-#DB_USER=django_user
-#DB_PASSWORD=secure_pw
-#DB_HOST=db_container_or_ip
-#DB_PORT=3306
 
 
 # Password validation

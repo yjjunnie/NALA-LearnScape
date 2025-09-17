@@ -7,9 +7,6 @@ import requests
 import os
 
 @api_view(['GET'])
-def 
-
-@api_view(['GET'])
 def homepage_view():
     return Response()
     

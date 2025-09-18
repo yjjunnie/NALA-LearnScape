@@ -33,21 +33,20 @@ class Concept(Node):
     def __str__(self):
         return f'Concept: {self.name} of topic "{self.topic.name}" '
 
-# Course and Student
-class Course(models.Model):
+# Module and Student
+class Module(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'Course: {self.title}'
+        return f'Module: {self.title}'
 
 class Student(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    enrolled_courses = models.ManyToManyField(Course, related_name='students', blank=True)
+    enrolled_modules = models.ManyToManyField(Module, related_name='students', blank=True)
 
     def __str__(self):
         return f'Student: {self.name}'
-    
 

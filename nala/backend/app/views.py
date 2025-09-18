@@ -8,13 +8,11 @@ from rest_framework.response import Response
 from app.services.classifierjson import classify_messages_from_json
 
 @api_view(['GET'])
-def homepage_view():
-    return Response()
+def homepage_view(request):
+    return Response({"message": "Hello, World!"})
 
 @api_view(["GET"])
 def classify_chathistory():
     filepath = "app/services/chat_history/1221_get.json"  # Adjust path if needed
     results = classify_messages_from_json(filepath)
     return Response(results)
-
-    

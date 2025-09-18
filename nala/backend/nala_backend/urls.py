@@ -16,8 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from app import views
+from app.views import homepage_view,classify_chathistory
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('app.urls')),
+    path('', views.homepage_view, name="homepage"),
+    path('', views.classify_chathistory, name="classify-chathistory"),
 ]

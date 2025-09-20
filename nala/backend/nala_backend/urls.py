@@ -22,5 +22,5 @@ from app.views import homepage_view,classify_chathistory
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.homepage_view, name="homepage"),
-    path('', views.classify_chathistory, name="classify-chathistory"),
+    path('api/classify-chat-history/', views.classify_chathistory, name="classify-chathistory"),
 ]

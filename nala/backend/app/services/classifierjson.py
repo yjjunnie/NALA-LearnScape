@@ -1,6 +1,8 @@
 import json
 from app.services.classifier import classify
 
+#1. classify the conversation history of the user n deem it as the one of the different bloom's taxomy tiers
+
 def load_json(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
         return json.load(f)
@@ -31,6 +33,9 @@ def classify_messages_from_json(filepath):
         return []
 
     for index, msg in enumerate(messages):
+        if msg.get("msg_sender") != "user":
+            continue
+
         raw_text = msg.get("msg_text")
         extracted_text = extract_text_from_msg(raw_text)
         if not extracted_text:
@@ -65,3 +70,24 @@ def classify_messages_from_json(filepath):
             labels = None
 
     return results
+
+#2. display chat history with newconvohistory.json with linear algebra content
+
+def loading_json(filepath):
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read().strip()
+            if not content:
+                return {"error": f"{filepath} is empty"}
+            return json.loads(content)
+    except FileNotFoundError:
+        return {"error": f"File not found: {filepath}"}
+    except json.JSONDecodeError as e:
+        return {"error": f"Invalid JSON in {filepath}", "details": str(e)}
+
+
+def display_messages_from_json(filepath):
+    data = loading_json(filepath)
+    return data
+
+#3. generate percentage of topics asked in the linear algebra content; we have four topics: Introducing the Matrix, Linear Transforms and the Matrix, Manipulating the Matrix, Inverting the Matrix

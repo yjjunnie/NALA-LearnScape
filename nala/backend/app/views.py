@@ -5,8 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 #import requests
 #import os
-from app.services.classifierjson import classify_messages_from_json
-
+from app.services.classifierjson import classify_messages_from_json, display_messages_from_json
 @api_view(['GET'])
 def homepage_view(request):
     return Response({"message": "Hello, World!"})
@@ -16,3 +15,10 @@ def classify_chathistory(request):
     filepath = "app/services/chat_history/1221_get.json"  # Adjust path if needed
     results = classify_messages_from_json(filepath)
     return Response(results)
+
+@api_view(["GET"])
+def display_chathistory(request):
+    filepath = "app/services/chat_history/newconvohistoryposted.json"
+    results = display_messages_from_json(filepath)
+    return Response(results)
+    

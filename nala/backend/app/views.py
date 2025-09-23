@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 #import requests
 #import os
-from app.services.classifierjson import classify_messages_from_json, display_messages_from_json, percentage_from_json
+from app.services.classifierjson import classify_messages_from_json, display_messages_from_json, percentage_from_json, calculate_time_spent_per_topic
 
 @api_view(['GET'])
 def homepage_view(request):
@@ -27,4 +27,10 @@ def display_chathistory(request):
 def percentage_chathistory(request):
     filepath = "app/services/chat_history/newconvohistoryposted.json"
     results = percentage_from_json(filepath)
+    return Response(results)
+
+@api_view(["GET"])
+def time_spent_per_topic(request):
+    filepath = "app/services/chat_history/newconvohistoryposted.json"
+    results = calculate_time_spent_per_topic(filepath)
     return Response(results)

@@ -1,127 +1,127 @@
-node_id,node_type,node_name,node_description,parent_node_id
-1,topic,Introducing the Matrix,Overview of Matrix concepts,NULL
-2,topic,Linear Transforms and the Matrix,Overview of Linear Transforms concepts,NULL
-3,topic,Manipulating the Matrix,Overview of Manipulating Matrix concepts,NULL
-4,topic,Inverting the Matrix,Overview of Inverting Matrix concepts,NULL
+node_id,node_type,node_name,node_description,parent_node_id,node_module_id
+1,topic,Introducing the Matrix,Overview of Matrix concepts,NULL,1
+2,topic,Linear Transforms and the Matrix,Overview of Linear Transforms concepts,NULL,1
+3,topic,Manipulating the Matrix,Overview of Manipulating Matrix concepts,NULL,1
+4,topic,Inverting the Matrix,Overview of Inverting Matrix concepts,NULL,1
 5,concept,Vector Application,"Vectors used for data representation such as displacement, velocity, probabilities, time series data 
 
-",1
-6,concept,Difference between Set and Vectors,Sets are unordered and Vectors are ordered ,1
-7,concept,Vector Norm,"The vector norm, also known as the magnitude or length of a vector, measures the size of the vector. It is calculated using the square root of the sum of the squares of its components, representing the 'distance' of the vector from the origin in space.",1
-8,concept,Vector Addition,Vector addition is the operation of adding two vectors by summing their corresponding components. The result is a new vector that represents the combined effect of the two vectors' magnitudes and directions.,1
-9,concept,Scalar Vector Multiplication,"Scalar vector multiplication involves multiplying each component of a vector by a scalar. This operation scales the vector's magnitude by the scalar, without changing its direction (unless the scalar is negative).",1
-10,concept,Unit Vectors,"Unit vectors are vectors with a magnitude of 1. They are used to represent direction, and any vector can be converted into a unit vector by dividing it by its magnitude.",1
-11,concept,Transpose Vector,The transpose of a vector involves converting a column vector into a row vector (or vice versa). This operation is crucial in matrix operations and is often used in linear transformations.,1
-12,concept,Column Vector,"A column vector is a matrix with a single column of numbers, representing a point or direction in space. It is commonly used in systems of equations and matrix multiplication.",1
-13,concept,Row Vector,"A row vector is a matrix with a single row of numbers. It represents a vector in a horizontal form, often used in matrix operations and for transposition in mathematical calculations.",1
-14,concept,Special Basis Vector,"Special basis vectors, also known as standard basis vectors, are a set of vectors that form the foundation of a vector space. In n-dimensional space, they are typically denoted as e₁, e₂, ..., eₙ, where each vector has a magnitude of 1 and is aligned with one of the axes. For example, in 3D space, e₁ = [1, 0, 0], e₂ = [0, 1, 0], and e₃ = [0, 0, 1]. These vectors provide a reference frame for expressing other vectors in terms of their components along the axes.",1
+",1,1
+6,concept,Difference between Set and Vectors,Sets are unordered and Vectors are ordered ,1,1
+7,concept,Vector Norm,"The vector norm, also known as the magnitude or length of a vector, measures the size of the vector. It is calculated using the square root of the sum of the squares of its components, representing the 'distance' of the vector from the origin in space.",1,1
+8,concept,Vector Addition,Vector addition is the operation of adding two vectors by summing their corresponding components. The result is a new vector that represents the combined effect of the two vectors' magnitudes and directions.,1,1
+9,concept,Scalar Vector Multiplication,"Scalar vector multiplication involves multiplying each component of a vector by a scalar. This operation scales the vector's magnitude by the scalar, without changing its direction (unless the scalar is negative).",1,1
+10,concept,Unit Vectors,"Unit vectors are vectors with a magnitude of 1. They are used to represent direction, and any vector can be converted into a unit vector by dividing it by its magnitude.",1,1
+11,concept,Transpose Vector,The transpose of a vector involves converting a column vector into a row vector (or vice versa). This operation is crucial in matrix operations and is often used in linear transformations.,1,1
+12,concept,Column Vector,"A column vector is a matrix with a single column of numbers, representing a point or direction in space. It is commonly used in systems of equations and matrix multiplication.",1,1
+13,concept,Row Vector,"A row vector is a matrix with a single row of numbers. It represents a vector in a horizontal form, often used in matrix operations and for transposition in mathematical calculations.",1,1
+14,concept,Special Basis Vector,"Special basis vectors, also known as standard basis vectors, are a set of vectors that form the foundation of a vector space. In n-dimensional space, they are typically denoted as e₁, e₂, ..., eₙ, where each vector has a magnitude of 1 and is aligned with one of the axes. For example, in 3D space, e₁ = [1, 0, 0], e₂ = [0, 1, 0], and e₃ = [0, 0, 1]. These vectors provide a reference frame for expressing other vectors in terms of their components along the axes.",1,1
 15,concept,Transformation,"Transformations describe how objects move or change. Examples include rotation, scaling, and projection.
 A transformation T maps an input vector to an output vector, often described as 
 T(u) = [T₁(u₁, u₂), T₂(u₁, u₂)]ᵀ.
- ",2
-16,concept,Linear Transformation,"A transformation T: ℝⁿ → ℝᵐ is linear if: T(αv + βu) = αT(v) + βT(u). A function between vector spaces that preserves vector addition and scalar multiplication, often represented by a matrix.",2
+ ",2,1
+16,concept,Linear Transformation,"A transformation T: ℝⁿ → ℝᵐ is linear if: T(αv + βu) = αT(v) + βT(u). A function between vector spaces that preserves vector addition and scalar multiplication, often represented by a matrix.",2,1
 17,concept,Linear Transformation Examples,"Example 1: T(x, y) = (x², y) → Not linear 
 Squaring x breaks scalar multiplication.
-Example 2: T(x, y) = (y, x) → Linear",2
-18,concept,Matrix Representation of Linear Transformation ,"Any linear transformation can be represented as a matrix A such that T(v) = Av. Matrix A is formed from the transformed basis vectors: A = [T(e₁), T(e₂), ..., T(eₙ)].  A is built by checking what happens to each basis vector.",2
+Example 2: T(x, y) = (y, x) → Linear",2,1
+18,concept,Matrix Representation of Linear Transformation ,"Any linear transformation can be represented as a matrix A such that T(v) = Av. Matrix A is formed from the transformed basis vectors: A = [T(e₁), T(e₂), ..., T(eₙ)].  A is built by checking what happens to each basis vector.",2,1
 19,concept,Rotation by 90° (Counterclockwise) Transformation,"T(e₁) = [0, 1], T(e₂) = [-1, 0] → A = [0, -1; 1, 0]
-",2
-20,concept,Rotation by angle φ Transformation,"T(e₁) = [cos(φ), sin(φ)], T(e₂) = [-sin(φ), cos(φ)] → A = [cos(φ), -sin(φ); sin(φ), cos(φ)]",2
-21,concept,Reflection over y = x Transformation,"A = [0, 1; 1, 0]",2
-22,concept,Vertical Stretch by k Transformation,"A = [1, 0; 0, k]",2
-23,concept,Horizontal Shear by k Transformation,"A = [1, k; 0, 1]",2
-24,concept,Vertical Shear by k Transformation,"A = [1, 0; k, 1]",2
-25,concept,Component Extraction,To extract the kth component: A = eₖᵀ,2
-26,concept,Integration as a Linear Transformation,∫₀ᵏ [a·f(x) + b·g(x)] dx = a·∫₀ᵏ f(x) dx + b·∫₀ᵏ g(x) dx,2
-27,concept,Matrix Addition,The operation of adding two matrices of the same dimensions by adding their corresponding entries.,2
-28,concept,Matrix Multiplication,"A way of combining two matrices to produce a new matrix, where each entry is the dot product of a row from the first matrix and a column from the second.",2
-29,concept,Identity Matrix,"A special square matrix with 1s on the diagonal and 0s elsewhere. When multiplied with another matrix, it leaves the matrix unchanged.",2
-30,concept,Matrix Transpose,Transpose flips rows to columns: Aᵀ turns an m×n matrix into n×m by turning columns into rows.,2
+",2,1
+20,concept,Rotation by angle φ Transformation,"T(e₁) = [cos(φ), sin(φ)], T(e₂) = [-sin(φ), cos(φ)] → A = [cos(φ), -sin(φ); sin(φ), cos(φ)]",2,1
+21,concept,Reflection over y = x Transformation,"A = [0, 1; 1, 0]",2,1
+22,concept,Vertical Stretch by k Transformation,"A = [1, 0; 0, k]",2,1
+23,concept,Horizontal Shear by k Transformation,"A = [1, k; 0, 1]",2,1
+24,concept,Vertical Shear by k Transformation,"A = [1, 0; k, 1]",2,1
+25,concept,Component Extraction,To extract the kth component: A = eₖᵀ,2,1
+26,concept,Integration as a Linear Transformation,∫₀ᵏ [a·f(x) + b·g(x)] dx = a·∫₀ᵏ f(x) dx + b·∫₀ᵏ g(x) dx,2,1
+27,concept,Matrix Addition,The operation of adding two matrices of the same dimensions by adding their corresponding entries.,2,1
+28,concept,Matrix Multiplication,"A way of combining two matrices to produce a new matrix, where each entry is the dot product of a row from the first matrix and a column from the second.",2,1
+29,concept,Identity Matrix,"A special square matrix with 1s on the diagonal and 0s elsewhere. When multiplied with another matrix, it leaves the matrix unchanged.",2,1
+30,concept,Matrix Transpose,Transpose flips rows to columns: Aᵀ turns an m×n matrix into n×m by turning columns into rows.,2,1
 31,concept,Intuition for Matrix Operation,"We've studied linear scalar maps for years, for example:
 T(x) = a₁₁ x (1x1 matrix is just a scalar)
-We can generalize these operations to matrices as well.",3
+We can generalize these operations to matrices as well.",3,1
 32,concept,Identity Matrix Detailed,"The identity matrix Iₙ represents the action of doing nothing on Rⁿ.
 The number 1 represents the scalar operation:
 1x = x, i.e., identity matrix leaves vectors unchanged.
-For any vector v, Iₙ v = v.",3
+For any vector v, Iₙ v = v.",3,1
 33,concept,The Zero Matrix ,"The zero matrix maps any vector to zero.
 The matrix [0] represents mapping all inputs to zero.
-A zero matrix with all entries 0 will make any input vector zero.",3
+A zero matrix with all entries 0 will make any input vector zero.",3,1
 34,concept,Matrix Equality,"Two matrices A and B are equal if they transform all vectors the same way.
 For matrices to be equal, they must transform every basis vector eₖ the same.
-Thus, A eₖ = B eₖ for all k.",3
+Thus, A eₖ = B eₖ for all k.",3,1
 35,concept,Matrix Addition Detailed,"For two matrices A and B, matrix addition is defined as:
 C = A + B, where each element cᵢⱼ = aᵢⱼ + bᵢⱼ.
-This means we add corresponding elements of A and B.",3
+This means we add corresponding elements of A and B.",3,1
 36,concept,Matrix Addition Example,"Example: If A = [[1, 0], [0, 1]] and B = [[0, -1], [1, 0]],
-then A + B = [[1, -1], [1, 1]].",3
+then A + B = [[1, -1], [1, 1]].",3,1
 37,concept,Matrix Scalar Multiplication Detailed,"Matrix scalar multiplication is defined as multiplying each element of the matrix by a scalar.
-For example, for a matrix A and scalar α, we get αA.",3
-38,concept,Rules of Matrix Arithmetic,"The rules of matrix arithmetic, such as distributivity and associativity, hold element-wise, similar to standard arithmetic.",3
+For example, for a matrix A and scalar α, we get αA.",3,1
+38,concept,Rules of Matrix Arithmetic,"The rules of matrix arithmetic, such as distributivity and associativity, hold element-wise, similar to standard arithmetic.",3,1
 39,concept,Application: Conditions for Orthogonality,"Vectors u and v are orthogonal if:
 uᵀ v = 0, meaning their dot product is zero.
-This defines the condition for two vectors being orthogonal in n-dimensional space.",3
+This defines the condition for two vectors being orthogonal in n-dimensional space.",3,1
 40,concept,Angles in N-Dimensions,"We can generalize the angle between two vectors u and v using the cosine rule:
 cos(θ) = (uᵀ v) / (||u|| ||v||)
-This formula generalizes the angle calculation to n-dimensional space.",3
+This formula generalizes the angle calculation to n-dimensional space.",3,1
 41,concept,Matrix-Matrix Multiplication,"When we chain two transformations U and T, described by matrices A and B, respectively, the resulting matrix C is the matrix product C = AB.
-Matrix multiplication is **not commutative**, meaning AB ≠ BA.",3
+Matrix multiplication is **not commutative**, meaning AB ≠ BA.",3,1
 42,concept,Matrix Multiplication Example,"Example: If A is a rotation matrix and B is a reflection matrix,
-the matrix AB applies the reflection first and then the rotation.",3
+the matrix AB applies the reflection first and then the rotation.",3,1
 43,concept,Non-Commutativity of Matrix Multiplication,"Matrix multiplication is **not commutative**. This means that the order in which matrices are multiplied matters.
-For example, multiplying a rotation matrix by a reflection matrix does not yield the same result as reflecting first and then rotating.",3
+For example, multiplying a rotation matrix by a reflection matrix does not yield the same result as reflecting first and then rotating.",3,1
 44,concept,Similarities with Standard Multiplication,"Matrix multiplication follows many of the same properties as standard multiplication, such as associativity and distributivity:
 Associative: A(BC) = (AB)C
-Distributive: A(B + C) = AB + AC",3
+Distributive: A(B + C) = AB + AC",3,1
 45,concept,Matrix Powers,"We can take powers of matrices, such as A² = A ⋅ A and A³ = A ⋅ A ⋅ A.
-Matrix powers represent repeated application of the same transformation.",3
-46,concept,The Zeroth Power,The zeroth power of a matrix is the **identity matrix** A⁰ = Iₙ.,3
+Matrix powers represent repeated application of the same transformation.",3,1
+46,concept,The Zeroth Power,The zeroth power of a matrix is the **identity matrix** A⁰ = Iₙ.,3,1
 47,concept,Matrix Inverse,"The matrix inverse A⁻¹ is the matrix that undoes the transformation of matrix A, such that:
-A⁻¹ A = I",3
-48,concept,Matrix Inverse Example,"For a rotation matrix A, the inverse is simply the **reverse** of the original transformation (i.e., clockwise instead of counterclockwise).",3
-49,concept,Matrix Inverse: Existence,"The inverse of a matrix does not exist for matrices that project vectors onto lower dimensions, like projection matrices.",3
-50,concept,Matrix Inverse: Motivation,"The inverse matrix is useful for undoing transformations in processes like forensics and retrodiction (e.g., finding the original input given the output).",3
-51,concept,Diagonalization,,4
+A⁻¹ A = I",3,1
+48,concept,Matrix Inverse Example,"For a rotation matrix A, the inverse is simply the **reverse** of the original transformation (i.e., clockwise instead of counterclockwise).",3,1
+49,concept,Matrix Inverse: Existence,"The inverse of a matrix does not exist for matrices that project vectors onto lower dimensions, like projection matrices.",3,1
+50,concept,Matrix Inverse: Motivation,"The inverse matrix is useful for undoing transformations in processes like forensics and retrodiction (e.g., finding the original input given the output).",3,1
+51,concept,Diagonalization,,4,1
 52,concept,Matrix Inversion Characteristics,"All invertible matrices are square.
 If A is invertible, then A⁻¹ is also invertible.
 A⁻¹ A = A A⁻¹ = I
-Matrix inversion is an essential concept for solving linear equations.",4
+Matrix inversion is an essential concept for solving linear equations.",4,1
 53,concept,Solving Linear Equations,"We can solve linear equations by writing them as matrix equations:
 For A x = b, we can solve for x using matrix inversion.
-This is equivalent to solving a system of n linear equations for the unknowns in x.",4
+This is equivalent to solving a system of n linear equations for the unknowns in x.",4,1
 54,concept,Solving System of Equations,"To solve a system using matrix equations, we use the augmented matrix approach.
 For example, solving:
  1x + 2y - z = 4
  2x + 7y + z = 14
- 3x + 8y - z = 17",4
+ 3x + 8y - z = 17",4,1
 55,concept,Row Reduction,"The row reduction method (also known as Gaussian elimination) is a systematic way to solve linear equations.
 Row operations include:
 • Row swapping
 • Row multiplication by a scalar
-• Row addition",4
+• Row addition",4,1
 56,concept,The Gaussian Row Reduction Algorithm,"Steps:
 1. Find a non-zero entry in the first column.
 2. Swap rows to bring this entry to the top.
 3. Use row addition to make all other entries in the column zero.
-4. Repeat for the remaining sub-matrix until the system is in echelon form.",4
+4. Repeat for the remaining sub-matrix until the system is in echelon form.",4,1
 57,concept,The Gauss-Jordan Reduction,"The Gauss-Jordan method extends Gaussian elimination to reduce the matrix to reduced row echelon form (RREF).
-This form simplifies finding the solutions to the system.",4
-58,concept,Pathological Scenarios: Inconsistent Equations,"If a system has an equation like 0 = 1, then the system has no solution.",4
-59,concept,Pathological Scenarios: Non-Unique Solutions,"When a system of equations has many solutions, it indicates that the matrix is singular and not invertible.",4
+This form simplifies finding the solutions to the system.",4,1
+58,concept,Pathological Scenarios: Inconsistent Equations,"If a system has an equation like 0 = 1, then the system has no solution.",4,1
+59,concept,Pathological Scenarios: Non-Unique Solutions,"When a system of equations has many solutions, it indicates that the matrix is singular and not invertible.",4,1
 60,concept,Back to Matrix Inversion,"To find the inverse of a matrix, we solve multiple linear equations.
-For a given matrix A, the inverse A⁻¹ is found by solving A x_j = e_j for each column vector e_j.",4
+For a given matrix A, the inverse A⁻¹ is found by solving A x_j = e_j for each column vector e_j.",4,1
 61,concept,The Matrix Inversion Algorithm,"We perform row reduction on the augmented matrix [A | I] to transform it into [I | A⁻¹].
-This method efficiently finds the inverse of a matrix.",4
+This method efficiently finds the inverse of a matrix.",4,1
 62,concept,Example: Find the Inverse of a Matrix,"Example: Find the inverse of a given matrix using the Gauss-Jordan method.
-You can also apply the row reduction steps to find the inverse manually.",4
+You can also apply the row reduction steps to find the inverse manually.",4,1
 63,concept,Closed Form for Inverses (2x2 Matrices),"For 2x2 matrices, the inverse can be found using the formula:
 If A = [[a, b], [c, d]], then
 The inverse is given by:
 A⁻¹ = (1 / (ad - bc)) [[d, -b], [-c, a]]
-This formula only works if (ad - bc) ≠ 0, i.e., the determinant is non-zero.",4
+This formula only works if (ad - bc) ≠ 0, i.e., the determinant is non-zero.",4,1
 64,concept,Introducing the Determinant,"The determinant of a matrix A, denoted det(A), is a scalar value that indicates whether a matrix is invertible.
 A matrix is invertible if and only if its determinant is non-zero.
 For a 2x2 matrix A = [[a, b], [c, d]], the determinant is:
-det(A) = (ad - bc)",4
+det(A) = (ad - bc)",4,1
 65,concept,Application: Hitboxes in Training,"In games, hitboxes are used to detect collisions. To efficiently check if an object intersects a target, we use matrix transformations.
-By applying the inverse transformation, we can determine whether the object is inside the target area (hitbox).",4
+By applying the inverse transformation, we can determine whether the object is inside the target area (hitbox).",4,1

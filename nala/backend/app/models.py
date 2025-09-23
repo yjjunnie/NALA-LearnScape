@@ -2,6 +2,7 @@ from django.db import models
 
 # ThreadMap
 class Node(models.Model):
+    id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255, unique=True)
     summary = models.TextField()
 
@@ -9,6 +10,7 @@ class Node(models.Model):
         return f'Node: {self.name}'
     
 class Relationship(models.Model):
+    id = models.IntegerField(primary_key=True)
     first_node = models.ForeignKey(Node, on_delete=models.CASCADE, related_name='first_node_of_rs')
     second_node = models.ForeignKey(Node, on_delete=models.CASCADE, related_name='second_node_of_rs')
 
@@ -31,7 +33,7 @@ class Concept(Node):
     related_topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
     
     def __str__(self):
-        return f'Concept: {self.name} of topic "{self.topic.name}" '
+        return f'Concept: {self.name} [Topic "{self.related_topic.name}"]'
 
 # Module and Student
 class Module(models.Model):

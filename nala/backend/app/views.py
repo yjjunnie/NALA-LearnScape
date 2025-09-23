@@ -13,7 +13,7 @@ def homepage_view(request):
 
 @api_view(["GET"])
 def classify_chathistory(request):
-    filepath = "app/services/chat_history/1221_get.json"  # Adjust path if needed
+    filepath = "app/services/chat_history/1221_short.json"  # Adjust path if needed
     results = classify_messages_from_json(filepath)
     return Response(results)
 

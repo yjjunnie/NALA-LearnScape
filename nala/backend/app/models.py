@@ -40,7 +40,27 @@ class Student(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     enrolled_modules = models.ManyToManyField(Module, related_name='students', blank=True)
+    learningStyle = models.CharField(max_length=255, choices=
+        [
+            ("Retrieval Practice", "retrieval practice"),
+            ("Spaced Practice", "spaced practice"),
+            ("Elaboration", "elaboration"),
+            ("Concrete Examples", "concrete examples"),
+            ("Interleaving", "interleaving"),
+            ("Dual Coding", "dual coding")  
+        ], blank=True, null=True)
+    learningStyleDesc = {
+        "Retrieval Practice" : "Testing yourself to strengthen memory and recall",
+        "Spaced Practice" : "Learning over time with breaks between sessions",
+        "Elaboration" : "Explaining discrete ideas with many details",
+        "Concrete Examples" : "Use specific examples to understand abstract ideas",
+        "Interleaving" : "Mixing different topics or skills during study sessions",
+        "Dual Coding" : "Using both visual and verbal information processing",
+    }
 
+    def get_learning_style_description(self):
+        return self.learningStyleDesc.get(self.learningStyle, "")
+    
     def __str__(self):
         return f'Student: {self.name}'
 

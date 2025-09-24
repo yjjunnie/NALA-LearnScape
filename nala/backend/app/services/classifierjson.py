@@ -160,5 +160,79 @@ def percentage_from_json(filepath):
 
     return results
 
+#4. time spent per topic
+
+from datetime import datetime
+import json
+
+def calculate_time_spent_per_topic(filepath):
+    data = load_json(filepath)
+    results = []
+
+    # If it's a list of messages
+    if isinstance(data, list):
+        messages = data
+    # If it's a single conversation dict
+    elif isinstance(data, dict) and "msg_text" in data:
+        messages = [data]
+    else:
+        return []
+
+    # filter for user messages only
+    user_msgs = [msg for msg in messages if msg.get("msg_sender") == "user"]
+
+    # sort by timestamp just in case
+    user_msgs.sort(key=lambda x: x["msg_timestamp"])
+
+    time_spent = {
+        "Introducing the Matrix": 0,
+        "Linear Transforms and the Matrix": 0,
+        "Manipulating the Matrix": 0,
+        "Inverting the Matrix": 0
+    }
+
+    for i in range(len(user_msgs) - 1):
+        current_msg = user_msgs[i]
+        next_msg = user_msgs[i + 1]
+
+        raw_text = current_msg.get("msg_text")
+        extracted_text = extract_text_from_msg(raw_text)
+        if not extracted_text:
+            continue
+
+        # parse timestamps
+        t1 = datetime.fromisoformat(current_msg["msg_timestamp"].replace("Z", "+00:00"))
+        t2 = datetime.fromisoformat(next_msg["msg_timestamp"].replace("Z", "+00:00"))
+        duration = (t2 - t1).total_seconds()
+
+        # classify into one of the four topics
+        result = classify(
+            extracted_text,
+            system="You are a strict classifier. Classify the user's text into one linear algebra topic from this set: [Introducing the Matrix, Linear Transforms and the Matrix, Manipulating the Matrix, Inverting the Matrix]. Choose EXACTLY ONE best label. Return ONLY a compact JSON string with keys: \"labels\" (array with one element)."
+        )
+
+        data = result.get("text")
+        try:
+            start = data.find('{')
+            end = data.rfind('}') + 1
+            json_string = data[start:end]
+            parsed_data = json.loads(json_string)
+
+            topic = parsed_data.get('labels')[0]
+            time_spent[topic] += duration
+        except (json.JSONDecodeError, IndexError, TypeError):
+            continue
+
+    total_time = sum(time_spent.values())
+    for topic, secs in time_spent.items():
+        results.append({
+            "topic": topic,
+            "seconds": secs,
+            "percentage": secs / total_time if total_time else 0
+        })
+
+    return results
+
+
 
 

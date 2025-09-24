@@ -17,12 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from app import views
-from app.views import homepage_view,classify_chathistory, display_chathistory, percentage_chathistory
+from app.views import homepage_view,classify_chathistory, display_chathistory, percentage_chathistory, time_spent_per_topic
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.homepage_view, name="homepage"),
     path('api/classify-chat-history/', views.classify_chathistory, name="classify-chathistory"),
     path('api/display-chat-history/', views.display_chathistory, name="display-chathistory"),
-    path('api/percentage-chat-history/', views.percentage_chathistory, name="percentage-chathistory")
+    path('api/percentage-chat-history/', views.percentage_chathistory, name="percentage-chathistory"),
+    path('api/time-spent-per-topic/', views.time_spent_per_topic, name="time-spent-per-topic")
 ]

@@ -1,7 +1,10 @@
 // src/pages/Home.jsx
 import { Link, useNavigate } from "react-router-dom";
+import learningStyle from "../components/learningStyle";
 
 export default function Home() {
+  const DEMO_STUDENT_ID = 1;
+
   return (
     <div style={{ textAlign: "center", marginTop: "50px" }}>
       <h1>Welcome to the Home Page</h1>

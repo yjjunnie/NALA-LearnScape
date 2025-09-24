@@ -3,6 +3,8 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from .models import *
+from .serializers import *
 #import requests
 #import os
 from app.services.classifierjson import classify_messages_from_json, display_messages_from_json, percentage_from_json, calculate_time_spent_per_topic
@@ -34,3 +36,12 @@ def time_spent_per_topic(request):
     filepath = "app/services/chat_history/newconvohistoryposted.json"
     results = calculate_time_spent_per_topic(filepath)
     return Response(results)
+
+@api_view(["GET"])
+def getStudent(request, pk):
+    try:
+        student = Student.objects.get(pk=pk)
+    except Student.DoesNotExist:
+        return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+    serializedData = StudentSerializer(student).data
+    return Response(serializedData)

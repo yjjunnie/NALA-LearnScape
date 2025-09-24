@@ -1,6 +1,5 @@
-// src/pages/Home.jsx
 import { Link, useNavigate } from "react-router-dom";
-import learningStyle from "../components/learningStyle";
+import learningStyle from "../components/LearningStyle";
 
 export default function Home() {
   const DEMO_STUDENT_ID = 1;

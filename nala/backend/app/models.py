@@ -39,7 +39,7 @@ class Student(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    enrolled_modules = models.ManyToManyField(Module, related_name='students', blank=True)
+    enrolled_modules = models.ManyToManyField(Module, related_name='students', null=True, blank=True)
     learningStyle = models.CharField(max_length=255, choices=
         [
             ("retrieval_practice", "Retrieval Practice"),

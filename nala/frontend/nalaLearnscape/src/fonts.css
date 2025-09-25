@@ -1,0 +1,15 @@
+    /* src/fonts.css */
+    @font-face {
+      font-family: "GlacialIndifference-Bold"; /* Choose a descriptive name */
+      src: local("GlacialIndifference-Bold"), url("./fonts/GlacialIndifference-Bold.otf") format("opentype");
+      font-weight: bold; /* Or specify the weight if applicable (e.g., bold, 500) */
+      font-style: normal; /* Or specify if italic */
+    }
+
+    @font-face {
+      font-family: "Fredoka-Bold"; /* Choose a descriptive name */
+      src: local("Fredoka-Bold"), url("./fonts/Fredoka-VariableFont_wdth\,wght.ttf") format("truetype");
+      font-weight: bold; /* Or specify the weight if applicable (e.g., bold, 500) */
+      font-style: normal; /* Or specify if italic */
+    }
+    

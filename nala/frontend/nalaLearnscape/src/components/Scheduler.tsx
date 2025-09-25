@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
+import { Box, Stack, Typography } from "@mui/material";
 import DragTimeBlock from "./DragTimeBlock";
 
 type ScheduleItem = {
@@ -118,14 +119,38 @@ const Scheduler: React.FC = () => {
   };
 
   return (
-    <div className="scheduler">
-      <div className="scheduler__header">
-        <h3>Recommended study plan for today:</h3>
-        <span className="scheduler__total">Total study time: {totalDurationLabel}</span>
-      </div>
-      <div className="scheduler__track-wrapper">
-        <div className="scheduler__time-label">0000</div>
-        <div
+    <Box className="scheduler" sx={{ backgroundColor: "rgba(255,255,255,0.18)", borderRadius: 4 }}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="space-between"
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        gap={1.5}
+        className="scheduler__header"
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            fontFamily: '"Fredoka", sans-serif',
+            fontSize: { xs: "1.2rem", md: "1.35rem" },
+            color: "rgba(255,255,255,0.92)",
+          }}
+        >
+          Recommended study plan for today:
+        </Typography>
+        <Typography
+          variant="subtitle1"
+          className="scheduler__total"
+          sx={{
+            color: "rgba(255,255,255,0.85)",
+            fontWeight: 500,
+          }}
+        >
+          Total study time: {totalDurationLabel}
+        </Typography>
+      </Stack>
+      <Box className="scheduler__track-wrapper">
+        <Typography className="scheduler__time-label">0000</Typography>
+        <Box
           className="scheduler__track"
           ref={trackRef}
           onDragOver={handleDragOver}
@@ -170,12 +195,12 @@ const Scheduler: React.FC = () => {
               );
             })}
           </div>
-        </div>
-        <div className="scheduler__time-label scheduler__time-label--end">
+        </Box>
+        <Typography className="scheduler__time-label scheduler__time-label--end">
           2359
-        </div>
-      </div>
-    </div>
+        </Typography>
+      </Box>
+    </Box>
   );
 };
 

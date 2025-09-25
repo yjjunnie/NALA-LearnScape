@@ -131,6 +131,7 @@ const LearningStyleOverview: React.FC = () => {
         px: { xs: 3, md: 4 },
         py: { xs: 3, md: 4 },
         background: "linear-gradient(180deg, #ffffff 0%, #f3f6ff 100%)",
+        boxShadow: "0 24px 50px rgba(76,115,255,0.18)",
         border: "1px solid rgba(76,115,255,0.14)",
       }}
     >

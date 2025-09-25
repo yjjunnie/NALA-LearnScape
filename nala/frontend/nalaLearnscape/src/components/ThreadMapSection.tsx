@@ -107,6 +107,7 @@ const ThreadMapSection: React.FC = () => {
         px: { xs: 3, md: 4 },
         py: { xs: 3, md: 4 },
         backgroundColor: "#ffffff",
+        boxShadow: "0 22px 45px rgba(44,87,170,0.14)",
         border: "1px solid rgba(76,115,255,0.12)",
       }}
     >

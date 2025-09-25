@@ -5,6 +5,8 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  Drawer,
+  IconButton,
   Link,
   Paper,
   Stack,
@@ -36,6 +38,29 @@ const Welcome: React.FC = () => {
     </Link>
   );
 
+  const handleNavigate = (path: string): void => {
+    navigate(path);
+    setIsDrawerOpen(false);
+  };
+
+  const findOutWhyLink = (
+    <Link
+      component="button"
+      type="button"
+      onClick={() => setIsModalOpen(true)}
+      underline="hover"
+      className="welcome__cta"
+      sx={{
+        color: "#FFE08C",
+        fontWeight: 600,
+        fontSize: "0.95rem",
+        letterSpacing: 0.3,
+        "&:hover": { color: "#FFFFFF" },
+      }}
+    >
+      Find out why
+    </Link>
+  );
   return (
     <Box
       component="section"
@@ -58,6 +83,7 @@ const Welcome: React.FC = () => {
           background:
             "linear-gradient(135deg, rgba(70,110,255,0.98) 0%, rgba(96,149,255,0.95) 55%, rgba(143,189,255,0.98) 100%)",
           color: "#FFFFFF",
+          boxShadow: "0 28px 65px rgba(34,72,168,0.32)",
           overflow: "hidden",
         }}
       >
@@ -68,33 +94,51 @@ const Welcome: React.FC = () => {
           justifyContent="space-between"
           className="welcome__header"
         >
-          <Box className="welcome__title-group" sx={{ flexGrow: 1 }}>
-            <Typography
-              variant="h3"
+          <Stack direction="row" spacing={2.5} alignItems="center" sx={{ width: "100%" }}>
+            <IconButton
+              className="welcome__menu"
+              onClick={() => setIsDrawerOpen(true)}
               sx={{
-                mb: 1,
-                color: "#FFFFFF",
-                fontSize: { xs: "1.95rem", md: "2.4rem" },
-                lineHeight: 1.05,
-                letterSpacing: 0.2,
+                borderRadius: 3,
+                backgroundColor: "rgba(255,255,255,0.2)",
+                color: "inherit",
+                border: "1px solid rgba(255,255,255,0.38)",
+                p: 1,
+                "&:hover": {
+                  backgroundColor: "rgba(255,255,255,0.3)",
+                },
               }}
             >
-              Welcome back,
-              <Box component="span" className="welcome__highlight" sx={{ color: "#FFE08C" }}>
-                {" "}John!
-              </Box>
-            </Typography>
-            <Typography
-              variant="subtitle1"
-              sx={{
-                color: "rgba(255,255,255,0.82)",
-                fontFamily: '"GlacialIndifference", sans-serif',
-                letterSpacing: 0.4,
-              }}
-            >
-              Your personalised schedule is ready. Drag the blocks to reshape your day.
-            </Typography>
-          </Box>
+              <MenuRoundedIcon />
+            </IconButton>
+            <Box className="welcome__title-group" sx={{ flexGrow: 1 }}>
+              <Typography
+                variant="h3"
+                sx={{
+                  mb: 1,
+                  color: "#FFFFFF",
+                  fontSize: { xs: "1.95rem", md: "2.4rem" },
+                  lineHeight: 1.05,
+                  letterSpacing: 0.2,
+                }}
+              >
+                Welcome back,
+                <Box component="span" className="welcome__highlight" sx={{ color: "#FFE08C" }}>
+                  {" "}John!
+                </Box>
+              </Typography>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  color: "rgba(255,255,255,0.82)",
+                  fontFamily: '"GlacialIndifference", sans-serif',
+                  letterSpacing: 0.4,
+                }}
+              >
+                Your personalised schedule is ready. Drag the blocks to reshape your day.
+              </Typography>
+            </Box>
+          </Stack>
           <Stack
             direction="column"
             alignItems="center"
@@ -106,6 +150,7 @@ const Welcome: React.FC = () => {
               py: 2.5,
               border: "1px solid rgba(255,255,255,0.35)",
               minWidth: 96,
+              boxShadow: "0 18px 36px rgba(16,46,120,0.2)",
             }}
           >
             <Box
@@ -119,6 +164,7 @@ const Welcome: React.FC = () => {
                 alignItems: "center",
                 justifyContent: "center",
                 color: "#FFFFFF",
+                boxShadow: "0 12px 24px rgba(28,62,158,0.35)",
               }}
             >
               <LocalFireDepartmentRoundedIcon sx={{ fontSize: 36 }} />

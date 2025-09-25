@@ -184,6 +184,8 @@ const Scheduler: React.FC<SchedulerProps> = ({ headerAction }) => {
         backgroundColor: "rgba(255,255,255,0.2)",
         borderRadius: 4,
         border: "1px solid rgba(255,255,255,0.35)",
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)",
+
       }}
     >
       <Stack

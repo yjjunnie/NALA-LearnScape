@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
-    "@xyflow/react": "^12.8.4",
+    "@xyflow/react": "^12.8.5",
     "classcat": "^5.0.5",
     "d3-force": "^3.0.0",
     "nanoid": "^5.1.5",

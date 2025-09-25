@@ -36,6 +36,7 @@ class Relationship(models.Model):
         return f'Relationship: {self.first_node.name} {self.rs_type} {self.second_node.name}'
     
 class Student(models.Model):
+    id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     enrolled_modules = models.ManyToManyField(Module, related_name='students', blank=True)
@@ -62,7 +63,7 @@ class Student(models.Model):
         return self.learningStyleDesc.get(self.learningStyle, "")
     
     def __str__(self):
-        return f'Student: {self.name}'
+        return f'Student: [{self.id}] {self.name}'
 
 class Topic(Node):
     def __str__(self):

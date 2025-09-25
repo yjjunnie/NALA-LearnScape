@@ -35,8 +35,36 @@ const theme = createTheme({
       fontFamily: '"Fredoka", "GlacialIndifference", sans-serif',
       fontWeight: 700,
     },
+    h4: {
+      fontFamily: '"Fredoka", "GlacialIndifference", sans-serif',
+      fontWeight: 700,
+    },
+    h5: {
+      fontFamily: '"Fredoka", "GlacialIndifference", sans-serif',
+      fontWeight: 700,
+    },
+    h6: {
+      fontFamily: '"Fredoka", "GlacialIndifference", sans-serif',
+      fontWeight: 700,
+    },
+    subtitle1: {
+      fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+    },
+    subtitle2: {
+      fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+    },
+    body1: {
+      fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+    },
+    body2: {
+      fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+    },
     button: {
       textTransform: "none",
+      fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+      fontWeight: 600,
+    },
+    caption: {
       fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
     },
   },

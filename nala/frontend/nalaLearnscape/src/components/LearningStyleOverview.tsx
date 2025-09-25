@@ -103,20 +103,23 @@ const LearningStyleOverview: React.FC = () => {
         py: { xs: 3, md: 4 },
         background: "linear-gradient(180deg, #ffffff 0%, #f3f6ff 100%)",
         boxShadow: "0 24px 50px rgba(76,115,255,0.18)",
+        border: "1px solid rgba(76,115,255,0.14)",
       }}
     >
       <Stack spacing={1.5} className="learning-style-card__header">
         <Typography
-          variant="h6"
+          variant="subtitle2"
           sx={{
-            color: "text.secondary",
-            letterSpacing: 0.5,
+            color: "#4C73FF",
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            fontWeight: 700,
           }}
         >
           Current Learning Style
         </Typography>
         <Typography
-          variant="h4"
+          variant="h3"
           className="learning-style-card__style"
           sx={{
             color: "primary.main",
@@ -126,12 +129,12 @@ const LearningStyleOverview: React.FC = () => {
           {currentStyle}
         </Typography>
       </Stack>
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={{ xs: 3, md: 4 }}
-        alignItems="center"
-        className="learning-style-card__content"
-      >
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={{ xs: 3, md: 4 }}
+          alignItems="center"
+          className="learning-style-card__content"
+        >
         <Box className="learning-style-card__chart">
           {hoveredSlice && (
             <Box className="learning-style-card__tooltip">
@@ -207,6 +210,21 @@ const LearningStyleOverview: React.FC = () => {
                 arrow
                 enterDelay={100}
                 leaveDelay={0}
+                slotProps={{
+                  tooltip: {
+                    sx: {
+                      backgroundColor: "rgba(40,72,209,0.95)",
+                      borderRadius: 2,
+                      fontFamily: '"GlacialIndifference", sans-serif',
+                      fontSize: "0.75rem",
+                      px: 1.5,
+                      py: 1,
+                    },
+                  },
+                  arrow: {
+                    sx: { color: "rgba(40,72,209,0.95)" },
+                  },
+                }}
               >
                 <Box
                   className="learning-style-card__info-icon"

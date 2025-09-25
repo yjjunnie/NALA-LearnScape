@@ -1,5 +1,6 @@
 .home {
   background: #e8f1ff;
+  font-family: "GlacialIndifference", sans-serif;
 }
 
 .home__below {
@@ -20,6 +21,15 @@
   gap: 24px;
   min-height: 340px;
   position: relative;
+}
+
+.welcome__card::after {
+  content: "";
+  position: absolute;
+  inset: 24px;
+  border-radius: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  pointer-events: none;
 }
 
 .welcome__header {
@@ -55,17 +65,18 @@
   font-family: "Fredoka", sans-serif;
   font-weight: 600;
   font-size: 1rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: #2447b5;
 }
 
 .scheduler__track {
   position: relative;
   height: 140px;
-  border-radius: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.22);
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.95);
   overflow: hidden;
   padding: 20px 0;
+  box-shadow: inset 0 0 0 1px rgba(76, 115, 255, 0.12);
 }
 
 .scheduler__markers {
@@ -88,13 +99,13 @@
 .scheduler__marker-line {
   width: 2px;
   flex: 1;
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(76, 115, 255, 0.2);
 }
 
 .scheduler__marker-label {
   font-size: 0.75rem;
   font-family: "GlacialIndifference", sans-serif;
-  color: rgba(255, 255, 255, 0.88);
+  color: #1a2c5e;
 }
 
 .scheduler__block {
@@ -178,7 +189,7 @@
 .learning-style-card__legend-item {
   border-radius: 18px;
   padding: 12px 16px;
-  background: rgba(232, 241, 255, 0.5);
+  background: rgba(232, 241, 255, 0.6);
 }
 
 .learning-style-card__legend-color {
@@ -209,8 +220,36 @@
 
 .threadmap-section__body {
   border-radius: 28px;
-  background: #f5f8ff;
+  background: linear-gradient(180deg, rgba(232, 241, 255, 0.8) 0%, rgba(244, 248, 255, 0.95) 100%);
   padding: 12px;
+  min-height: 300px;
+}
+
+.threadmap {
+  background: transparent;
+  border-radius: 20px;
+}
+
+.threadmap .react-flow__background {
+  background: transparent;
+}
+
+.threadmap .react-flow__controls {
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  border: 1px solid rgba(76, 115, 255, 0.2);
+}
+
+.threadmap .react-flow__node {
+  font-family: "GlacialIndifference", sans-serif;
+  font-weight: 600;
+  color: #1a2c5e;
+  font-size: 0.95rem;
+}
+
+.threadmap .react-flow__edge-path {
+  stroke: rgba(76, 115, 255, 0.6) !important;
 }
 
 @media (max-width: 1024px) {

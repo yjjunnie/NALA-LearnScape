@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { Box, Stack, Typography } from "@mui/material";
 import DragTimeBlock from "./DragTimeBlock";
 
@@ -17,6 +18,10 @@ const clamp = (value: number, min: number, max: number): number => {
   if (value > max) return max;
   return value;
 };
+
+export interface SchedulerProps {
+  headerAction?: ReactNode;
+}
 
 const formatTime = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
@@ -50,7 +55,7 @@ const initialSchedule: ScheduleItem[] = [
   },
 ];
 
-const Scheduler: React.FC = () => {
+const Scheduler: React.FC<SchedulerProps> = ({ headerAction }) => {
   const [schedule, setSchedule] = useState<ScheduleItem[]>(initialSchedule);
   const [activeBlock, setActiveBlock] = useState<string | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -119,34 +124,56 @@ const Scheduler: React.FC = () => {
   };
 
   return (
-    <Box className="scheduler" sx={{ backgroundColor: "rgba(255,255,255,0.18)", borderRadius: 4 }}>
+    <Box
+      className="scheduler"
+      sx={{
+        backgroundColor: "rgba(255,255,255,0.2)",
+        borderRadius: 4,
+        border: "1px solid rgba(255,255,255,0.35)",
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)",
+      }}
+    >
       <Stack
-        direction={{ xs: "column", sm: "row" }}
+        direction={{ xs: "column", md: "row" }}
         justifyContent="space-between"
-        alignItems={{ xs: "flex-start", sm: "center" }}
+        alignItems={{ xs: "flex-start", md: "center" }}
         gap={1.5}
         className="scheduler__header"
       >
         <Typography
           variant="h6"
           sx={{
-            fontFamily: '"Fredoka", sans-serif',
-            fontSize: { xs: "1.2rem", md: "1.35rem" },
-            color: "rgba(255,255,255,0.92)",
+            fontSize: { xs: "1.1rem", md: "1.25rem" },
+            color: "rgba(255,255,255,0.95)",
+            letterSpacing: 0.4,
           }}
         >
           Recommended study plan for today:
         </Typography>
-        <Typography
-          variant="subtitle1"
-          className="scheduler__total"
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={{ xs: 1, sm: 2 }}
+          alignItems={{ xs: "flex-start", sm: "center" }}
           sx={{
-            color: "rgba(255,255,255,0.85)",
-            fontWeight: 500,
+            width: "100%",
+            justifyContent: { sm: "flex-end" },
+            flexWrap: "wrap",
+            rowGap: 0.5,
           }}
         >
-          Total study time: {totalDurationLabel}
-        </Typography>
+          <Typography
+            variant="subtitle1"
+            className="scheduler__total"
+            sx={{
+              color: "rgba(255,255,255,0.9)",
+              fontWeight: 500,
+              textAlign: { xs: "left", sm: "right" },
+            }}
+          >
+            Total study time: {totalDurationLabel}
+          </Typography>
+          {headerAction}
+        </Stack>
       </Stack>
       <Box className="scheduler__track-wrapper">
         <Typography className="scheduler__time-label">0000</Typography>

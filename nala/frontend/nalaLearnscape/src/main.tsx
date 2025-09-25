@@ -27,6 +27,24 @@ createRoot(document.getElementById("root")!).render(
           h3: {
             fontFamily: theme.typography.h3.fontFamily,
           },
+          h4: {
+            fontFamily: theme.typography.h4?.fontFamily,
+          },
+          h5: {
+            fontFamily: theme.typography.h5?.fontFamily,
+          },
+          h6: {
+            fontFamily: theme.typography.h6?.fontFamily,
+          },
+          p: {
+            fontFamily: theme.typography.fontFamily,
+          },
+          span: {
+            fontFamily: theme.typography.fontFamily,
+          },
+          button: {
+            fontFamily: theme.typography.button?.fontFamily,
+          },
           a: {
             color: "inherit",
           },

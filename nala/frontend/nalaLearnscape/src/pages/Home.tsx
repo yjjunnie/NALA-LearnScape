@@ -30,6 +30,7 @@ const Home: React.FC = () => {
                   background:
                     "linear-gradient(180deg, rgba(216,229,255,0.85) 0%, rgba(241,245,255,0.9) 100%)",
                   boxShadow: "inset 0 0 0 1px rgba(76,115,255,0.1)",
+                  border: "1px solid rgba(76,115,255,0.12)",
                 }}
               >
                 <Typography

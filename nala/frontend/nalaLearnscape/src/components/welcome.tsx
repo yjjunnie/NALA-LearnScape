@@ -5,7 +5,6 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  Divider,
   Drawer,
   IconButton,
   Link,
@@ -41,6 +40,25 @@ const Welcome: React.FC = () => {
     setIsDrawerOpen(false);
   };
 
+  const findOutWhyLink = (
+    <Link
+      component="button"
+      type="button"
+      onClick={() => setIsModalOpen(true)}
+      underline="hover"
+      className="welcome__cta"
+      sx={{
+        color: "#FFE08C",
+        fontWeight: 600,
+        fontSize: "0.95rem",
+        letterSpacing: 0.3,
+        "&:hover": { color: "#FFFFFF" },
+      }}
+    >
+      Find out why
+    </Link>
+  );
+
   return (
     <Box
       component="section"
@@ -61,45 +79,46 @@ const Welcome: React.FC = () => {
           px: { xs: 3, md: 5 },
           py: { xs: 3, md: 4 },
           background:
-            "linear-gradient(135deg, rgba(76,115,255,0.96) 0%, rgba(110,162,255,0.9) 60%, rgba(147,193,255,0.95) 100%)",
+            "linear-gradient(135deg, rgba(70,110,255,0.98) 0%, rgba(96,149,255,0.95) 55%, rgba(143,189,255,0.98) 100%)",
           color: "#FFFFFF",
-          boxShadow: "0 24px 60px rgba(44,87,170,0.28)",
+          boxShadow: "0 28px 65px rgba(34,72,168,0.32)",
           overflow: "hidden",
         }}
       >
         <Stack
-          direction="row"
-          spacing={2}
-          alignItems="flex-start"
+          direction={{ xs: "column", md: "row" }}
+          spacing={{ xs: 3, md: 4 }}
+          alignItems={{ xs: "flex-start", md: "center" }}
           justifyContent="space-between"
           className="welcome__header"
         >
-          <Stack direction="row" spacing={2} alignItems="flex-start">
+          <Stack direction="row" spacing={2.5} alignItems="center" sx={{ width: "100%" }}>
             <IconButton
               className="welcome__menu"
               onClick={() => setIsDrawerOpen(true)}
               sx={{
                 borderRadius: 3,
-                backgroundColor: "rgba(255,255,255,0.18)",
+                backgroundColor: "rgba(255,255,255,0.2)",
                 color: "inherit",
-                border: "1px solid rgba(255,255,255,0.36)",
+                border: "1px solid rgba(255,255,255,0.38)",
                 p: 1,
                 "&:hover": {
-                  backgroundColor: "rgba(255,255,255,0.28)",
+                  backgroundColor: "rgba(255,255,255,0.3)",
                 },
               }}
               aria-label="Open navigation menu"
             >
               <MenuRoundedIcon />
             </IconButton>
-            <Box className="welcome__title-group">
+            <Box className="welcome__title-group" sx={{ flexGrow: 1 }}>
               <Typography
                 variant="h3"
                 sx={{
                   mb: 1,
                   color: "#FFFFFF",
-                  fontSize: { xs: "1.9rem", md: "2.3rem" },
+                  fontSize: { xs: "1.95rem", md: "2.4rem" },
                   lineHeight: 1.05,
+                  letterSpacing: 0.2,
                 }}
               >
                 Welcome back,
@@ -107,56 +126,85 @@ const Welcome: React.FC = () => {
                   {" "}John!
                 </Box>
               </Typography>
-              <Link
-                component="button"
-                type="button"
-                onClick={() => setIsModalOpen(true)}
-                underline="hover"
-                className="welcome__cta"
+              <Typography
+                variant="subtitle1"
                 sx={{
-                  color: "#FFFFFF",
-                  fontWeight: 600,
-                  fontSize: "1rem",
-                  letterSpacing: 0.3,
-                  "&:hover": { color: "#FFE08C" },
+                  color: "rgba(255,255,255,0.82)",
+                  fontFamily: '"GlacialIndifference", sans-serif',
+                  letterSpacing: 0.4,
                 }}
               >
-                Find out why
-              </Link>
+                Your personalised schedule is ready. Drag the blocks to reshape your day.
+              </Typography>
             </Box>
           </Stack>
           <Stack
             direction="column"
             alignItems="center"
-            spacing={0.5}
+            spacing={1.2}
             sx={{
-              backgroundColor: "rgba(255,255,255,0.18)",
-              borderRadius: 4,
-              px: 2,
-              py: 1.5,
+              backgroundColor: "rgba(255,255,255,0.22)",
+              borderRadius: 5,
+              px: 2.5,
+              py: 2.5,
               border: "1px solid rgba(255,255,255,0.35)",
-              minWidth: 72,
+              minWidth: 96,
+              boxShadow: "0 18px 36px rgba(16,46,120,0.2)",
             }}
           >
-            <LocalFireDepartmentRoundedIcon fontSize="large" sx={{ color: "#FFE08C" }} />
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: 1 }}>
-              25 Days
+            <Box
+              sx={{
+                position: "relative",
+                width: 62,
+                height: 62,
+                borderRadius: "50%",
+                background: "linear-gradient(180deg, #4C73FF 0%, #2848D1 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#FFFFFF",
+                boxShadow: "0 12px 24px rgba(28,62,158,0.35)",
+              }}
+            >
+              <LocalFireDepartmentRoundedIcon sx={{ fontSize: 36 }} />
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  position: "absolute",
+                  bottom: 10,
+                  fontFamily: '"Fredoka", sans-serif',
+                  fontWeight: 700,
+                  fontSize: "1.05rem",
+                }}
+              >
+                25
+              </Typography>
+            </Box>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                color: "#FFFFFF",
+                fontWeight: 600,
+                letterSpacing: 1,
+                fontFamily: '"Fredoka", sans-serif',
+              }}
+            >
+              Day Streak
             </Typography>
-            <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.85)" }}>
-              Streak
+            <Typography
+              variant="caption"
+              sx={{
+                color: "rgba(255,255,255,0.8)",
+                letterSpacing: 1,
+                fontFamily: '"GlacialIndifference", sans-serif',
+              }}
+            >
+              Keep it going!
             </Typography>
           </Stack>
         </Stack>
 
-        <Divider
-          sx={{
-            my: { xs: 2.5, md: 3 },
-            borderColor: "rgba(255,255,255,0.28)",
-            borderBottomWidth: 1,
-          }}
-        />
-
-        <Scheduler />
+        <Scheduler headerAction={findOutWhyLink} />
       </Paper>
 
       <LearningStyleOverview />

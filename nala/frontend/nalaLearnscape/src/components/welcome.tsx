@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -8,31 +8,34 @@ import {
   Drawer,
   IconButton,
   Link,
-  List,
-  ListItemButton,
-  ListItemText,
   Paper,
   Stack,
   Typography,
 } from "@mui/material";
-import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
-import { useLocation, useNavigate } from "react-router-dom";
 import Scheduler from "./Scheduler";
 import LearningStyleOverview from "./LearningStyleOverview";
 
 const Welcome: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
 
-  const navigationItems = useMemo(
-    () => [
-      { label: "Home", path: "/" },
-      { label: "Course", path: "/threadmap" },
-    ],
-    []
+  const findOutWhyLink = (
+    <Link
+      component="button"
+      type="button"
+      onClick={() => setIsModalOpen(true)}
+      underline="hover"
+      className="welcome__cta"
+      sx={{
+        color: "#FFE08C",
+        fontWeight: 600,
+        fontSize: "0.95rem",
+        letterSpacing: 0.3,
+        "&:hover": { color: "#FFFFFF" },
+      }}
+    >
+      Find out why
+    </Link>
   );
 
   const handleNavigate = (path: string): void => {
@@ -58,7 +61,6 @@ const Welcome: React.FC = () => {
       Find out why
     </Link>
   );
-
   return (
     <Box
       component="section"
@@ -106,7 +108,6 @@ const Welcome: React.FC = () => {
                   backgroundColor: "rgba(255,255,255,0.3)",
                 },
               }}
-              aria-label="Open navigation menu"
             >
               <MenuRoundedIcon />
             </IconButton>
@@ -208,56 +209,6 @@ const Welcome: React.FC = () => {
       </Paper>
 
       <LearningStyleOverview />
-
-      <Drawer
-        anchor="left"
-        open={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        PaperProps={{
-          sx: {
-            width: 260,
-            backgroundColor: "#f4f7ff",
-            paddingY: 3,
-            borderTopRightRadius: 24,
-            borderBottomRightRadius: 24,
-          },
-        }}
-      >
-        <Typography variant="h6" sx={{ px: 3, pb: 2, color: "#1A2C5E" }}>
-          Quick Links
-        </Typography>
-        <List>
-          {navigationItems.map((item) => (
-            <ListItemButton
-              key={item.path}
-              onClick={() => handleNavigate(item.path)}
-              selected={location.pathname === item.path}
-              sx={{
-                mx: 2,
-                mb: 1,
-                borderRadius: 3,
-                boxShadow: location.pathname === item.path ? "0 8px 18px rgba(76,115,255,0.2)" : "none",
-                backgroundColor:
-                  location.pathname === item.path ? "rgba(76,115,255,0.12)" : "transparent",
-              }}
-            >
-              <ListItemText
-                primary={item.label}
-                primaryTypographyProps={{
-                  fontFamily: '"Fredoka", sans-serif',
-                  fontWeight: 600,
-                  sx: {
-                    color:
-                      location.pathname === item.path
-                        ? "primary.main"
-                        : "text.primary",
-                  },
-                }}
-              />
-            </ListItemButton>
-          ))}
-        </List>
-      </Drawer>
 
       <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle

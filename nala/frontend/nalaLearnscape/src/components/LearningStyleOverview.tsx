@@ -71,8 +71,23 @@ const prototypeFetchLearningStyle = async (): Promise<LearningStyleResponse> => 
   });
 };
 
-const radius = 70;
-const circumference = 2 * Math.PI * radius;
+const radius = 80;
+
+const polarToCartesian = (center: number, r: number, angle: number) => {
+  const radians = ((angle - 90) * Math.PI) / 180;
+  return {
+    x: center + r * Math.cos(radians),
+    y: center + r * Math.sin(radians),
+  };
+};
+
+const describeSegment = (startAngle: number, endAngle: number, r: number) => {
+  const start = polarToCartesian(100, r, endAngle);
+  const end = polarToCartesian(100, r, startAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+  return `M 100 100 L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 1 ${end.x} ${end.y} Z`;
+};
 
 const LearningStyleOverview: React.FC = () => {
   const [data, setData] = useState<LearningSlice[]>([]);
@@ -91,7 +106,21 @@ const LearningStyleOverview: React.FC = () => {
     [data]
   );
 
-  let cumulativeValue = 0;
+  const slicesWithAngles = useMemo(() => {
+    let runningTotal = 0;
+    return data.map((slice) => {
+      const startAngle = runningTotal * 360;
+      const portion = slice.value / total;
+      runningTotal += portion;
+      const endAngle = runningTotal * 360;
+
+      return {
+        ...slice,
+        startAngle,
+        endAngle,
+      };
+    });
+  }, [data, total]);
 
   return (
     <Paper
@@ -146,41 +175,24 @@ const LearningStyleOverview: React.FC = () => {
               </Typography>
             </Box>
           )}
-          <svg viewBox="0 0 200 200" role="img" aria-label="Learning style distribution">
-            <circle
-              cx="100"
-              cy="100"
-              r={radius}
-              fill="#E6EDFF"
-              stroke="#E6EDFF"
-              strokeWidth="40"
-            />
-            {data.map((slice) => {
-              const dashArray = `${(slice.value / total) * circumference} ${circumference}`;
-              const dashOffset = -(cumulativeValue / total) * circumference;
-              cumulativeValue += slice.value;
-
-              return (
-                <circle
-                  key={slice.id}
-                  className="learning-style-card__slice"
-                  cx="100"
-                  cy="100"
-                  r={radius}
-                  stroke={slice.color}
-                  strokeWidth="40"
-                  fill="transparent"
-                  strokeDasharray={dashArray}
-                  strokeDashoffset={dashOffset}
-                  onMouseEnter={() => setHoveredSlice(slice)}
-                  onMouseLeave={() => setHoveredSlice(null)}
-                  style={{
-                    transform: "rotate(-90deg)",
-                    transformOrigin: "100px 100px",
-                  }}
-                />
-              );
-            })}
+          <svg
+            viewBox="0 0 200 200"
+            role="img"
+            aria-label="Learning style distribution"
+            className="learning-style-card__chart-figure"
+          >
+            {slicesWithAngles.map((slice) => (
+              <path
+                key={slice.id}
+                d={describeSegment(slice.startAngle, slice.endAngle, radius)}
+                fill={slice.color}
+                stroke="#ffffff"
+                strokeWidth={1.5}
+                onMouseEnter={() => setHoveredSlice(slice)}
+                onMouseLeave={() => setHoveredSlice(null)}
+              />
+            ))}
+            <circle cx="100" cy="100" r="42" fill="#ffffff" />
           </svg>
         </Box>
         <Stack spacing={1.5} className="learning-style-card__legend">

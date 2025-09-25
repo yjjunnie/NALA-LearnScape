@@ -118,7 +118,6 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.18);
   color: #0c1e4a;
   cursor: grab;
 }

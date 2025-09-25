@@ -108,16 +108,70 @@ const Scheduler: React.FC<SchedulerProps> = ({ headerAction }) => {
     const minutes = Math.round(ratio * TOTAL_MINUTES);
 
     setSchedule((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) {
-          return item;
+      {
+        const nextSchedule = [...prev];
+        const currentIndex = nextSchedule.findIndex((item) => item.id === id);
+        if (currentIndex === -1) {
+          return prev;
         }
-        const maxStart = TOTAL_MINUTES - item.duration;
-        return {
-          ...item,
-          start: clamp(minutes, 0, maxStart),
+
+        const currentItem = nextSchedule[currentIndex];
+        const desiredStart = clamp(minutes, 0, TOTAL_MINUTES - currentItem.duration);
+        const others = nextSchedule
+          .filter((item) => item.id !== id)
+          .sort((a, b) => a.start - b.start);
+
+        const originalStart = currentItem.start;
+        let updatedStart = originalStart;
+        let placed = false;
+        let previousEnd = 0;
+
+        for (const other of others) {
+          const otherStart = Math.max(other.start, previousEnd);
+          const gapStart = previousEnd;
+          const gapEnd = otherStart;
+
+          if (gapEnd - gapStart >= currentItem.duration) {
+            const candidateStart = clamp(
+              desiredStart,
+              gapStart,
+              gapEnd - currentItem.duration
+            );
+            if (candidateStart >= gapStart && candidateStart + currentItem.duration <= gapEnd) {
+              updatedStart = candidateStart;
+              placed = true;
+              break;
+            }
+          }
+
+          previousEnd = Math.max(previousEnd, other.start + other.duration);
+        }
+
+        if (!placed) {
+          const gapStart = previousEnd;
+          const gapEnd = TOTAL_MINUTES;
+          if (gapEnd - gapStart >= currentItem.duration) {
+            updatedStart = clamp(
+              desiredStart,
+              gapStart,
+              gapEnd - currentItem.duration
+            );
+            placed = true;
+          }
+        }
+
+        if (!placed) {
+          return prev;
+        }
+
+        const updatedItem: ScheduleItem = {
+          ...currentItem,
+          start: updatedStart,
         };
-      })
+
+        const updatedSchedule = [...others, updatedItem].sort((a, b) => a.start - b.start);
+        return updatedSchedule;
+      }
     );
 
     setActiveBlock(null);
@@ -131,6 +185,7 @@ const Scheduler: React.FC<SchedulerProps> = ({ headerAction }) => {
         borderRadius: 4,
         border: "1px solid rgba(255,255,255,0.35)",
         boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)",
+
       }}
     >
       <Stack

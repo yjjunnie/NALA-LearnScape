@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
@@ -18,6 +19,7 @@ import LearningStyleOverview from "./LearningStyleOverview";
 
 const Welcome: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const findOutWhyLink = (
     <Link
@@ -43,31 +45,16 @@ const Welcome: React.FC = () => {
     setIsDrawerOpen(false);
   };
 
-  const findOutWhyLink = (
-    <Link
-      component="button"
-      type="button"
-      onClick={() => setIsModalOpen(true)}
-      underline="hover"
-      className="welcome__cta"
-      sx={{
-        color: "#FFE08C",
-        fontWeight: 600,
-        fontSize: "0.95rem",
-        letterSpacing: 0.3,
-        "&:hover": { color: "#FFFFFF" },
-      }}
-    >
-      Find out why
-    </Link>
-  );
   return (
     <Box
       component="section"
       className="welcome"
       sx={{
         display: "grid",
-        gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.9fr) minmax(0, 1fr)" },
+        gridTemplateColumns: {
+          xs: "1fr",
+          lg: "minmax(0, 1.9fr) minmax(0, 1fr)",
+        },
         gap: { xs: 3, lg: 3 },
         alignItems: "stretch",
       }}
@@ -94,7 +81,12 @@ const Welcome: React.FC = () => {
           justifyContent="space-between"
           className="welcome__header"
         >
-          <Stack direction="row" spacing={2.5} alignItems="center" sx={{ width: "100%" }}>
+          <Stack
+            direction="row"
+            spacing={2.5}
+            alignItems="center"
+            sx={{ width: "100%" }}
+          >
             <IconButton
               className="welcome__menu"
               onClick={() => setIsDrawerOpen(true)}
@@ -123,8 +115,13 @@ const Welcome: React.FC = () => {
                 }}
               >
                 Welcome back,
-                <Box component="span" className="welcome__highlight" sx={{ color: "#FFE08C" }}>
-                  {" "}John!
+                <Box
+                  component="span"
+                  className="welcome__highlight"
+                  sx={{ color: "#FFE08C" }}
+                >
+                  {" "}
+                  John!
                 </Box>
               </Typography>
               <Typography
@@ -135,7 +132,8 @@ const Welcome: React.FC = () => {
                   letterSpacing: 0.4,
                 }}
               >
-                Your personalised schedule is ready. Drag the blocks to reshape your day.
+                Your personalised schedule is ready. Drag the blocks to reshape
+                your day.
               </Typography>
             </Box>
           </Stack>
@@ -210,7 +208,12 @@ const Welcome: React.FC = () => {
 
       <LearningStyleOverview />
 
-      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle
           sx={{
             fontFamily: '"Fredoka", sans-serif',
@@ -222,7 +225,8 @@ const Welcome: React.FC = () => {
         </DialogTitle>
         <DialogContent sx={{ minHeight: 180 }}>
           <Typography variant="body1" color="text.secondary">
-            Additional insights will appear here once the recommendation engine is connected.
+            Additional insights will appear here once the recommendation engine
+            is connected.
           </Typography>
           <Box mt={3}>
             <Button variant="contained" onClick={() => setIsModalOpen(false)}>

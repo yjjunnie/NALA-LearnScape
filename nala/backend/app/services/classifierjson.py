@@ -239,7 +239,6 @@ def calculate_time_spent_per_topic(filepath):
 def learning_style_from_json(filepath):
     total_count = 0
     retrieval_practice_count = 0
-    spaced_practice_count = 0
     elaboration_count = 0
     concrete_examples_count = 0
     interleaving_count = 0
@@ -263,7 +262,15 @@ def learning_style_from_json(filepath):
         if not raw_text:
             continue
 
-        learning_style = classify(raw_text, system="You are a strict classifier. Classify the user's text into one of the following learning styles: [Retrieval Practice, Spaced Practice, Elaboration, Concrete Examples, Interleaving, Dual Coding]. Choose EXACTLY ONE best label. Return ONLY a compact JSON string with keys: \"labels\" (array with one element).")
+        learning_style = classify(raw_text, system="You are a strict classifier. Classify the user's text into one of the following learning styles: [Retrieval Practice, Elaboration, Concrete Examples, Interleaving, Dual Coding], where"
+        "Retrieval Practice: Testing yourself to strengthen memory and recall,"
+        "Elaboration: Explaining discrete ideas with many details,"
+        "Concrete Examples: Using specific examples to understand abstract ideas,"
+        "Interleaving: Mixing different topics or skills during study sessions and the topics here are firstly, Introducing the Matrix then,"
+        "Linear Transforms and the Matrix then,"
+        "Manipulating the Matrix then lastly,"
+        "Inverting the Matrix, so if the user's text is about any of two or more of these topics mentioned at the same time, classify it as Interleaving."
+        "Dual Coding: Using both visual and verbal information processing. Choose EXACTLY ONE best label. Return ONLY a compact JSON string with keys: \"labels\" (array with one element).")
 
         learning_style = learning_style.get("text")
 
@@ -277,8 +284,6 @@ def learning_style_from_json(filepath):
 
             if style == "Retrieval Practice":
                 retrieval_practice_count += 1
-            elif style == "Spaced Practice":
-                spaced_practice_count += 1
             elif style == "Elaboration":
                 elaboration_count += 1
             elif style == "Concrete Examples":
@@ -296,7 +301,6 @@ def learning_style_from_json(filepath):
 
     results.append({
         "Retrieval Practice": round((retrieval_practice_count / total_count) * 100, 2),
-        "Spaced Practice": round((spaced_practice_count / total_count) * 100, 2),
         "Elaboration": round((elaboration_count / total_count) * 100, 2),
         "Concrete Examples": round((concrete_examples_count / total_count) * 100, 2),
         "Interleaving": round((interleaving_count / total_count) * 100, 2),

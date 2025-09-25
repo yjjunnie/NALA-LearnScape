@@ -1,4 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
+import {
+  Box,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 
 type LearningSlice = {
   id: string;
@@ -87,24 +94,54 @@ const LearningStyleOverview: React.FC = () => {
   let cumulativeValue = 0;
 
   return (
-    <div className="learning-style-card">
-      <div className="learning-style-card__header">
-        <div className="learning-style-card__badge">
-          <span className="learning-style-card__badge-text">🔥</span>
-          <span className="learning-style-card__badge-number">25</span>
-        </div>
-        <h3>Current Learning Style:</h3>
-        <p className="learning-style-card__style">{currentStyle}</p>
-      </div>
-      <div className="learning-style-card__content">
-        <div className="learning-style-card__chart">
+    <Paper
+      elevation={0}
+      className="learning-style-card"
+      sx={{
+        borderRadius: { xs: 4, md: 5 },
+        px: { xs: 3, md: 4 },
+        py: { xs: 3, md: 4 },
+        background: "linear-gradient(180deg, #ffffff 0%, #f3f6ff 100%)",
+        boxShadow: "0 24px 50px rgba(76,115,255,0.18)",
+      }}
+    >
+      <Stack spacing={1.5} className="learning-style-card__header">
+        <Typography
+          variant="h6"
+          sx={{
+            color: "text.secondary",
+            letterSpacing: 0.5,
+          }}
+        >
+          Current Learning Style
+        </Typography>
+        <Typography
+          variant="h4"
+          className="learning-style-card__style"
+          sx={{
+            color: "primary.main",
+            fontSize: { xs: "1.6rem", md: "1.8rem" },
+          }}
+        >
+          {currentStyle}
+        </Typography>
+      </Stack>
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={{ xs: 3, md: 4 }}
+        alignItems="center"
+        className="learning-style-card__content"
+      >
+        <Box className="learning-style-card__chart">
           {hoveredSlice && (
-            <div className="learning-style-card__tooltip">
-              <strong>{hoveredSlice.label}</strong>
-              <span>
+            <Box className="learning-style-card__tooltip">
+              <Typography variant="subtitle1" fontWeight={700}>
+                {hoveredSlice.label}
+              </Typography>
+              <Typography variant="body2" color="primary.main">
                 {Math.round((hoveredSlice.value / total) * 100)}%
-              </span>
-            </div>
+              </Typography>
+            </Box>
           )}
           <svg viewBox="0 0 200 200" role="img" aria-label="Learning style distribution">
             <circle
@@ -142,37 +179,48 @@ const LearningStyleOverview: React.FC = () => {
               );
             })}
           </svg>
-        </div>
-        <div className="learning-style-card__legend">
+        </Box>
+        <Stack spacing={1.5} className="learning-style-card__legend">
           {data.map((slice) => (
-            <div className="learning-style-card__legend-item" key={slice.id}>
-              <span
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1.5}
+              key={slice.id}
+              className="learning-style-card__legend-item"
+            >
+              <Box
                 className="learning-style-card__legend-color"
-                style={{ backgroundColor: slice.color }}
+                sx={{ backgroundColor: slice.color }}
               />
-              <span className="learning-style-card__legend-label">{slice.label}</span>
-              <span className="learning-style-card__legend-value">
-                {Math.round((slice.value / total) * 100)}%
-              </span>
-              <span className="learning-style-card__info">
-                <span
+              <Box sx={{ flexGrow: 1 }}>
+                <Typography variant="subtitle1" className="learning-style-card__legend-label">
+                  {slice.label}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {Math.round((slice.value / total) * 100)}%
+                </Typography>
+              </Box>
+              <Tooltip
+                title={slice.description}
+                placement="top"
+                arrow
+                enterDelay={100}
+                leaveDelay={0}
+              >
+                <Box
                   className="learning-style-card__info-icon"
                   onMouseEnter={() => setHoveredSlice(slice)}
                   onMouseLeave={() => setHoveredSlice(null)}
                 >
                   ?
-                </span>
-                {hoveredSlice?.id === slice.id && (
-                  <div className="learning-style-card__info-tooltip">
-                    {slice.description}
-                  </div>
-                )}
-              </span>
-            </div>
+                </Box>
+              </Tooltip>
+            </Stack>
           ))}
-        </div>
-      </div>
-    </div>
+        </Stack>
+      </Stack>
+    </Paper>
   );
 };
 

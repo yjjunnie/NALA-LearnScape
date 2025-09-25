@@ -1,5 +1,15 @@
 import React, { useMemo, useState } from "react";
 import type { Edge, Node } from "@xyflow/react";
+import {
+  Box,
+  Button,
+  Menu,
+  MenuItem,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import ThreadMap from "./ThreadMap";
 
 type ThreadMapOption = {
@@ -81,7 +91,7 @@ const THREAD_MAP_OPTIONS: ThreadMapOption[] = [
 
 const ThreadMapSection: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string>(THREAD_MAP_OPTIONS[0].id);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterAnchor, setFilterAnchor] = useState<null | HTMLElement>(null);
 
   const selectedOption = useMemo(
     () => THREAD_MAP_OPTIONS.find((option) => option.id === selectedId)!,
@@ -89,58 +99,107 @@ const ThreadMapSection: React.FC = () => {
   );
 
   return (
-    <section className="threadmap-section">
-      <header className="threadmap-section__header">
-        <div>
-          <h2>{selectedOption.label}</h2>
-          <p>{selectedOption.subtitle}</p>
-        </div>
-        <div className="threadmap-section__filter">
-          <button
-            type="button"
-            onClick={() => setIsFilterOpen((open) => !open)}
-            className="threadmap-section__filter-button"
-            aria-haspopup="listbox"
-            aria-expanded={isFilterOpen}
+    <Paper
+      elevation={0}
+      className="threadmap-section"
+      sx={{
+        borderRadius: 5,
+        px: { xs: 3, md: 4 },
+        py: { xs: 3, md: 4 },
+        backgroundColor: "#ffffff",
+        boxShadow: "0 22px 45px rgba(44,87,170,0.14)",
+      }}
+    >
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="space-between"
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        spacing={{ xs: 2, sm: 3 }}
+        className="threadmap-section__header"
+      >
+        <Box>
+          <Typography
+            variant="h5"
+            sx={{
+              fontFamily: '"Fredoka", sans-serif',
+              color: "primary.main",
+              mb: 0.5,
+            }}
           >
-            <span className="threadmap-section__filter-icon">⛃</span>
+            {selectedOption.label}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {selectedOption.subtitle}
+          </Typography>
+        </Box>
+        <div className="threadmap-section__filter">
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<FilterListRoundedIcon />}
+            onClick={(event) => setFilterAnchor(event.currentTarget)}
+            className="threadmap-section__filter-button"
+            sx={{
+              borderRadius: 999,
+              px: 3,
+              background: "linear-gradient(135deg, #4C73FF 0%, #7EA8FF 100%)",
+              boxShadow: "0 12px 25px rgba(76,115,255,0.25)",
+            }}
+          >
             Filter
-          </button>
-          {isFilterOpen && (
-            <ul className="threadmap-section__filter-menu" role="listbox">
-              {THREAD_MAP_OPTIONS.map((option) => (
-                <li key={option.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedId(option.id);
-                      setIsFilterOpen(false);
-                    }}
-                    className={
-                      option.id === selectedId
-                        ? "threadmap-section__filter-option threadmap-section__filter-option--active"
-                        : "threadmap-section__filter-option"
-                    }
-                    role="option"
-                    aria-selected={option.id === selectedId}
-                  >
-                    <span className="threadmap-section__filter-option-label">
-                      {option.label}
-                    </span>
-                    <span className="threadmap-section__filter-option-subtitle">
-                      {option.subtitle}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          </Button>
+          <Menu
+            anchorEl={filterAnchor}
+            open={Boolean(filterAnchor)}
+            onClose={() => setFilterAnchor(null)}
+            MenuListProps={{ "aria-label": "Filter thread map" }}
+            PaperProps={{
+              sx: {
+                borderRadius: 3,
+                minWidth: 240,
+                p: 1,
+              },
+            }}
+          >
+            {THREAD_MAP_OPTIONS.map((option) => (
+              <MenuItem
+                key={option.id}
+                selected={option.id === selectedId}
+                onClick={() => {
+                  setSelectedId(option.id);
+                  setFilterAnchor(null);
+                }}
+                sx={{
+                  borderRadius: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  gap: 0.5,
+                  py: 1.5,
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 600,
+                    color: option.id === selectedId ? "primary.main" : "text.primary",
+                    fontFamily: '"Fredoka", sans-serif',
+                  }}
+                >
+                  {option.label}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {option.subtitle}
+                </Typography>
+              </MenuItem>
+            ))}
+          </Menu>
         </div>
-      </header>
-      <div className="threadmap-section__body">
+      </Stack>
+      <Box className="threadmap-section__body">
         <ThreadMap nodes={selectedOption.nodes} edges={selectedOption.edges} />
-      </div>
-    </section>
+      </Box>
+    </Paper>
   );
 };
 

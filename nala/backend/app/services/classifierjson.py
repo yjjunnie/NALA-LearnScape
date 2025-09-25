@@ -234,5 +234,79 @@ def calculate_time_spent_per_topic(filepath):
     return results
 
 
+# 5. learning style based on entire user chat history
+
+def learning_style_from_json(filepath):
+    total_count = 0
+    retrieval_practice_count = 0
+    spaced_practice_count = 0
+    elaboration_count = 0
+    concrete_examples_count = 0
+    interleaving_count = 0
+    dual_coding_count = 0
+
+    data = load_json(filepath)
+    results = []
+
+    if isinstance(data, list):
+        messages = data
+    elif isinstance(data, dict) and "msg_text" in data:
+        messages = [data]
+    else:
+        return []
+
+    for msg in messages:
+        if msg.get("msg_sender") != "user":
+            continue
+
+        raw_text = msg.get("msg_text")
+        if not raw_text:
+            continue
+
+        learning_style = classify(raw_text, system="You are a strict classifier. Classify the user's text into one of the following learning styles: [Retrieval Practice, Spaced Practice, Elaboration, Concrete Examples, Interleaving, Dual Coding]. Choose EXACTLY ONE best label. Return ONLY a compact JSON string with keys: \"labels\" (array with one element).")
+
+        learning_style = learning_style.get("text")
+
+        try:
+            start = learning_style.find("{")
+            end = learning_style.rfind("}") + 1
+            json_string = learning_style[start:end]
+            parsed_data = json.loads(json_string)
+
+            style = parsed_data.get('labels')[0]
+
+            if style == "Retrieval Practice":
+                retrieval_practice_count += 1
+            elif style == "Spaced Practice":
+                spaced_practice_count += 1
+            elif style == "Elaboration":
+                elaboration_count += 1
+            elif style == "Concrete Examples":
+                concrete_examples_count += 1
+            elif style == "Interleaving":
+                interleaving_count += 1
+            elif style == "Dual Coding":
+                dual_coding_count += 1
+        except (json.JSONDecodeError, IndexError, TypeError):
+            continue
+        total_count += 1
+
+    if total_count == 0:  
+        return [{"error": "No user messages found"}]
+
+    results.append({
+        "Retrieval Practice": round((retrieval_practice_count / total_count) * 100, 2),
+        "Spaced Practice": round((spaced_practice_count / total_count) * 100, 2),
+        "Elaboration": round((elaboration_count / total_count) * 100, 2),
+        "Concrete Examples": round((concrete_examples_count / total_count) * 100, 2),
+        "Interleaving": round((interleaving_count / total_count) * 100, 2),
+        "Dual Coding": round((dual_coding_count / total_count) * 100, 2),
+        "total_user_messages": total_count
+    })
+
+    return results
+
+
+
 
 

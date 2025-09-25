@@ -13,7 +13,7 @@ class NodeSerializer(serializers.ModelSerializer):
         model = Node
         fields = ['id', 'name', 'summary', 'module', 'module_info']
     
-    def get_module_info(self, obj):
+    def get_module_info(self, obj): 
         if obj.module:
             return {
                 'id': obj.module.id,

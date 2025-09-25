@@ -7,7 +7,7 @@ from .models import *
 from .serializers import *
 #import requests
 #import os
-from app.services.classifierjson import classify_messages_from_json, display_messages_from_json, percentage_from_json, calculate_time_spent_per_topic
+from app.services.classifierjson import classify_messages_from_json, display_messages_from_json, learning_style_from_json, percentage_from_json, calculate_time_spent_per_topic, learning_style_from_json
 
 @api_view(['GET'])
 def homepage_view(request):
@@ -37,7 +37,7 @@ def time_spent_per_topic(request):
     results = calculate_time_spent_per_topic(filepath)
     return Response(results)
 
-@api_view(["GET"])
+@api_view(["GET"]) 
 def getStudent(request, pk):
     try:
         student = Student.objects.get(pk=pk)
@@ -45,3 +45,9 @@ def getStudent(request, pk):
         return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
     serializedData = StudentSerializer(student).data
     return Response(serializedData)
+
+@api_view(["GET"])
+def percentage_learning_style(request):
+    filepath = "app/services/chat_history/newlearningstyle.json"
+    results = learning_style_from_json(filepath)
+    return Response(results)

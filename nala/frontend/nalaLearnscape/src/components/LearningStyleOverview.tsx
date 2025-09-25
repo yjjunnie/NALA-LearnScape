@@ -71,8 +71,23 @@ const prototypeFetchLearningStyle = async (): Promise<LearningStyleResponse> => 
   });
 };
 
-const radius = 70;
-const circumference = 2 * Math.PI * radius;
+const radius = 80;
+
+const polarToCartesian = (center: number, r: number, angle: number) => {
+  const radians = ((angle - 90) * Math.PI) / 180;
+  return {
+    x: center + r * Math.cos(radians),
+    y: center + r * Math.sin(radians),
+  };
+};
+
+const describeSegment = (startAngle: number, endAngle: number, r: number) => {
+  const start = polarToCartesian(100, r, endAngle);
+  const end = polarToCartesian(100, r, startAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+  return `M 100 100 L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 1 ${end.x} ${end.y} Z`;
+};
 
 const LearningStyleOverview: React.FC = () => {
   const [data, setData] = useState<LearningSlice[]>([]);
@@ -91,7 +106,21 @@ const LearningStyleOverview: React.FC = () => {
     [data]
   );
 
-  let cumulativeValue = 0;
+  const slicesWithAngles = useMemo(() => {
+    let runningTotal = 0;
+    return data.map((slice) => {
+      const startAngle = runningTotal * 360;
+      const portion = slice.value / total;
+      runningTotal += portion;
+      const endAngle = runningTotal * 360;
+
+      return {
+        ...slice,
+        startAngle,
+        endAngle,
+      };
+    });
+  }, [data, total]);
 
   return (
     <Paper
@@ -102,21 +131,23 @@ const LearningStyleOverview: React.FC = () => {
         px: { xs: 3, md: 4 },
         py: { xs: 3, md: 4 },
         background: "linear-gradient(180deg, #ffffff 0%, #f3f6ff 100%)",
-        boxShadow: "0 24px 50px rgba(76,115,255,0.18)",
+        border: "1px solid rgba(76,115,255,0.14)",
       }}
     >
       <Stack spacing={1.5} className="learning-style-card__header">
         <Typography
-          variant="h6"
+          variant="subtitle2"
           sx={{
-            color: "text.secondary",
-            letterSpacing: 0.5,
+            color: "#4C73FF",
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            fontWeight: 700,
           }}
         >
           Current Learning Style
         </Typography>
         <Typography
-          variant="h4"
+          variant="h3"
           className="learning-style-card__style"
           sx={{
             color: "primary.main",
@@ -126,12 +157,12 @@ const LearningStyleOverview: React.FC = () => {
           {currentStyle}
         </Typography>
       </Stack>
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={{ xs: 3, md: 4 }}
-        alignItems="center"
-        className="learning-style-card__content"
-      >
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={{ xs: 3, md: 4 }}
+          alignItems="center"
+          className="learning-style-card__content"
+        >
         <Box className="learning-style-card__chart">
           {hoveredSlice && (
             <Box className="learning-style-card__tooltip">
@@ -143,41 +174,24 @@ const LearningStyleOverview: React.FC = () => {
               </Typography>
             </Box>
           )}
-          <svg viewBox="0 0 200 200" role="img" aria-label="Learning style distribution">
-            <circle
-              cx="100"
-              cy="100"
-              r={radius}
-              fill="#E6EDFF"
-              stroke="#E6EDFF"
-              strokeWidth="40"
-            />
-            {data.map((slice) => {
-              const dashArray = `${(slice.value / total) * circumference} ${circumference}`;
-              const dashOffset = -(cumulativeValue / total) * circumference;
-              cumulativeValue += slice.value;
-
-              return (
-                <circle
-                  key={slice.id}
-                  className="learning-style-card__slice"
-                  cx="100"
-                  cy="100"
-                  r={radius}
-                  stroke={slice.color}
-                  strokeWidth="40"
-                  fill="transparent"
-                  strokeDasharray={dashArray}
-                  strokeDashoffset={dashOffset}
-                  onMouseEnter={() => setHoveredSlice(slice)}
-                  onMouseLeave={() => setHoveredSlice(null)}
-                  style={{
-                    transform: "rotate(-90deg)",
-                    transformOrigin: "100px 100px",
-                  }}
-                />
-              );
-            })}
+          <svg
+            viewBox="0 0 200 200"
+            role="img"
+            aria-label="Learning style distribution"
+            className="learning-style-card__chart-figure"
+          >
+            {slicesWithAngles.map((slice) => (
+              <path
+                key={slice.id}
+                d={describeSegment(slice.startAngle, slice.endAngle, radius)}
+                fill={slice.color}
+                stroke="#ffffff"
+                strokeWidth={1.5}
+                onMouseEnter={() => setHoveredSlice(slice)}
+                onMouseLeave={() => setHoveredSlice(null)}
+              />
+            ))}
+            <circle cx="100" cy="100" r="42" fill="#ffffff" />
           </svg>
         </Box>
         <Stack spacing={1.5} className="learning-style-card__legend">
@@ -207,6 +221,21 @@ const LearningStyleOverview: React.FC = () => {
                 arrow
                 enterDelay={100}
                 leaveDelay={0}
+                slotProps={{
+                  tooltip: {
+                    sx: {
+                      backgroundColor: "rgba(40,72,209,0.95)",
+                      borderRadius: 2,
+                      fontFamily: '"GlacialIndifference", sans-serif',
+                      fontSize: "0.75rem",
+                      px: 1.5,
+                      py: 1,
+                    },
+                  },
+                  arrow: {
+                    sx: { color: "rgba(40,72,209,0.95)" },
+                  },
+                }}
               >
                 <Box
                   className="learning-style-card__info-icon"

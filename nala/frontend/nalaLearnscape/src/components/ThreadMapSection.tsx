@@ -107,7 +107,7 @@ const ThreadMapSection: React.FC = () => {
         px: { xs: 3, md: 4 },
         py: { xs: 3, md: 4 },
         backgroundColor: "#ffffff",
-        boxShadow: "0 22px 45px rgba(44,87,170,0.14)",
+        border: "1px solid rgba(76,115,255,0.12)",
       }}
     >
       <Stack
@@ -143,7 +143,6 @@ const ThreadMapSection: React.FC = () => {
               borderRadius: 999,
               px: 3,
               background: "linear-gradient(135deg, #4C73FF 0%, #7EA8FF 100%)",
-              boxShadow: "0 12px 25px rgba(76,115,255,0.25)",
             }}
           >
             Filter

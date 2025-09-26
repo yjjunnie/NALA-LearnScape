@@ -36,6 +36,10 @@ const createOption = (
         padding: 16,
         background: "#E1E9FF",
         border: "2px solid #4C73FF",
+        fontFamily: '"GlacialIndifference", sans-serif',
+        fontWeight: 600,
+        color: "#1a2c5e",
+        fontSize: "0.95rem",
       },
     },
     {
@@ -47,6 +51,10 @@ const createOption = (
         padding: 16,
         background: "#F2F6FF",
         border: "2px solid #A0C1FF",
+        fontFamily: '"GlacialIndifference", sans-serif',
+        fontWeight: 600,
+        color: "#1a2c5e",
+        fontSize: "0.95rem",
       },
     },
     {
@@ -58,6 +66,10 @@ const createOption = (
         padding: 16,
         background: "#F2F6FF",
         border: "2px solid #A0C1FF",
+        fontFamily: '"GlacialIndifference", sans-serif',
+        fontWeight: 600,
+        color: "#1a2c5e",
+        fontSize: "0.95rem",
       },
     },
     {
@@ -69,15 +81,43 @@ const createOption = (
         padding: 16,
         background: "#E6EDFF",
         border: "2px solid #4C73FF",
+        fontFamily: '"GlacialIndifference", sans-serif',
+        fontWeight: 600,
+        color: "#1a2c5e",
+        fontSize: "0.95rem",
       },
     },
   ];
 
   const baseEdges: Edge[] = [
-    { id: `${id}-e1`, source: `${id}-core`, target: `${id}-skill-1`, animated: true },
-    { id: `${id}-e2`, source: `${id}-core`, target: `${id}-skill-2`, animated: true },
-    { id: `${id}-e3`, source: `${id}-skill-1`, target: `${id}-assessment`, animated: true },
-    { id: `${id}-e4`, source: `${id}-skill-2`, target: `${id}-assessment`, animated: true },
+    {
+      id: `${id}-e1`,
+      source: `${id}-core`,
+      target: `${id}-skill-1`,
+      animated: true,
+      style: { stroke: "rgba(76,115,255,0.6)" },
+    },
+    {
+      id: `${id}-e2`,
+      source: `${id}-core`,
+      target: `${id}-skill-2`,
+      animated: true,
+      style: { stroke: "rgba(76,115,255,0.6)" },
+    },
+    {
+      id: `${id}-e3`,
+      source: `${id}-skill-1`,
+      target: `${id}-assessment`,
+      animated: true,
+      style: { stroke: "rgba(76,115,255,0.6)" },
+    },
+    {
+      id: `${id}-e4`,
+      source: `${id}-skill-2`,
+      target: `${id}-assessment`,
+      animated: true,
+      style: { stroke: "rgba(76,115,255,0.6)" },
+    },
   ];
 
   return { id, label, subtitle, nodes: baseNodes, edges: baseEdges };
@@ -101,7 +141,7 @@ const ThreadMapSection: React.FC = () => {
   return (
     <Paper
       elevation={0}
-      className="threadmap-section"
+      className="flex flex-col gap-4"
       sx={{
         borderRadius: 5,
         px: { xs: 3, md: 4 },
@@ -116,7 +156,7 @@ const ThreadMapSection: React.FC = () => {
         justifyContent="space-between"
         alignItems={{ xs: "flex-start", sm: "center" }}
         spacing={{ xs: 2, sm: 3 }}
-        className="threadmap-section__header"
+        className="w-full"
       >
         <Box>
           <Typography
@@ -133,13 +173,13 @@ const ThreadMapSection: React.FC = () => {
             {selectedOption.subtitle}
           </Typography>
         </Box>
-        <div className="threadmap-section__filter">
+        <div className="flex items-center">
           <Button
             variant="contained"
             color="primary"
             startIcon={<FilterListRoundedIcon />}
             onClick={(event) => setFilterAnchor(event.currentTarget)}
-            className="threadmap-section__filter-button"
+            className="rounded-full"
             sx={{
               borderRadius: 999,
               px: 3,
@@ -196,7 +236,7 @@ const ThreadMapSection: React.FC = () => {
           </Menu>
         </div>
       </Stack>
-      <Box className="threadmap-section__body">
+      <Box className="min-h-[300px] rounded-[28px] bg-[linear-gradient(180deg,rgba(232,241,255,0.8)_0%,rgba(244,248,255,0.95)_100%)] p-3">
         <ThreadMap nodes={selectedOption.nodes} edges={selectedOption.edges} />
       </Box>
     </Paper>

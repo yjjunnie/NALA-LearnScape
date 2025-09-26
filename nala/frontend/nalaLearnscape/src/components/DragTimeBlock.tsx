@@ -38,7 +38,7 @@ const DragTimeBlock: React.FC<DragTimeBlockProps> = ({
 }) => {
   return (
     <div
-      className={`drag-time-block ${className}`}
+      className={`flex cursor-grab flex-col justify-between rounded-[24px] border border-transparent p-[18px] text-[#0c1e4a] active:cursor-grabbing ${className}`}
       draggable
       onDragStart={(event) => onDragStart(event, id)}
       onDragEnd={onDragEnd}
@@ -48,8 +48,12 @@ const DragTimeBlock: React.FC<DragTimeBlockProps> = ({
         ...style,
       }}
     >
-      <span className="drag-time-block__label">{label}</span>
-      <span className="drag-time-block__duration">{formatDuration(duration)}</span>
+      <span className="font-['GlacialIndifference',sans-serif] text-[0.95rem] font-semibold">
+        {label}
+      </span>
+      <span className="text-[0.8rem] opacity-[0.85]">
+        {formatDuration(duration)}
+      </span>
     </div>
   );
 };

@@ -16,8 +16,6 @@ import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import { useLocation, useNavigate } from "react-router-dom";
 import Welcome from "../components/welcome";
 import ThreadMapSection from "../components/ThreadMapSection";
-import "./Home.css";
-
 const Home: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
@@ -37,11 +35,14 @@ const Home: React.FC = () => {
   };
 
   return (
-    <Box component="main" sx={{ py: { xs: 4, md: 6 } }} className="home">
+    <Box
+      component="main"
+      sx={{ py: { xs: 4, md: 6 } }}
+      className="bg-[#e8f1ff] font-['GlacialIndifference',sans-serif]"
+    >
       <Container maxWidth="lg" disableGutters sx={{ px: { xs: 3, md: 5 } }}>
         <Stack spacing={{ xs: 4, md: 5 }}>
           <IconButton
-            className="home__menu-button"
             onClick={() => setIsDrawerOpen(true)}
             aria-label="Open navigation menu"
             sx={{
@@ -59,17 +60,17 @@ const Home: React.FC = () => {
             <MenuRoundedIcon />
           </IconButton>
           <Welcome />
-          <Grid container spacing={3} className="home__below">
+          <Grid container spacing={3} className="w-full">
             <Grid item xs={12} md={8}>
               <ThreadMapSection />
             </Grid>
             <Grid item xs={12} md={4}>
               <Paper
                 elevation={0}
-                className="home__side-card"
+                className="rounded-[32px]"
                 sx={{
                   minHeight: { xs: 200, md: 300 },
-                  borderRadius: 5,
+                  borderRadius: "32px",
                   px: { xs: 3, md: 4 },
                   py: { xs: 3, md: 4 },
                   display: "flex",

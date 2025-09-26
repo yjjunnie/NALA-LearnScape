@@ -125,7 +125,7 @@ const LearningStyleOverview: React.FC = () => {
   return (
     <Paper
       elevation={0}
-      className="learning-style-card"
+      className="flex flex-col gap-[18px]"
       sx={{
         borderRadius: { xs: 4, md: 5 },
         px: { xs: 3, md: 4 },
@@ -135,7 +135,7 @@ const LearningStyleOverview: React.FC = () => {
         border: "1px solid rgba(76,115,255,0.14)",
       }}
     >
-      <Stack spacing={1.5} className="learning-style-card__header">
+      <Stack spacing={1.5} className="flex flex-col gap-[6px]">
         <Typography
           variant="subtitle2"
           sx={{
@@ -149,7 +149,7 @@ const LearningStyleOverview: React.FC = () => {
         </Typography>
         <Typography
           variant="h3"
-          className="learning-style-card__style"
+          className="font-['Fredoka',sans-serif]"
           sx={{
             color: "primary.main",
             fontSize: { xs: "1.6rem", md: "1.8rem" },
@@ -158,15 +158,15 @@ const LearningStyleOverview: React.FC = () => {
           {currentStyle}
         </Typography>
       </Stack>
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={{ xs: 3, md: 4 }}
-          alignItems="center"
-          className="learning-style-card__content"
-        >
-        <Box className="learning-style-card__chart">
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={{ xs: 3, md: 4 }}
+        alignItems="center"
+        className="w-full"
+      >
+        <Box className="relative flex items-center justify-center">
           {hoveredSlice && (
-            <Box className="learning-style-card__tooltip">
+        <Box className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 rounded-[16px] bg-[rgba(76,115,255,0.92)] px-[14px] py-2 text-white">
               <Typography variant="subtitle1" fontWeight={700}>
                 {hoveredSlice.label}
               </Typography>
@@ -179,7 +179,7 @@ const LearningStyleOverview: React.FC = () => {
             viewBox="0 0 200 200"
             role="img"
             aria-label="Learning style distribution"
-            className="learning-style-card__chart-figure"
+            className="h-auto w-full"
           >
             {slicesWithAngles.map((slice) => (
               <path
@@ -195,21 +195,24 @@ const LearningStyleOverview: React.FC = () => {
             <circle cx="100" cy="100" r="42" fill="#ffffff" />
           </svg>
         </Box>
-        <Stack spacing={1.5} className="learning-style-card__legend">
+        <Stack spacing={1.5} className="w-full">
           {data.map((slice) => (
             <Stack
               direction="row"
               alignItems="center"
               spacing={1.5}
               key={slice.id}
-              className="learning-style-card__legend-item"
+              className="rounded-[18px] bg-[rgba(232,241,255,0.6)] px-4 py-3"
             >
               <Box
-                className="learning-style-card__legend-color"
+                className="h-4 w-4 rounded-full"
                 sx={{ backgroundColor: slice.color }}
               />
               <Box sx={{ flexGrow: 1 }}>
-                <Typography variant="subtitle1" className="learning-style-card__legend-label">
+                <Typography
+                  variant="subtitle1"
+                  className="font-['GlacialIndifference',sans-serif] font-semibold"
+                >
                   {slice.label}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -239,7 +242,7 @@ const LearningStyleOverview: React.FC = () => {
                 }}
               >
                 <Box
-                  className="learning-style-card__info-icon"
+                  className="inline-flex h-[26px] w-[26px] cursor-default items-center justify-center rounded-full bg-[#e1e9ff] font-['Fredoka',sans-serif] font-bold text-[#1b46d1]"
                   onMouseEnter={() => setHoveredSlice(slice)}
                   onMouseLeave={() => setHoveredSlice(null)}
                 >

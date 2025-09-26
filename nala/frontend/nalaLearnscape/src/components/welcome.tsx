@@ -29,7 +29,7 @@ const Welcome: React.FC = () => {
       type="button"
       onClick={() => setIsModalOpen(true)}
       underline="hover"
-      className="welcome__cta"
+      className="font-['Fredoka','GlacialIndifference',sans-serif] font-semibold"
       sx={{
         color: "#FFE08C",
         fontWeight: 600,
@@ -50,7 +50,7 @@ const Welcome: React.FC = () => {
   return (
     <Box
       component="section"
-      className="welcome"
+      className="w-full"
       sx={{
         display: "grid",
         gridTemplateColumns: {
@@ -63,7 +63,7 @@ const Welcome: React.FC = () => {
     >
       <Paper
         elevation={0}
-        className="welcome__card"
+        className="relative flex min-h-[340px] flex-col gap-6 overflow-hidden rounded-[36px]"
         sx={{
           position: "relative",
           borderRadius: { xs: 5, md: 6 },
@@ -76,12 +76,17 @@ const Welcome: React.FC = () => {
           overflow: "hidden",
         }}
       >
+        <Box
+          component="span"
+          aria-hidden
+          className="pointer-events-none absolute inset-6 rounded-[36px] border border-white/20"
+        />
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={{ xs: 3, md: 4 }}
           alignItems={{ xs: "flex-start", md: "center" }}
           justifyContent="space-between"
-          className="welcome__header"
+          className="w-full"
         >
           <Stack
             direction="row"
@@ -90,7 +95,6 @@ const Welcome: React.FC = () => {
             sx={{ width: "100%" }}
           >
             <IconButton
-              className="welcome__menu"
               onClick={() => setIsDrawerOpen(true)}
               sx={{
                 borderRadius: 3,
@@ -105,7 +109,7 @@ const Welcome: React.FC = () => {
             >
               <MenuRoundedIcon />
             </IconButton>
-            <Box className="welcome__title-group" sx={{ flexGrow: 1 }}>
+            <Box sx={{ flexGrow: 1 }}>
               <Typography
                 variant="h3"
                 sx={{
@@ -119,7 +123,7 @@ const Welcome: React.FC = () => {
                 Welcome back,
                 <Box
                   component="span"
-                  className="welcome__highlight"
+                  className="text-[#FFE08C]"
                   sx={{ color: "#FFE08C" }}
                 >
                   {" "}

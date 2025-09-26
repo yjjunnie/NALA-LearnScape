@@ -179,10 +179,10 @@ const Scheduler: React.FC<SchedulerProps> = ({ headerAction }) => {
 
   return (
     <Box
-      className="scheduler"
+      className="flex flex-col gap-[18px] rounded-[32px] p-6 backdrop-blur-[6px]"
       sx={{
         backgroundColor: "rgba(255,255,255,0.2)",
-        borderRadius: 4,
+        borderRadius: "32px",
         border: "1px solid rgba(255,255,255,0.35)",
         boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)",
 
@@ -193,7 +193,7 @@ const Scheduler: React.FC<SchedulerProps> = ({ headerAction }) => {
         justifyContent="space-between"
         alignItems={{ xs: "flex-start", md: "center" }}
         gap={1.5}
-        className="scheduler__header"
+        className="w-full"
       >
         <Typography
           variant="h6"
@@ -218,7 +218,7 @@ const Scheduler: React.FC<SchedulerProps> = ({ headerAction }) => {
         >
           <Typography
             variant="subtitle1"
-            className="scheduler__total"
+            className="font-medium text-white/90"
             sx={{
               color: "rgba(255,255,255,0.9)",
               fontWeight: 500,
@@ -230,10 +230,12 @@ const Scheduler: React.FC<SchedulerProps> = ({ headerAction }) => {
           {headerAction}
         </Stack>
       </Stack>
-      <Box className="scheduler__track-wrapper">
-        <Typography className="scheduler__time-label">0000</Typography>
+      <Box className="grid grid-cols-[auto_1fr] items-center gap-[18px] lg:grid-cols-[auto_1fr_auto]">
+        <Typography className="font-['Fredoka',sans-serif] text-base font-semibold text-[#2447b5]">
+          0000
+        </Typography>
         <Box
-          className="scheduler__track"
+          className="relative h-[140px] rounded-[32px] border border-white/60 bg-[rgba(255,255,255,0.95)] py-5 shadow-[inset_0_0_0_1px_rgba(76,115,255,0.12)]"
           ref={trackRef}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
@@ -256,11 +258,11 @@ const Scheduler: React.FC<SchedulerProps> = ({ headerAction }) => {
                   width: `${widthPercent}%`,
                   opacity: activeBlock === item.id ? 0.75 : 1,
                 }}
-                className="scheduler__block"
+                className="absolute top-[28px] bottom-[28px] flex cursor-grab flex-col justify-between rounded-[24px] border border-transparent p-[18px] text-[#0c1e4a] active:cursor-grabbing"
               />
             );
           })}
-          <div className="scheduler__markers">
+          <div className="pointer-events-none absolute inset-0">
             {Array.from({ length: 7 }).map((_, index) => {
               const stepMinutes = (index + 1) * (TOTAL_MINUTES / 8);
               const label = formatTime(Math.round(stepMinutes));
@@ -268,17 +270,21 @@ const Scheduler: React.FC<SchedulerProps> = ({ headerAction }) => {
               return (
                 <div
                   key={label}
-                  className="scheduler__marker"
+                  className="absolute top-[14px] bottom-[14px] flex -translate-x-1/2 flex-col items-center gap-[6px]"
                   style={{ left: `${leftPercent}%` }}
                 >
-                  <span className="scheduler__marker-line" />
-                  <span className="scheduler__marker-label">{label}</span>
+                  <span className="flex-1 w-[2px] bg-[rgba(76,115,255,0.2)]" />
+                  <span className="text-[0.75rem] font-['GlacialIndifference',sans-serif] text-[#1a2c5e]">
+                    {label}
+                  </span>
                 </div>
               );
             })}
           </div>
         </Box>
-        <Typography className="scheduler__time-label scheduler__time-label--end">
+        <Typography
+          className="font-['Fredoka',sans-serif] text-base font-semibold text-[#2447b5] justify-self-end lg:justify-self-auto"
+        >
           2359
         </Typography>
       </Box>

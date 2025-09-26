@@ -13,7 +13,6 @@ import { useNavigate } from "react-router-dom";
 import Welcome from "../components/welcome";
 import ThreadMapSection from "../components/ThreadMapSection";
 import SideNav from "../components/SideNav";
-import "./Home.css";
 
 const Home: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);

@@ -1,0 +1,267 @@
+.home {
+  background: #e8f1ff;
+  font-family: "GlacialIndifference", sans-serif;
+}
+
+.home__below {
+  width: 100%;
+}
+
+.home__side-card {
+  border-radius: 32px;
+}
+
+.welcome {
+  width: 100%;
+}
+
+.welcome__card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 340px;
+  position: relative;
+}
+
+.welcome__card::after {
+  content: "";
+  position: absolute;
+  inset: 24px;
+  border-radius: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+}
+
+.welcome__header {
+  width: 100%;
+}
+
+.welcome__highlight {
+  color: #ffe08c;
+}
+
+.welcome__cta {
+  font-family: "Fredoka", "GlacialIndifference", sans-serif;
+  font-weight: 600;
+}
+
+.scheduler {
+  padding: 24px;
+  border-radius: 32px;
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.scheduler__track-wrapper {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.scheduler__time-label {
+  font-family: "Fredoka", sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #2447b5;
+}
+
+.scheduler__track {
+  position: relative;
+  height: 140px;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.95);
+  overflow: hidden;
+  padding: 20px 0;
+  box-shadow: inset 0 0 0 1px rgba(76, 115, 255, 0.12);
+}
+
+.scheduler__markers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.scheduler__marker {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.scheduler__marker-line {
+  width: 2px;
+  flex: 1;
+  background: rgba(76, 115, 255, 0.2);
+}
+
+.scheduler__marker-label {
+  font-size: 0.75rem;
+  font-family: "GlacialIndifference", sans-serif;
+  color: #1a2c5e;
+}
+
+.scheduler__block {
+  position: absolute;
+  top: 28px;
+  bottom: 28px;
+  border-radius: 24px;
+  border: 1px solid transparent;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #0c1e4a;
+  cursor: grab;
+}
+
+.scheduler__block:active {
+  cursor: grabbing;
+}
+
+.drag-time-block__label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  font-family: "GlacialIndifference", sans-serif;
+}
+
+.drag-time-block__duration {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.learning-style-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.learning-style-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.learning-style-card__style {
+  font-family: "Fredoka", sans-serif;
+}
+
+.learning-style-card__content {
+  width: 100%;
+}
+
+.learning-style-card__chart {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.learning-style-card__tooltip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(76, 115, 255, 0.92);
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: "GlacialIndifference", sans-serif;
+  pointer-events: none;
+}
+
+.learning-style-card__legend {
+  width: 100%;
+}
+
+.learning-style-card__legend-item {
+  border-radius: 18px;
+  padding: 12px 16px;
+  background: rgba(232, 241, 255, 0.6);
+}
+
+.learning-style-card__legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.learning-style-card__info-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #e1e9ff;
+  color: #1b46d1;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Fredoka", sans-serif;
+  cursor: default;
+}
+
+.threadmap-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.threadmap-section__body {
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(232, 241, 255, 0.8) 0%, rgba(244, 248, 255, 0.95) 100%);
+  padding: 12px;
+  min-height: 300px;
+}
+
+.threadmap {
+  background: transparent;
+  border-radius: 20px;
+}
+
+.threadmap .react-flow__background {
+  background: transparent;
+}
+
+.threadmap .react-flow__controls {
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  border: 1px solid rgba(76, 115, 255, 0.2);
+}
+
+.threadmap .react-flow__node {
+  font-family: "GlacialIndifference", sans-serif;
+  font-weight: 600;
+  color: #1a2c5e;
+  font-size: 0.95rem;
+}
+
+.threadmap .react-flow__edge-path {
+  stroke: rgba(76, 115, 255, 0.6) !important;
+}
+
+@media (max-width: 1024px) {
+  .welcome {
+    grid-template-columns: 1fr;
+  }
+
+  .scheduler__track-wrapper {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .scheduler__time-label--end {
+    justify-self: end;
+  }
+}

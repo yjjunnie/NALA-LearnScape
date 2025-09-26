@@ -1,0 +1,36 @@
+@font-face {
+  font-family: "GlacialIndifference";
+  src: local("GlacialIndifference"),
+    url("./assets/fonts/GlacialIndifference-Bold.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GlacialIndifference";
+  src: local("GlacialIndifference"),
+    url("./assets/fonts/GlacialIndifference-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fredoka";
+  src: local("Fredoka"),
+    url("./assets/fonts/Fredoka-VariableFont_wdth,wght.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fredoka";
+  src: local("Fredoka"),
+    url("./fonts/Fredoka-VariableFont_wdth,wght.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+    

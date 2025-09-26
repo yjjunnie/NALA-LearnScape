@@ -1,46 +1,36 @@
-import React, { useCallback } from 'react';
+import { create } from "zustand";
 import {
-  ReactFlow,
-  Background,
-  Controls,
-  MiniMap,
-  addEdge,
-  Position,
-} from '@xyflow/react';
-import useStore from './rfStore'; // Adjust the import path as needed
+  applyEdgeChanges,
+  applyNodeChanges,
+  type Edge,
+  type Node,
+  type OnEdgesChange,
+  type OnNodesChange,
+} from "@xyflow/react";
 
-import '@xyflow/react/dist/style.css';
-
-const ThreadMap= () => {
-  const { nodes, edges, onNodesChange, onEdgesChange } = useStore();
-
-  const onConnect = useCallback(
-    (params) => {
-      const newEdge = addEdge(params, edges);
-      onEdgesChange([
-        {
-          type: 'add',
-          item: newEdge[newEdge.length - 1]
-        }
-      ]);
-    },
-    [onEdgesChange, edges],
-  );
-
-  return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      fitView
-    >
-      <Background />
-      <Controls />
-      <MiniMap />
-    </ReactFlow>
-  );
+type RFState = {
+  nodes: Node[];
+  edges: Edge[];
+  onNodesChange: OnNodesChange;
+  onEdgesChange: OnEdgesChange;
+  setGraph: (nodes: Node[], edges: Edge[]) => void;
 };
 
-export default ThreadMap;
+const initialNodes: Node[] = [];
+const initialEdges: Edge[] = [];
+
+const useRFStore = create<RFState>((set, get) => ({
+  nodes: initialNodes,
+  edges: initialEdges,
+  onNodesChange: (changes) =>
+    set({
+      nodes: applyNodeChanges(changes, get().nodes),
+    }),
+  onEdgesChange: (changes) =>
+    set({
+      edges: applyEdgeChanges(changes, get().edges),
+    }),
+  setGraph: (nodes, edges) => set({ nodes, edges }),
+}));
+
+export default useRFStore;

@@ -14,11 +14,13 @@ import {
   Typography,
 } from "@mui/material";
 import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import Scheduler from "./Scheduler";
 import LearningStyleOverview from "./LearningStyleOverview";
 
 const Welcome: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
 
   const findOutWhyLink = (

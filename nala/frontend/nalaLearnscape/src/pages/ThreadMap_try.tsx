@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useState, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+} from "react";
 import {
   ReactFlow,
   Background,
@@ -10,6 +16,10 @@ import {
   ConnectionMode,
   Handle,
   Position,
+  BaseEdge,
+  EdgeLabelRenderer,
+  getStraightPath,
+  useReactFlow,
 } from "@xyflow/react";
 import type {
   Node,
@@ -19,6 +29,7 @@ import type {
   ReactFlowInstance,
   XYPosition,
   NodeChange,
+  EdgeProps,
 } from "@xyflow/react";
 import * as d3 from "d3";
 import { Plus, Trash2 } from "lucide-react";
@@ -294,6 +305,21 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
   );
   const moduleNumber = data.node_module_id.replace(/\D/g, ""); // Extract number from MOD_001
 
+  const handleStyleBase: React.CSSProperties = {
+    width: 12,
+    height: 12,
+    borderRadius: "50%",
+    background: "rgba(255, 255, 255, 0.85)",
+    border: "2px solid rgba(0, 0, 0, 0.1)",
+  };
+
+  const getHandleStyle = (
+    extra: React.CSSProperties
+  ): React.CSSProperties => ({
+    ...handleStyleBase,
+    ...extra,
+  });
+
   return (
     <div className="relative">
       <div
@@ -349,8 +375,78 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
         >
           {data.node_name}
         </div>
-        <Handle type="target" position={Position.Left} />
-        <Handle type="source" position={Position.Right} />
+        <Handle
+          id="target-top"
+          type="target"
+          position={Position.Top}
+          style={getHandleStyle({
+            left: "35%",
+            transform: "translate(-50%, -50%)",
+          })}
+        />
+        <Handle
+          id="target-bottom"
+          type="target"
+          position={Position.Bottom}
+          style={getHandleStyle({
+            left: "35%",
+            transform: "translate(-50%, 50%)",
+          })}
+        />
+        <Handle
+          id="target-left"
+          type="target"
+          position={Position.Left}
+          style={getHandleStyle({
+            top: "35%",
+            transform: "translate(-50%, -50%)",
+          })}
+        />
+        <Handle
+          id="target-right"
+          type="target"
+          position={Position.Right}
+          style={getHandleStyle({
+            top: "35%",
+            transform: "translate(50%, -50%)",
+          })}
+        />
+        <Handle
+          id="source-top"
+          type="source"
+          position={Position.Top}
+          style={getHandleStyle({
+            left: "65%",
+            transform: "translate(-50%, -50%)",
+          })}
+        />
+        <Handle
+          id="source-bottom"
+          type="source"
+          position={Position.Bottom}
+          style={getHandleStyle({
+            left: "65%",
+            transform: "translate(-50%, 50%)",
+          })}
+        />
+        <Handle
+          id="source-left"
+          type="source"
+          position={Position.Left}
+          style={getHandleStyle({
+            top: "65%",
+            transform: "translate(-50%, -50%)",
+          })}
+        />
+        <Handle
+          id="source-right"
+          type="source"
+          position={Position.Right}
+          style={getHandleStyle({
+            top: "65%",
+            transform: "translate(50%, -50%)",
+          })}
+        />
       </div>
 
       {/* Label below the node */}
@@ -419,6 +515,90 @@ const AddNodeHover: React.FC<{
     >
       <Plus size={20} color="white" />
     </div>
+  );
+};
+
+const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
+  const {
+    id,
+    source,
+    target,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    style,
+    markerEnd,
+    data,
+  } = props;
+
+  const { getEdges } = useReactFlow();
+  const edges = getEdges();
+
+  const parallelEdges = useMemo(
+    () =>
+      edges.filter(
+        (edge) =>
+          (edge.source === source && edge.target === target) ||
+          (edge.source === target && edge.target === source)
+      ),
+    [edges, source, target]
+  );
+
+  const parallelIndex = parallelEdges.findIndex((edge) => edge.id === id);
+  const offsetStep = 18;
+  const offsetAmount =
+    parallelEdges.length > 1
+      ? (parallelIndex - (parallelEdges.length - 1) / 2) * offsetStep
+      : 0;
+
+  const dx = targetX - sourceX;
+  const dy = targetY - sourceY;
+  const length = Math.hypot(dx, dy) || 1;
+
+  const offsetX = (-dy / length) * offsetAmount;
+  const offsetY = (dx / length) * offsetAmount;
+
+  const [edgePath, labelX, labelY] = getStraightPath({
+    sourceX: sourceX + offsetX,
+    sourceY: sourceY + offsetY,
+    targetX: targetX + offsetX,
+    targetY: targetY + offsetY,
+  });
+
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <>
+      <BaseEdge path={edgePath} style={style} markerEnd={markerEnd} />
+      <path
+        d={edgePath}
+        fill="none"
+        stroke="transparent"
+        strokeWidth={20}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      />
+      {isHovered && data?.label && data.label.trim() !== "" && (
+        <EdgeLabelRenderer>
+          <div
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              pointerEvents: "none",
+              background: "rgba(0, 0, 0, 0.75)",
+              color: "#fff",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              fontSize: "10px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {data.label}
+          </div>
+        </EdgeLabelRenderer>
+      )}
+    </>
   );
 };
 
@@ -725,6 +905,7 @@ const Flow: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingNodePositionRef = useRef<XYPosition | null>(null);
   const isSimulationTickRef = useRef<boolean>(false);
+  const edgeTypes = useMemo(() => ({ hoverLabel: HoverLabelEdge }), []);
 
   // Sync nodes with database entries while preserving positions
   useEffect(() => {
@@ -817,10 +998,10 @@ const Flow: React.FC = () => {
         id: `e${rel.node_id_1}-${rel.node_id_2}`,
         source: rel.node_id_1,
         target: rel.node_id_2,
-        type: "straight",
+        type: "hoverLabel",
         style: { stroke: "#b1b1b7", strokeWidth: 2 },
         animated: false,
-        label: rel.relationship_type,
+        data: { label: rel.relationship_type },
       }))
     );
   }, [dbRelationships, setEdges]);
@@ -874,6 +1055,8 @@ const Flow: React.FC = () => {
       ...node,
       x: node.position.x,
       y: node.position.y,
+      fx: node.id === selectedNode ? node.position.x : null,
+      fy: node.id === selectedNode ? node.position.y : null,
     }));
 
     const simulationNodeMap = new Map(
@@ -1023,7 +1206,7 @@ const Flow: React.FC = () => {
     });
 
     simulation.alpha(0.9).restart();
-  }, [nodes, edges, setNodes]);
+  }, [nodes, edges, setNodes, selectedNode]);
 
   // D3 Force Layout
   // Handle connection
@@ -1035,8 +1218,9 @@ const Flow: React.FC = () => {
         id: `e${params.source}-${params.target}`,
         source: params.source,
         target: params.target,
-        type: "straight",
+        type: "hoverLabel",
         style: { stroke: "#b1b1b7", strokeWidth: 2 },
+        data: { label: "" },
       };
 
       // Add to database relationships
@@ -1045,7 +1229,7 @@ const Flow: React.FC = () => {
           Math.max(...dbRelationships.map((r) => r.relationship_id), 0) + 1,
         node_id_1: params.source,
         node_id_2: params.target,
-        relationship_type: "connected_to",
+        relationship_type: "",
       };
 
       setDbRelationships((prev) => [...prev, newRelationship]);
@@ -1138,6 +1322,23 @@ const Flow: React.FC = () => {
       };
 
       setDbNodes((prev) => [...prev, newDbNode]);
+      if (parentNodeId) {
+        setDbRelationships((prev) => {
+          const nextId =
+            prev.length > 0
+              ? Math.max(...prev.map((rel) => rel.relationship_id)) + 1
+              : 1;
+          return [
+            ...prev,
+            {
+              relationship_id: nextId,
+              node_id_1: parentNodeId,
+              node_id_2: newNodeId,
+              relationship_type: "",
+            },
+          ];
+        });
+      }
       setPendingNodePosition(null);
     },
     [pendingNodePosition, dbNodes]
@@ -1244,6 +1445,7 @@ const Flow: React.FC = () => {
           nodes={nodes}
           nodeTypes={nodeTypes}
           edges={edges}
+          edgeTypes={edgeTypes}
           onNodesChange={handleNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}

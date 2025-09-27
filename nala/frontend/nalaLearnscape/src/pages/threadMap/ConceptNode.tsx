@@ -75,16 +75,33 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({ data, selected = false }) => 
     </React.Fragment>
   );
 
+  const circleSize = `${size}px`;
+  const nameStyles: React.CSSProperties = {
+    marginTop: "10px",
+    textAlign: "center",
+    color: "#1f2937",
+    fontWeight: data.node_type === "topic" ? 700 : 600,
+    fontSize: data.node_type === "topic" ? "16px" : "13px",
+    lineHeight: 1.25,
+    maxWidth: circleSize,
+    wordBreak: "break-word",
+  };
+
   return (
-    <div className="relative">
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
       <div
         style={{
-          width: `${size}px`,
-          height: `${size}px`,
+          width: circleSize,
+          height: circleSize,
           borderRadius: "50%",
           backgroundColor: data.color || "#00bcd4",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           color: "#fff",
@@ -92,14 +109,16 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({ data, selected = false }) => 
           fontWeight: "bold",
           textAlign: "center",
           cursor: "pointer",
-          border: selected
-            ? "3px solid #ff6b35"
-            : "2px solid rgba(255,255,255,0.2)",
+          borderStyle: "solid",
+          borderWidth: 3,
+          borderColor: selected ? "#ff6b35" : "rgba(255,255,255,0.35)",
           boxShadow: selected
-            ? "0 0 20px rgba(255,107,53,0.5)"
+            ? "0 0 20px rgba(255,107,53,0.4)"
             : "0 4px 12px rgba(0,0,0,0.15)",
-          transition: "all 0.2s ease",
-          padding: "8px",
+          transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+          boxSizing: "border-box",
+          position: "relative",
+          overflow: "hidden",
         }}
         title={`${data.node_name}${
           data.node_description ? "\n" + data.node_description : ""
@@ -107,68 +126,82 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({ data, selected = false }) => 
       >
         <div
           style={{
-            fontSize: data.node_type === "topic" ? "24px" : "18px",
-            marginBottom: "4px",
+            padding: "12px 10px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            height: "100%",
+            gap: "4px",
           }}
         >
-          {moduleNumber || "?"}
-        </div>
+          <div
+            style={{
+              fontSize: data.node_type === "topic" ? "24px" : "18px",
+              fontWeight: 700,
+            }}
+          >
+            {moduleNumber || "?"}
+          </div>
 
-        <div
-          style={{
-            fontSize: data.node_type === "topic" ? "11px" : "10px",
-            lineHeight: "1.2",
-            maxWidth: "90%",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-          }}
-        >
-          {data.node_name}
+          <div
+            style={{
+              fontSize: data.node_type === "topic" ? "11px" : "10px",
+              lineHeight: "1.2",
+              maxWidth: "90%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            {moduleInfo?.module_name || data.node_module_id}
+          </div>
         </div>
         {renderHandle("target-top", "target", Position.Top, {
           top: 0,
-          left: "35%",
+          left: "42%",
           transform: "translate(-50%, -50%)",
         }, "+")}
         {renderHandle("target-bottom", "target", Position.Bottom, {
           bottom: 0,
-          left: "35%",
+          left: "42%",
           transform: "translate(-50%, 50%)",
         }, "+")}
         {renderHandle("target-left", "target", Position.Left, {
           left: 0,
-          top: "35%",
+          top: "42%",
           transform: "translate(-50%, -50%)",
         }, "+")}
         {renderHandle("target-right", "target", Position.Right, {
           right: 0,
-          top: "35%",
+          top: "42%",
           transform: "translate(50%, -50%)",
         }, "+")}
         {renderHandle("source-top", "source", Position.Top, {
           top: 0,
-          right: "35%",
-          transform: "translate(50%, -50%)",
+          left: "58%",
+          transform: "translate(-50%, -50%)",
         }, "+")}
         {renderHandle("source-bottom", "source", Position.Bottom, {
           bottom: 0,
-          right: "35%",
-          transform: "translate(50%, 50%)",
+          left: "58%",
+          transform: "translate(-50%, 50%)",
         }, "+")}
         {renderHandle("source-left", "source", Position.Left, {
           left: 0,
-          bottom: "35%",
-          transform: "translate(-50%, 50%)",
+          top: "58%",
+          transform: "translate(-50%, -50%)",
         }, "+")}
         {renderHandle("source-right", "source", Position.Right, {
           right: 0,
-          bottom: "35%",
-          transform: "translate(50%, 50%)",
+          top: "58%",
+          transform: "translate(50%, -50%)",
         }, "+")}
       </div>
+      <div style={nameStyles}>{data.node_name}</div>
     </div>
   );
 };

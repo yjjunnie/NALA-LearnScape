@@ -14,874 +14,45 @@ import {
   useEdgesState,
   addEdge,
   ConnectionMode,
-  Handle,
-  Position,
-  BaseEdge,
-  EdgeLabelRenderer,
-  getStraightPath,
-  useReactFlow,
 } from "@xyflow/react";
 import type {
-  Node,
-  Edge,
   OnConnect,
   NodeMouseHandler,
   ReactFlowInstance,
   XYPosition,
   NodeChange,
-  EdgeProps,
+  NodeDragHandler,
 } from "@xyflow/react";
 import * as d3 from "d3";
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import "@xyflow/react/dist/style.css";
-
-interface NodeData extends Record<string, unknown> {
-  node_id: string;
-  node_name: string;
-  node_description?: string;
-  node_type: "topic" | "concept";
-  parent_node_id?: string;
-  node_module_id: string;
-  color?: string;
-}
-
-type FlowNode = Node<NodeData>;
-type FlowEdge = Edge;
-
-interface DatabaseNode {
-  node_id: string;
-  node_type: "topic" | "concept";
-  node_name: string;
-  node_description?: string;
-  parent_node_id?: string;
-  node_module_id: string;
-}
-
-interface DatabaseRelationship {
-  relationship_id: number;
-  node_id_1: string;
-  node_id_2: string;
-  relationship_type: string;
-}
-
-interface HoverNode {
-  flowPosition: XYPosition;
-  screenPosition: XYPosition;
-  visible: boolean;
-}
-
-interface NodeModule {
-  module_id: string;
-  module_name: string;
-  color: string;
-}
-
-// Mock database data matching your schema
-const mockDatabaseNodes: DatabaseNode[] = [
-  {
-    node_id: "1",
-    node_type: "topic",
-    node_name: "Logic",
-    node_description: "Mathematical logic fundamentals",
-    node_module_id: "MOD_001",
-  },
-  {
-    node_id: "2",
-    node_type: "concept",
-    node_name: "Propositions",
-    node_description: "Basic logical statements",
-    parent_node_id: "1",
-    node_module_id: "MOD_001",
-  },
-  {
-    node_id: "3",
-    node_type: "concept",
-    node_name: "Truth tables",
-    node_description: "Truth value analysis",
-    parent_node_id: "1",
-    node_module_id: "MOD_001",
-  },
-  {
-    node_id: "4",
-    node_type: "concept",
-    node_name: "Logical Equivalence Laws",
-    node_description: "Equivalence rules",
-    parent_node_id: "1",
-    node_module_id: "MOD_001",
-  },
-  {
-    node_id: "5",
-    node_type: "concept",
-    node_name: "De Morgan's Laws",
-    node_description: "Negation distribution laws",
-    parent_node_id: "1",
-    node_module_id: "MOD_001",
-  },
-  {
-    node_id: "6",
-    node_type: "concept",
-    node_name: "Logical Operators",
-    node_description: "AND, OR, NOT operations",
-    parent_node_id: "1",
-    node_module_id: "MOD_001",
-  },
-  {
-    node_id: "7",
-    node_type: "concept",
-    node_name: "Inference Rules",
-    node_description: "Rules for logical deduction",
-    parent_node_id: "1",
-    node_module_id: "MOD_001",
-  },
-  {
-    node_id: "8",
-    node_type: "concept",
-    node_name: "Proof by Contradiction",
-    node_description: "Indirect proof method",
-    parent_node_id: "7",
-    node_module_id: "MOD_002",
-  },
-  {
-    node_id: "9",
-    node_type: "concept",
-    node_name: "Proof by Contrapositive",
-    node_description: "Contrapositive proof method",
-    parent_node_id: "7",
-    node_module_id: "MOD_002",
-  },
-  {
-    node_id: "10",
-    node_type: "topic",
-    node_name: "Set Theory",
-    node_description: "Mathematical set operations",
-    node_module_id: "MOD_003",
-  },
-  {
-    node_id: "11",
-    node_type: "concept",
-    node_name: "Discrete Proof",
-    node_description: "Discrete mathematics proofs",
-    parent_node_id: "10",
-    node_module_id: "MOD_002",
-  },
-  {
-    node_id: "12",
-    node_type: "concept",
-    node_name: "Proof Techniques",
-    node_description: "Various proof methods",
-    parent_node_id: "11",
-    node_module_id: "MOD_002",
-  },
-];
-
-const mockDatabaseRelationships: DatabaseRelationship[] = [
-  {
-    relationship_id: 1,
-    node_id_1: "1",
-    node_id_2: "2",
-    relationship_type: "contains",
-  },
-  {
-    relationship_id: 2,
-    node_id_1: "1",
-    node_id_2: "3",
-    relationship_type: "contains",
-  },
-  {
-    relationship_id: 3,
-    node_id_1: "1",
-    node_id_2: "4",
-    relationship_type: "contains",
-  },
-  {
-    relationship_id: 4,
-    node_id_1: "1",
-    node_id_2: "5",
-    relationship_type: "contains",
-  },
-  {
-    relationship_id: 5,
-    node_id_1: "1",
-    node_id_2: "6",
-    relationship_type: "contains",
-  },
-  {
-    relationship_id: 6,
-    node_id_1: "1",
-    node_id_2: "7",
-    relationship_type: "contains",
-  },
-  {
-    relationship_id: 7,
-    node_id_1: "7",
-    node_id_2: "8",
-    relationship_type: "leads_to",
-  },
-  {
-    relationship_id: 8,
-    node_id_1: "7",
-    node_id_2: "9",
-    relationship_type: "leads_to",
-  },
-  {
-    relationship_id: 9,
-    node_id_1: "7",
-    node_id_2: "11",
-    relationship_type: "leads_to",
-  },
-  {
-    relationship_id: 10,
-    node_id_1: "11",
-    node_id_2: "12",
-    relationship_type: "uses",
-  },
-  {
-    relationship_id: 11,
-    node_id_1: "10",
-    node_id_2: "1",
-    relationship_type: "related_to",
-  },
-];
-
-// Module definitions for color coding
-const nodeModules: NodeModule[] = [
-  { module_id: "MOD_001", module_name: "Basic Logic", color: "#00bcd4" },
-  { module_id: "MOD_002", module_name: "Proof Methods", color: "#5c9cfc" },
-  { module_id: "MOD_003", module_name: "Set Theory", color: "#4a85f5" },
-  { module_id: "MOD_004", module_name: "Number Theory", color: "#ff6b35" },
-  { module_id: "MOD_005", module_name: "Graph Theory", color: "#4caf50" },
-];
-
-// Color generation function
-const getColorForModule = (moduleId: string): string => {
-  const module = nodeModules.find((m) => m.module_id === moduleId);
-  if (module) return module.color;
-
-  // Generate consistent color based on module_id if not found
-  const colors = [
-    "#00bcd4",
-    "#5c9cfc",
-    "#4a85f5",
-    "#ff6b35",
-    "#4caf50",
-    "#9c27b0",
-    "#ff9800",
-    "#e91e63",
-  ];
-  const hash = moduleId.split("").reduce((a, b) => {
-    a = (a << 5) - a + b.charCodeAt(0);
-    return a & a;
-  }, 0);
-  return colors[Math.abs(hash) % colors.length];
-};
-
-// Get topic color (slightly darker for topics)
-const getTopicColor = (moduleColor: string): string => {
-  // Convert hex to RGB, darken it, convert back to hex
-  const hex = moduleColor.replace("#", "");
-  const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - 20);
-  const g = Math.max(0, parseInt(hex.substr(2, 2), 16) - 20);
-  const b = Math.max(0, parseInt(hex.substr(4, 2), 16) - 20);
-  return `#${r.toString(16).padStart(2, "0")}${g
-    .toString(16)
-    .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-};
-
-interface ConceptNodeProps {
-  data: NodeData;
-  selected?: boolean;
-}
-
-const ConceptNode: React.FC<ConceptNodeProps> = ({
-  data,
-  selected = false,
-}) => {
-  const size = data.node_type === "topic" ? 120 : 80;
-  const fontSize = data.node_type === "topic" ? "16px" : "14px";
-
-  // Get module info for display
-  const moduleInfo = nodeModules.find(
-    (m) => m.module_id === data.node_module_id
-  );
-  const moduleNumber = data.node_module_id.replace(/\D/g, ""); // Extract number from MOD_001
-
-  const handleStyleBase: React.CSSProperties = {
-    width: 12,
-    height: 12,
-    borderRadius: "50%",
-    background: "rgba(255, 255, 255, 0.85)",
-    border: "2px solid rgba(0, 0, 0, 0.1)",
-  };
-
-  const getHandleStyle = (extra: React.CSSProperties): React.CSSProperties => ({
-    ...handleStyleBase,
-    ...extra,
-  });
-
-  return (
-    <div className="relative">
-      <div
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-          borderRadius: "50%",
-          backgroundColor: data.color || "#00bcd4",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#fff",
-          fontSize: fontSize,
-          fontWeight: "bold",
-          textAlign: "center",
-          cursor: "pointer",
-          border: selected
-            ? "3px solid #ff6b35"
-            : "2px solid rgba(255,255,255,0.2)",
-          boxShadow: selected
-            ? "0 0 20px rgba(255,107,53,0.5)"
-            : "0 4px 12px rgba(0,0,0,0.15)",
-          transition: "all 0.2s ease",
-          padding: "8px",
-        }}
-        title={`${data.node_name}${
-          data.node_description ? "\n" + data.node_description : ""
-        }\nModule: ${moduleInfo?.module_name || data.node_module_id}`}
-      >
-        {/* Module number display */}
-        <div
-          style={{
-            fontSize: data.node_type === "topic" ? "24px" : "18px",
-            marginBottom: "4px",
-          }}
-        >
-          {moduleNumber || "?"}
-        </div>
-
-        {/* Node name */}
-        <div
-          style={{
-            fontSize: data.node_type === "topic" ? "11px" : "10px",
-            lineHeight: "1.2",
-            maxWidth: "90%",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-          }}
-        >
-          {data.node_name}
-        </div>
-        <Handle
-          id="target-top"
-          type="target"
-          position={Position.Top}
-          style={getHandleStyle({
-            left: "35%",
-            transform: "translate(-50%, -50%)",
-          })}
-        />
-        <Handle
-          id="target-bottom"
-          type="target"
-          position={Position.Bottom}
-          style={getHandleStyle({
-            left: "35%",
-            transform: "translate(-50%, 50%)",
-          })}
-        />
-        <Handle
-          id="target-left"
-          type="target"
-          position={Position.Left}
-          style={getHandleStyle({
-            top: "35%",
-            transform: "translate(-50%, -50%)",
-          })}
-        />
-        <Handle
-          id="target-right"
-          type="target"
-          position={Position.Right}
-          style={getHandleStyle({
-            top: "35%",
-            transform: "translate(50%, -50%)",
-          })}
-        />
-        <Handle
-          id="source-top"
-          type="source"
-          position={Position.Top}
-          style={getHandleStyle({
-            left: "65%",
-            transform: "translate(-50%, -50%)",
-          })}
-        />
-        <Handle
-          id="source-bottom"
-          type="source"
-          position={Position.Bottom}
-          style={getHandleStyle({
-            left: "65%",
-            transform: "translate(-50%, 50%)",
-          })}
-        />
-        <Handle
-          id="source-left"
-          type="source"
-          position={Position.Left}
-          style={getHandleStyle({
-            top: "65%",
-            transform: "translate(-50%, -50%)",
-          })}
-        />
-        <Handle
-          id="source-right"
-          type="source"
-          position={Position.Right}
-          style={getHandleStyle({
-            top: "65%",
-            transform: "translate(50%, -50%)",
-          })}
-        />
-      </div>
-
-      {/* Label below the node */}
-      <div
-        style={{
-          position: "absolute",
-          top: `${size + 10}px`,
-          left: "50%",
-          transform: "translateX(-50%)",
-          fontSize: "12px",
-          color: "#333",
-          textAlign: "center",
-          maxWidth: "140px",
-          wordWrap: "break-word",
-          fontWeight: "500",
-        }}
-      >
-        {data.node_name}
-        {moduleInfo && (
-          <div style={{ fontSize: "10px", color: "#666", marginTop: "2px" }}>
-            {moduleInfo.module_name}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const TopicNode: React.FC<ConceptNodeProps> = (props) => (
-  <ConceptNode {...props} />
-);
-
-// Add Node Hover Component
-const AddNodeHover: React.FC<{
-  screenPosition: XYPosition;
-  onClick: () => void;
-}> = ({ screenPosition, onClick }) => {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        position: "absolute",
-        left: screenPosition.x - 25,
-        top: screenPosition.y - 25,
-        width: "50px",
-        height: "50px",
-        borderRadius: "50%",
-        backgroundColor: "rgba(128, 128, 128, 0.8)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        zIndex: 1000,
-        border: "2px dashed rgba(255, 255, 255, 0.8)",
-        transition: "all 0.2s ease",
-        pointerEvents: "all",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = "rgba(100, 100, 100, 0.9)";
-        e.currentTarget.style.transform = "scale(1.1)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = "rgba(128, 128, 128, 0.8)";
-        e.currentTarget.style.transform = "scale(1)";
-      }}
-    >
-      <Plus size={20} color="white" />
-    </div>
-  );
-};
-
-const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
-  const {
-    id,
-    source,
-    target,
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    style,
-    markerEnd,
-    data,
-  } = props;
-
-  const { getEdges } = useReactFlow();
-  const edges = getEdges();
-
-  const parallelEdges = useMemo(
-    () =>
-      edges.filter(
-        (edge) =>
-          (edge.source === source && edge.target === target) ||
-          (edge.source === target && edge.target === source)
-      ),
-    [edges, source, target]
-  );
-
-  const parallelIndex = parallelEdges.findIndex((edge) => edge.id === id);
-  const offsetStep = 18;
-  const offsetAmount =
-    parallelEdges.length > 1
-      ? (parallelIndex - (parallelEdges.length - 1) / 2) * offsetStep
-      : 0;
-
-  const dx = targetX - sourceX;
-  const dy = targetY - sourceY;
-  const length = Math.hypot(dx, dy) || 1;
-
-  const offsetX = (-dy / length) * offsetAmount;
-  const offsetY = (dx / length) * offsetAmount;
-
-  const [edgePath, labelX, labelY] = getStraightPath({
-    sourceX: sourceX + offsetX,
-    sourceY: sourceY + offsetY,
-    targetX: targetX + offsetX,
-    targetY: targetY + offsetY,
-  });
-
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <>
-      <BaseEdge path={edgePath} style={style} markerEnd={markerEnd} />
-      <path
-        d={edgePath}
-        fill="none"
-        stroke="transparent"
-        strokeWidth={20}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      />
-      {isHovered &&
-        typeof data?.label === "string" &&
-        data.label.trim() !== "" && (
-          <EdgeLabelRenderer>
-            <div
-              style={{
-                position: "absolute",
-                transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-                pointerEvents: "none",
-                background: "rgba(0, 0, 0, 0.75)",
-                color: "#fff",
-                padding: "4px 8px",
-                borderRadius: "4px",
-                fontSize: "10px",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {data.label}
-            </div>
-          </EdgeLabelRenderer>
-        )}
-    </>
-  );
-};
-
-// Node Input Modal
-interface NodeInputModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (
-    nodeName: string,
-    nodeType: "concept" | "topic",
-    nodeDescription: string,
-    moduleId: string,
-    parentNodeId?: string
-  ) => void;
-  availableNodes: DatabaseNode[];
-}
-
-const NodeInputModal: React.FC<NodeInputModalProps> = ({
-  isOpen,
-  onClose,
-  onSave,
-  availableNodes,
-}) => {
-  const [nodeName, setNodeName] = useState<string>("");
-  const [nodeType, setNodeType] = useState<"concept" | "topic">("concept");
-  const [nodeDescription, setNodeDescription] = useState<string>("");
-  const [moduleId, setModuleId] = useState<string>("MOD_001");
-  const [parentNodeId, setParentNodeId] = useState<string>("");
-
-  const handleSave = () => {
-    if (nodeName.trim()) {
-      onSave(
-        nodeName.trim(),
-        nodeType,
-        nodeDescription.trim(),
-        moduleId,
-        parentNodeId || undefined
-      );
-      setNodeName("");
-      setNodeDescription("");
-      setParentNodeId("");
-      onClose();
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSave();
-    } else if (e.key === "Escape") {
-      onClose();
-    }
-  };
-
-  if (!isOpen) return null;
-
-  const topicNodes = availableNodes.filter(
-    (node) => node.node_type === "topic"
-  );
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 2000,
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          backgroundColor: "white",
-          padding: "24px",
-          borderRadius: "8px",
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
-          minWidth: "400px",
-          maxHeight: "80vh",
-          overflow: "auto",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3
-          style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "bold" }}
-        >
-          Add New Node
-        </h3>
-
-        <div style={{ marginBottom: "16px" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "4px",
-              fontSize: "14px",
-              fontWeight: "500",
-            }}
-          >
-            Node Name *
-          </label>
-          <input
-            type="text"
-            value={nodeName}
-            onChange={(e) => setNodeName(e.target.value)}
-            placeholder="Enter node name"
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              fontSize: "14px",
-              boxSizing: "border-box",
-            }}
-            onKeyDown={handleKeyPress}
-            autoFocus
-          />
-        </div>
-
-        <div style={{ marginBottom: "16px" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "4px",
-              fontSize: "14px",
-              fontWeight: "500",
-            }}
-          >
-            Node Description
-          </label>
-          <textarea
-            value={nodeDescription}
-            onChange={(e) => setNodeDescription(e.target.value)}
-            placeholder="Optional description"
-            rows={3}
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              fontSize: "14px",
-              boxSizing: "border-box",
-              resize: "vertical",
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "16px" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "4px",
-              fontSize: "14px",
-              fontWeight: "500",
-            }}
-          >
-            Node Type
-          </label>
-          <select
-            value={nodeType}
-            onChange={(e) => setNodeType(e.target.value as "concept" | "topic")}
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              fontSize: "14px",
-            }}
-          >
-            <option value="concept">Concept Node</option>
-            <option value="topic">Topic Node</option>
-          </select>
-        </div>
-
-        <div style={{ marginBottom: "16px" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "4px",
-              fontSize: "14px",
-              fontWeight: "500",
-            }}
-          >
-            Module
-          </label>
-          <select
-            value={moduleId}
-            onChange={(e) => setModuleId(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              fontSize: "14px",
-            }}
-          >
-            {nodeModules.map((module) => (
-              <option key={module.module_id} value={module.module_id}>
-                {module.module_name} ({module.module_id})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {nodeType === "concept" && (
-          <div style={{ marginBottom: "16px" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "4px",
-                fontSize: "14px",
-                fontWeight: "500",
-              }}
-            >
-              Parent Node (Optional)
-            </label>
-            <select
-              value={parentNodeId}
-              onChange={(e) => setParentNodeId(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "12px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-              }}
-            >
-              <option value="">No Parent</option>
-              {topicNodes.map((node) => (
-                <option key={node.node_id} value={node.node_id}>
-                  {node.node_name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div
-          style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}
-        >
-          <button
-            onClick={onClose}
-            style={{
-              padding: "10px 16px",
-              backgroundColor: "#666",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            style={{
-              padding: "10px 16px",
-              backgroundColor: "#00bcd4",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
-          >
-            Add Node
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const nodeTypes = {
-  conceptNode: ConceptNode,
-  topicNode: TopicNode,
-};
+import type {
+  FlowNode,
+  FlowEdge,
+  NodeData,
+  DatabaseNode,
+  DatabaseRelationship,
+  HoverNode,
+} from "./threadMap/types";
+import {
+  mockDatabaseNodes,
+  mockDatabaseRelationships,
+} from "./threadMap/mockData";
+import {
+  getColorForModule,
+  getTopicColor,
+  generateDistinctTopicColor,
+} from "./threadMap/colorUtils";
+import ConceptNode from "./threadMap/ConceptNode";
+import NodeInputModal from "./threadMap/NodeInputModal";
+import HoverLabelEdge from "./threadMap/HoverLabelEdge";
+import AddNodeHover from "./threadMap/AddNodeHover";
 
 const Flow: React.FC = () => {
+  const nodeTypes = useMemo(
+    () => ({ conceptNode: ConceptNode, topicNode: ConceptNode }),
+    []
+  );
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
   const [dbNodes, setDbNodes] = useState<DatabaseNode[]>(mockDatabaseNodes);
@@ -905,6 +76,7 @@ const Flow: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingNodePositionRef = useRef<XYPosition | null>(null);
   const isSimulationTickRef = useRef<boolean>(false);
+  const draggedNodeIdRef = useRef<string | null>(null);
   const edgeTypes = useMemo(() => ({ hoverLabel: HoverLabelEdge }), []);
 
   // Sync nodes with database entries while preserving positions
@@ -917,11 +89,33 @@ const Flow: React.FC = () => {
       const width = containerBounds?.clientWidth ?? 800;
       const height = containerBounds?.clientHeight ?? 600;
       const existingMap = new Map(prevNodes.map((node) => [node.id, node]));
+      const colorCache = new Map<string, string>();
+
+      prevNodes.forEach((node) => {
+        if (node.data?.color) {
+          colorCache.set(node.id, node.data.color);
+        }
+      });
 
       const updatedNodes = dbNodes.map((dbNode) => {
         const baseColor = getColorForModule(dbNode.node_module_id);
-        const nodeColor =
-          dbNode.node_type === "topic" ? getTopicColor(baseColor) : baseColor;
+        let nodeColor = colorCache.get(dbNode.node_id);
+
+        if (!nodeColor) {
+          if (dbNode.node_type === "topic") {
+            const usedColors = new Set(colorCache.values());
+            nodeColor = generateDistinctTopicColor(usedColors);
+          } else if (dbNode.parent_node_id) {
+            nodeColor = colorCache.get(dbNode.parent_node_id);
+          }
+        }
+
+        if (!nodeColor) {
+          nodeColor =
+            dbNode.node_type === "topic"
+              ? getTopicColor(baseColor)
+              : baseColor;
+        }
 
         const existing = existingMap.get(dbNode.node_id);
 
@@ -963,6 +157,8 @@ const Flow: React.FC = () => {
           node_module_id: dbNode.node_module_id,
           color: nodeColor,
         };
+
+        colorCache.set(dbNode.node_id, nodeColor);
 
         const baseNode: FlowNode = existing
           ? {
@@ -1051,12 +247,14 @@ const Flow: React.FC = () => {
       return findRootTopicId(nodeMap.get(node.data.parent_node_id), visited);
     };
 
+    const activeDraggedId = draggedNodeIdRef.current;
+
     const simulationNodes = nodes.map((node) => ({
       ...node,
       x: node.position.x,
       y: node.position.y,
-      fx: node.id === selectedNode ? node.position.x : null,
-      fy: node.id === selectedNode ? node.position.y : null,
+      fx: node.id === activeDraggedId ? node.position.x : null,
+      fy: node.id === activeDraggedId ? node.position.y : null,
     }));
 
     const simulationNodeMap = new Map(
@@ -1075,8 +273,9 @@ const Flow: React.FC = () => {
       d3
         .forceManyBody()
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "topic" ? -420 : -200
+          (d.data as NodeData).node_type === "topic" ? -320 : -160
         )
+        .distanceMax(240)
     );
     simulation.force(
       "collision",
@@ -1084,9 +283,9 @@ const Flow: React.FC = () => {
         .forceCollide()
         .radius((d: any) => {
           const nodeData = d.data as NodeData;
-          return nodeData.node_type === "topic" ? 110 : 70;
+          return nodeData.node_type === "topic" ? 95 : 60;
         })
-        .strength(1.1)
+        .strength(0.9)
     );
     simulation.force(
       "link",
@@ -1206,7 +405,7 @@ const Flow: React.FC = () => {
     });
 
     simulation.alpha(0.9).restart();
-  }, [nodes, edges, setNodes, selectedNode]);
+  }, [nodes, edges, setNodes]);
 
   // D3 Force Layout
   // Handle connection
@@ -1354,6 +553,58 @@ const Flow: React.FC = () => {
     [onNodesChange]
   );
 
+  const handleNodeDragStart = useCallback<NodeDragHandler<FlowNode>>(
+    (_, node) => {
+      setSelectedNode(node.id);
+      draggedNodeIdRef.current = node.id;
+      if (simulationRef.current) {
+        simulationRef.current.alphaTarget(0.3).restart();
+      }
+    },
+    []
+  );
+
+  const handleNodeDrag = useCallback<NodeDragHandler<FlowNode>>(
+    (_, node) => {
+      isSimulationTickRef.current = true;
+      setNodes((prev) =>
+        prev.map((existing) =>
+          existing.id === node.id
+            ? { ...existing, position: { ...node.position } }
+            : existing
+        )
+      );
+      if (simulationRef.current) {
+        const nodesInSim = simulationRef.current.nodes() as any[];
+        const simNode = nodesInSim.find((n) => n.id === node.id);
+        if (simNode) {
+          simNode.fx = node.position.x;
+          simNode.fy = node.position.y;
+          simNode.x = node.position.x;
+          simNode.y = node.position.y;
+        }
+      }
+    },
+    [setNodes]
+  );
+
+  const handleNodeDragStop = useCallback<NodeDragHandler<FlowNode>>(
+    (_, node) => {
+      draggedNodeIdRef.current = null;
+      if (simulationRef.current) {
+        const nodesInSim = simulationRef.current.nodes() as any[];
+        const simNode = nodesInSim.find((n) => n.id === node.id);
+        if (simNode) {
+          simNode.fx = null;
+          simNode.fy = null;
+        }
+        simulationRef.current.alphaTarget(0);
+        simulationRef.current.alpha(0.4).restart();
+      }
+    },
+    []
+  );
+
   // Delete selected node
   const deleteSelectedNode = useCallback(() => {
     if (!selectedNode) return;
@@ -1450,6 +701,9 @@ const Flow: React.FC = () => {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={handleNodeClick}
+          onNodeDragStart={handleNodeDragStart}
+          onNodeDrag={handleNodeDrag}
+          onNodeDragStop={handleNodeDragStop}
           onInit={setReactFlowInstance}
           fitView
           attributionPosition="bottom-left"

@@ -9,11 +9,16 @@ interface ConceptNodeProps {
   selected?: boolean;
 }
 
-const ConceptNode: React.FC<ConceptNodeProps> = ({ data, selected = false }) => {
+const ConceptNode: React.FC<ConceptNodeProps> = ({
+  data,
+  selected = false,
+}) => {
   const size = data.node_type === "topic" ? 120 : 80;
   const fontSize = data.node_type === "topic" ? "16px" : "14px";
 
-  const moduleInfo = nodeModules.find((m) => m.module_id === data.node_module_id);
+  const moduleInfo = nodeModules.find(
+    (m) => m.module_id === data.node_module_id
+  );
   const moduleNumber = data.node_module_id.replace(/\D/g, "");
 
   const [hoveredHandle, setHoveredHandle] = useState<string | null>(null);
@@ -49,7 +54,9 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({ data, selected = false }) => 
         position={position}
         style={getHandleStyle(extraStyle)}
         onMouseEnter={() => setHoveredHandle(id)}
-        onMouseLeave={() => setHoveredHandle((prev) => (prev === id ? null : prev))}
+        onMouseLeave={() =>
+          setHoveredHandle((prev) => (prev === id ? null : prev))
+        }
       />
       <div
         style={{
@@ -128,12 +135,10 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({ data, selected = false }) => 
           style={{
             padding: "12px 10px",
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
             width: "100%",
             height: "100%",
-            gap: "4px",
           }}
         >
           <div
@@ -156,50 +161,96 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({ data, selected = false }) => 
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
             }}
-          >
-            {moduleInfo?.module_name || data.node_module_id}
-          </div>
+          ></div>
         </div>
-        {renderHandle("target-top", "target", Position.Top, {
-          top: 0,
-          left: "42%",
-          transform: "translate(-50%, -50%)",
-        }, "+")}
-        {renderHandle("target-bottom", "target", Position.Bottom, {
-          bottom: 0,
-          left: "42%",
-          transform: "translate(-50%, 50%)",
-        }, "+")}
-        {renderHandle("target-left", "target", Position.Left, {
-          left: 0,
-          top: "42%",
-          transform: "translate(-50%, -50%)",
-        }, "+")}
-        {renderHandle("target-right", "target", Position.Right, {
-          right: 0,
-          top: "42%",
-          transform: "translate(50%, -50%)",
-        }, "+")}
-        {renderHandle("source-top", "source", Position.Top, {
-          top: 0,
-          left: "58%",
-          transform: "translate(-50%, -50%)",
-        }, "+")}
-        {renderHandle("source-bottom", "source", Position.Bottom, {
-          bottom: 0,
-          left: "58%",
-          transform: "translate(-50%, 50%)",
-        }, "+")}
-        {renderHandle("source-left", "source", Position.Left, {
-          left: 0,
-          top: "58%",
-          transform: "translate(-50%, -50%)",
-        }, "+")}
-        {renderHandle("source-right", "source", Position.Right, {
-          right: 0,
-          top: "58%",
-          transform: "translate(50%, -50%)",
-        }, "+")}
+        {renderHandle(
+          "target-top",
+          "target",
+          Position.Top,
+          {
+            top: 0,
+            left: "50%",
+            transform: "translate(-50%, -50%) translateX(-10px)",
+          },
+          "+"
+        )}
+        {renderHandle(
+          "target-bottom",
+          "target",
+          Position.Bottom,
+          {
+            bottom: 0,
+            left: "50%",
+            transform: "translate(-50%, 50%) translateX(-10px)",
+          },
+          "+"
+        )}
+        {renderHandle(
+          "target-left",
+          "target",
+          Position.Left,
+          {
+            left: 0,
+            top: "50%",
+            transform: "translate(-50%, -50%) translateX(-10px)",
+          },
+          "+"
+        )}
+        {renderHandle(
+          "target-right",
+          "target",
+          Position.Right,
+          {
+            right: 0,
+            top: "50%",
+            transform: "translate(50%, -50%) translateX(10px)",
+          },
+          "+"
+        )}
+        {renderHandle(
+          "source-top",
+          "source",
+          Position.Top,
+          {
+            top: 0,
+            left: "50%",
+            transform: "translate(-50%, -50%) translateX(10px)",
+          },
+          "+"
+        )}
+        {renderHandle(
+          "source-bottom",
+          "source",
+          Position.Bottom,
+          {
+            bottom: 0,
+            left: "50%",
+            transform: "translate(-50%, 50%) translateX(10px)",
+          },
+          "+"
+        )}
+        {renderHandle(
+          "source-left",
+          "source",
+          Position.Left,
+          {
+            left: 0,
+            top: "50%",
+            transform: "translate(-50%, -50%) translateX(-10px)",
+          },
+          "+"
+        )}
+        {renderHandle(
+          "source-right",
+          "source",
+          Position.Right,
+          {
+            right: 0,
+            top: "50%",
+            transform: "translate(50%, -50%) translateX(10px)",
+          },
+          "+"
+        )}
       </div>
       <div style={nameStyles}>{data.node_name}</div>
     </div>

@@ -62,9 +62,10 @@ const Flow: React.FC = () => {
     DatabaseRelationship[]
   >(mockDatabaseRelationships);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [activePopup, setActivePopup] = useState<
-    { nodeId: string; expanded: boolean } | null
-  >(null);
+  const [activePopup, setActivePopup] = useState<{
+    nodeId: string;
+    expanded: boolean;
+  } | null>(null);
   const [hoverNode, setHoverNode] = useState<HoverNode>({
     flowPosition: { x: 0, y: 0 },
     screenPosition: { x: 0, y: 0 },
@@ -106,8 +107,8 @@ const Flow: React.FC = () => {
     const measured = (nodeInternals as any).measured;
     const nodeWidth = measured?.width ?? nodeInternals.width ?? 0;
     const nodeHeight = measured?.height ?? nodeInternals.height ?? 0;
-    const absolutePosition =
-      (nodeInternals as any).positionAbsolute ?? nodeInternals.position ?? { x: 0, y: 0 };
+    const absolutePosition = (nodeInternals as any).positionAbsolute ??
+      nodeInternals.position ?? { x: 0, y: 0 };
 
     const centerX = absolutePosition.x + nodeWidth / 2;
     const centerY = absolutePosition.y + nodeHeight / 2;
@@ -150,7 +151,10 @@ const Flow: React.FC = () => {
 
     const collapsedWidth = popupLayout.collapsedWidth;
     const collapsedHeight = popupLayout.collapsedHeight;
-    const expandedWidth = Math.max(collapsedWidth, popupLayout.containerWidth - 40);
+    const expandedWidth = Math.max(
+      collapsedWidth,
+      popupLayout.containerWidth - 40
+    );
     const expandedHeight = Math.max(
       collapsedHeight,
       popupLayout.containerHeight - 40
@@ -683,7 +687,11 @@ const Flow: React.FC = () => {
   const handleNodesChange = useCallback(
     (changes: NodeChange<FlowNode>[]) => {
       onNodesChange(changes);
-      if (simulationRef.current) {
+      const shouldRestartSimulation = changes.some(
+        (change) => change.type !== "select"
+      );
+
+      if (shouldRestartSimulation && simulationRef.current) {
         simulationTickCountRef.current = 0;
         simulationRef.current.alpha(0.7).restart();
       }
@@ -863,12 +871,12 @@ const Flow: React.FC = () => {
           />
 
           {/* Hover Add Node */}
-        {hoverNode.visible && (
-          <AddNodeHover
-            screenPosition={hoverNode.screenPosition}
-            onClick={handleAddNodeFromHover}
-          />
-        )}
+          {hoverNode.visible && (
+            <AddNodeHover
+              screenPosition={hoverNode.screenPosition}
+              onClick={handleAddNodeFromHover}
+            />
+          )}
         </ReactFlow>
 
         {activePopup && popupLayout && popupSizing && (
@@ -909,14 +917,14 @@ const Flow: React.FC = () => {
                   Embedded page preview
                 </span>
               </div>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <div
+                style={{ display: "flex", gap: "8px", alignItems: "center" }}
+              >
                 <button
                   onClick={(event) => {
                     event.stopPropagation();
                     setActivePopup((prev) =>
-                      prev
-                        ? { ...prev, expanded: !prev.expanded }
-                        : prev
+                      prev ? { ...prev, expanded: !prev.expanded } : prev
                     );
                   }}
                   style={{

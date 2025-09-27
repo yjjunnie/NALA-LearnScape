@@ -711,8 +711,10 @@ const Flow: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [pendingNodePosition, setPendingNodePosition] =
     useState<XYPosition | null>(null);
-  const [reactFlowInstance, setReactFlowInstance] =
-    useState<ReactFlowInstance<FlowNode, FlowEdge> | null>(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance<
+    FlowNode,
+    FlowEdge
+  > | null>(null);
   const simulationRef = useRef<d3.Simulation<any, undefined> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingNodePositionRef = useRef<XYPosition | null>(null);
@@ -917,7 +919,7 @@ const Flow: React.FC = () => {
 
   // D3 Force Layout
   // Handle connection
-  const onConnect: OnConnect<FlowNode, FlowEdge> = useCallback(
+  const onConnect: OnConnect = useCallback(
     (params) => {
       if (!params.source || !params.target) return;
 

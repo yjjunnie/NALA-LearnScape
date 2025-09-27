@@ -16,12 +16,10 @@ import type {
   NodeMouseHandler,
   ReactFlowInstance,
   XYPosition,
-  OnNodesChange,
+  NodeChange,
 } from "@xyflow/react";
-
 import * as d3 from "d3";
 import { Plus, Trash2 } from "lucide-react";
-
 import "@xyflow/react/dist/style.css";
 
 interface NodeData {
@@ -696,7 +694,7 @@ const nodeTypes = {
 };
 
 const Flow: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<NodeData>>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [dbNodes, setDbNodes] = useState<DatabaseNode[]>(mockDatabaseNodes);
   const [dbRelationships, setDbRelationships] = useState<
@@ -750,12 +748,8 @@ const Flow: React.FC = () => {
 
             if (parentNode) {
               position = {
-                x:
-                  parentNode.position.x +
-                  (Math.random() - 0.5) * 200,
-                y:
-                  parentNode.position.y +
-                  (Math.random() - 0.5) * 200,
+                x: parentNode.position.x + (Math.random() - 0.5) * 200,
+                y: parentNode.position.y + (Math.random() - 0.5) * 200,
               };
             } else {
               position = {
@@ -783,16 +777,14 @@ const Flow: React.FC = () => {
         const baseNode: Node<NodeData> = existing
           ? {
               ...existing,
-              type:
-                dbNode.node_type === "topic" ? "topicNode" : "conceptNode",
+              type: dbNode.node_type === "topic" ? "topicNode" : "conceptNode",
               position: position ?? existing.position,
               data,
               selected: selectedNode === dbNode.node_id,
             }
           : {
               id: dbNode.node_id,
-              type:
-                dbNode.node_type === "topic" ? "topicNode" : "conceptNode",
+              type: dbNode.node_type === "topic" ? "topicNode" : "conceptNode",
               position: position ?? { x: 0, y: 0 },
               data,
               selected: selectedNode === dbNode.node_id,
@@ -1035,8 +1027,8 @@ const Flow: React.FC = () => {
     [pendingNodePosition, dbNodes]
   );
 
-  const handleNodesChange = useCallback<OnNodesChange>(
-    (changes) => {
+  const handleNodesChange = useCallback(
+    (changes: NodeChange<Node<NodeData>>[]) => {
       onNodesChange(changes);
       if (simulationRef.current) {
         simulationRef.current.alpha(0.7).restart();

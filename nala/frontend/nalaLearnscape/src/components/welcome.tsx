@@ -18,23 +18,20 @@ const Welcome: React.FC = () => {
   return (
     <>
       {/* Main Card */}
-      <div className="relative flex min-h-[340px] flex-col gap-6 rounded-[20px] px-5 py-4 overflow-hidden bg-gradient-to-br from-[#466EFF]/[0.98] via-[#6095FF]/[0.95] to-[#8FBDFF]/[0.98] text-white">
+      <div className="relative flex min-h-[340px] flex-col gap-6 rounded-[20px] px-5 py-8 overflow-hidden bg-gradient-to-br from-[#466EFF]/[0.98] via-[#6095FF]/[0.95] to-[#8FBDFF]/[0.98] text-white">
         {/* Header Row */}
         <div className="flex flex-col md:flex-row w-full justify-between items-start md:items-center gap-3 md:gap-4">
-          <div className="flex flex-row items-center gap-2.5 w-full">
+          <div className="flex flex-row items-center">
             <div className="flex-grow">
-              <h3 className="mb-1 text-white text-[1.95rem] md:text-[2.4rem] leading-[1.05] tracking-[0.2px] font-fredoka">
-                Welcome back,
-                <span className="text-[#FFE08C] font-fredoka"> John!</span>
+              <h3 className=" text-white text-5xl font-fredoka font-bold">
+                Welcome back, John!
               </h3>
-              <p className="text-white/80 font-glacial tracking-[0.4px]">
-                Your personalised schedule is ready. Drag the blocks to reshape
-                your day.
+              <p className="text-white/80 font-glacial tracking-[0.4px] mt-2">
+                Your personalised schedule for the day is ready.
               </p>
             </div>
           </div>
         </div>
-
         <Scheduler />
       </div>
 

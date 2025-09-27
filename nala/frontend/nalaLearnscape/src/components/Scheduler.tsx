@@ -12,7 +12,8 @@ interface ScheduleItem {
 // Constants
 const MINUTES_PER_DAY = 24 * 60;
 const PIXELS_PER_HOUR = 120;
-const TIMELINE_WIDTH = 24 * PIXELS_PER_HOUR;
+const HOUR_MARKER_PADDING = 40; // Add padding for hour markers
+const TIMELINE_WIDTH = 24 * PIXELS_PER_HOUR + HOUR_MARKER_PADDING;
 const SNAP_INTERVAL = 15; // Snap to 15-minute intervals
 
 // Utility functions
@@ -72,8 +73,8 @@ interface DropPreviewProps {
 }
 
 const DropPreview: React.FC<DropPreviewProps> = ({ start, duration, isValid }) => {
-  const leftPos = (start / MINUTES_PER_DAY) * TIMELINE_WIDTH;
-  const width = (duration / MINUTES_PER_DAY) * TIMELINE_WIDTH;
+  const leftPos = (start / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING) + HOUR_MARKER_PADDING / 2;
+  const width = (duration / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING);
   
   return (
     <div
@@ -110,8 +111,8 @@ const ScheduleBlock: React.FC<ScheduleBlockProps> = ({
   onResize,
   isDragging 
 }) => {
-  const leftPos = (item.start / MINUTES_PER_DAY) * TIMELINE_WIDTH;
-  const width = (item.duration / MINUTES_PER_DAY) * TIMELINE_WIDTH;
+  const leftPos = (item.start / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING) + HOUR_MARKER_PADDING / 2;
+  const width = (item.duration / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING);
   
   const startTime = minutesToTime(item.start);
   const endTime = minutesToTime(item.start + item.duration);
@@ -299,8 +300,8 @@ const Scheduler: React.FC = () => {
     if (!draggedId || !timelineRef.current) return;
 
     const rect = timelineRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-    const targetMinutes = snapToInterval((x / rect.width) * MINUTES_PER_DAY);
+    const x = Math.max(HOUR_MARKER_PADDING / 2, Math.min(e.clientX - rect.left, rect.width - HOUR_MARKER_PADDING / 2));
+    const targetMinutes = snapToInterval(((x - HOUR_MARKER_PADDING / 2) / (rect.width - HOUR_MARKER_PADDING)) * MINUTES_PER_DAY);
 
     const draggedItem = schedule.find(item => item.id === draggedId);
     if (!draggedItem) return;
@@ -354,7 +355,7 @@ const Scheduler: React.FC = () => {
 
       const rect = timelineRef.current.getBoundingClientRect();
       const deltaX = e.clientX - resizeState.startX;
-      const deltaMinutes = snapToInterval((deltaX / rect.width) * MINUTES_PER_DAY);
+      const deltaMinutes = snapToInterval((deltaX / (rect.width - HOUR_MARKER_PADDING)) * MINUTES_PER_DAY);
 
       let newStart = resizeState.originalItem.start;
       let newDuration = resizeState.originalItem.duration;
@@ -388,14 +389,14 @@ const Scheduler: React.FC = () => {
   // Generate hour markers
   const hourMarkers = Array.from({ length: 25 }, (_, hour) => ({
     hour,
-    left: (hour * 60 / MINUTES_PER_DAY) * TIMELINE_WIDTH,
+    left: (hour * 60 / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING) + HOUR_MARKER_PADDING / 2,
     label: `${hour.toString().padStart(2, '0')}:00`
   }));
 
   // Generate 15-minute grid lines
   const gridLines = Array.from({ length: 96 }, (_, index) => {
     const minutes = index * 15;
-    const left = (minutes / MINUTES_PER_DAY) * TIMELINE_WIDTH;
+    const left = (minutes / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING) + HOUR_MARKER_PADDING / 2;
     const isHour = minutes % 60 === 0;
     return { minutes, left, isHour };
   });
@@ -404,12 +405,12 @@ const Scheduler: React.FC = () => {
     <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-3xl p-4">
       {/* Header */}
       <div className="flex justify-between items-center mb-2">
-        <div className="text-white/90 font-medium">
+        <div className="text-white/90 font-bold">
           Total study time: {totalTimeText}
         </div>
         <button
           onClick={handleReset}
-          className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-medium transition-colors"
+          className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-bold transition-colors"
         >
           Reset
         </button>
@@ -466,7 +467,7 @@ const Scheduler: React.FC = () => {
       </div>
 
       {/* Instructions */}
-      <div className="text-center text-white/60 text-sm mt-4 space-y-1">
+      <div className="text-center text-white/60 text-sm mt-4 space-y-1 font-bold">
         <div>← Scroll horizontally to view full timeline →</div>
         <div className="text-xs">
           Drag blocks to move • Drag edges to resize • Snaps to 15-minute intervals

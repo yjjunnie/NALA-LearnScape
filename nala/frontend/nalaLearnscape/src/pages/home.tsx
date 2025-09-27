@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import {
-  Box,
   IconButton,
 } from "@mui/material";
-import Grid from "@mui/material/Grid";
 import { MenuRounded as MenuRoundedIcon } from "@mui/icons-material";
 import Welcome from "../components/Welcome";
 import ThreadMapSection from "../components/ThreadMapSection";
@@ -51,7 +49,7 @@ const Home: React.FC = () => {
         <Welcome />
         <LearningStyleOverview/>
         <ThreadMapSection />
-        
+
         {/* Insights Card Section */}
         <div className="w-full lg:w-1/3">
           <div className="flex flex-col space-y-2 sm:space-y-3">
@@ -68,18 +66,6 @@ const Home: React.FC = () => {
                 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(76,115,255,0.12)]
               "
             >
-              {/* gradient line at top */}
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[rgba(76,115,255,0.3)] to-transparent"></div>
-
-              {/* Title */}
-              <h6 className="mb-2 font-semibold text-[#1a2c5e] text-center">
-                Personal Dashboard
-              </h6>
-
-              {/* Body */}
-              <p className="text-center leading-[1.6] max-w-[280px] text-gray-500">
-                Track your learning progress, view achievements, and monitor daily streaks. Coming soon!
-              </p>
             </div>
           </div>
         </div>

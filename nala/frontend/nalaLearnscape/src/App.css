@@ -1,7 +1,13 @@
 @import "tailwindcss";
+@import "./fonts.css"; /* Import your fonts */
 
 @layer reactflow {
   @import "@xyflow/react/dist/style.css";
+}
+
+@theme {
+  --font-family-display: "Fredoka", ui-serif, serif;
+  --font-family-body: "GlacialIndifference", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {

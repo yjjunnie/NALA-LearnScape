@@ -22,50 +22,52 @@ const theme = createTheme({
     borderRadius: 24,
   },
   typography: {
-    fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+    fontFamily: '"GlacialIndifference", ui-sans-serif, system-ui, sans-serif',
     h1: {
-      fontFamily: '"Fredoka", "GlacialIndifference", sans-serif',
+      fontFamily: '"Fredoka", ui-serif, serif',
       fontWeight: 700,
     },
     h2: {
-      fontFamily: '"Fredoka", "GlacialIndifference", sans-serif',
-      fontWeight: 700,
+      fontFamily: '"Fredoka", ui-serif, serif',
+      fontWeight: 600,
     },
     h3: {
-      fontFamily: '"Fredoka", "GlacialIndifference", sans-serif',
-      fontWeight: 700,
+      fontFamily: '"Fredoka", ui-serif, serif',
+      fontWeight: 600,
     },
     h4: {
-      fontFamily: '"Fredoka", "GlacialIndifference", sans-serif',
-      fontWeight: 700,
+      fontFamily: '"Fredoka", ui-serif, serif',
+      fontWeight: 500,
     },
     h5: {
-      fontFamily: '"Fredoka", "GlacialIndifference", sans-serif',
-      fontWeight: 700,
+      fontFamily: '"Fredoka", ui-serif, serif',
+      fontWeight: 500,
     },
     h6: {
-      fontFamily: '"Fredoka", "GlacialIndifference", sans-serif',
-      fontWeight: 700,
+      fontFamily: '"Fredoka", ui-serif, serif',
+      fontWeight: 500,
     },
     subtitle1: {
-      fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+      fontFamily: '"GlacialIndifference", ui-sans-serif, system-ui, sans-serif',
+      fontWeight: 600,
     },
     subtitle2: {
-      fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+      fontFamily: '"GlacialIndifference", ui-sans-serif, system-ui, sans-serif',
+      fontWeight: 500,
     },
     body1: {
-      fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+      fontFamily: '"GlacialIndifference", ui-sans-serif, system-ui, sans-serif',
     },
     body2: {
-      fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+      fontFamily: '"GlacialIndifference", ui-sans-serif, system-ui, sans-serif',
     },
     button: {
       textTransform: "none",
-      fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+      fontFamily: '"GlacialIndifference", ui-sans-serif, system-ui, sans-serif',
       fontWeight: 600,
     },
     caption: {
-      fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+      fontFamily: '"GlacialIndifference", ui-sans-serif, system-ui, sans-serif',
     },
   },
 });

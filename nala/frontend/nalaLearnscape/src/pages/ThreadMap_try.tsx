@@ -22,7 +22,7 @@ import * as d3 from "d3";
 import { Plus, Trash2 } from "lucide-react";
 import "@xyflow/react/dist/style.css";
 
-interface NodeData {
+interface NodeData extends Record<string, unknown> {
   node_id: string;
   node_name: string;
   node_description?: string;
@@ -31,6 +31,9 @@ interface NodeData {
   node_module_id: string;
   color?: string;
 }
+
+type FlowNode = Node<NodeData>;
+type FlowEdge = Edge;
 
 interface DatabaseNode {
   node_id: string;
@@ -694,8 +697,8 @@ const nodeTypes = {
 };
 
 const Flow: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
   const [dbNodes, setDbNodes] = useState<DatabaseNode[]>(mockDatabaseNodes);
   const [dbRelationships, setDbRelationships] = useState<
     DatabaseRelationship[]
@@ -709,7 +712,7 @@ const Flow: React.FC = () => {
   const [pendingNodePosition, setPendingNodePosition] =
     useState<XYPosition | null>(null);
   const [reactFlowInstance, setReactFlowInstance] =
-    useState<ReactFlowInstance | null>(null);
+    useState<ReactFlowInstance<FlowNode, FlowEdge> | null>(null);
   const simulationRef = useRef<d3.Simulation<any, undefined> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingNodePositionRef = useRef<XYPosition | null>(null);
@@ -731,9 +734,7 @@ const Flow: React.FC = () => {
         const nodeColor =
           dbNode.node_type === "topic" ? getTopicColor(baseColor) : baseColor;
 
-        const existing = existingMap.get(dbNode.node_id) as
-          | Node<NodeData>
-          | undefined;
+        const existing = existingMap.get(dbNode.node_id);
 
         let position = existing?.position;
 
@@ -774,7 +775,7 @@ const Flow: React.FC = () => {
           color: nodeColor,
         };
 
-        const baseNode: Node<NodeData> = existing
+        const baseNode: FlowNode = existing
           ? {
               ...existing,
               type: dbNode.node_type === "topic" ? "topicNode" : "conceptNode",
@@ -916,11 +917,11 @@ const Flow: React.FC = () => {
 
   // D3 Force Layout
   // Handle connection
-  const onConnect: OnConnect = useCallback(
+  const onConnect: OnConnect<FlowNode, FlowEdge> = useCallback(
     (params) => {
       if (!params.source || !params.target) return;
 
-      const newEdge: Edge = {
+      const newEdge: FlowEdge = {
         id: `e${params.source}-${params.target}`,
         source: params.source,
         target: params.target,
@@ -938,13 +939,13 @@ const Flow: React.FC = () => {
       };
 
       setDbRelationships((prev) => [...prev, newRelationship]);
-      setEdges((els) => addEdge(newEdge, els));
+      setEdges((els) => addEdge<FlowEdge>(newEdge, els));
     },
     [dbRelationships, setEdges]
   );
 
   // Handle node click
-  const handleNodeClick: NodeMouseHandler = useCallback(
+  const handleNodeClick: NodeMouseHandler<FlowNode> = useCallback(
     (event, node) => {
       setSelectedNode(selectedNode === node.id ? null : node.id);
     },
@@ -966,8 +967,7 @@ const Flow: React.FC = () => {
 
       // Check if mouse is over any existing node
       const isOverNode = nodes.some((node) => {
-        const nodeData = node.data as unknown as NodeData;
-        const nodeSize = nodeData.node_type === "topic" ? 60 : 40;
+        const nodeSize = node.data.node_type === "topic" ? 60 : 40;
         const distance = Math.sqrt(
           Math.pow(position.x - node.position.x, 2) +
             Math.pow(position.y - node.position.y, 2)
@@ -1028,7 +1028,7 @@ const Flow: React.FC = () => {
   );
 
   const handleNodesChange = useCallback(
-    (changes: NodeChange<Node<NodeData>>[]) => {
+    (changes: NodeChange<FlowNode>[]) => {
       onNodesChange(changes);
       if (simulationRef.current) {
         simulationRef.current.alpha(0.7).restart();
@@ -1124,7 +1124,7 @@ const Flow: React.FC = () => {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <ReactFlow
+        <ReactFlow<FlowNode, FlowEdge>
           nodes={nodes}
           nodeTypes={nodeTypes}
           edges={edges}
@@ -1140,9 +1140,7 @@ const Flow: React.FC = () => {
           <Background color="#f0f0f0" gap={20} />
           <Controls />
           <MiniMap
-            nodeColor={(node) =>
-              (node.data as unknown as NodeData).color || "#00bcd4"
-            }
+            nodeColor={(node: FlowNode) => node.data.color || "#00bcd4"}
             style={{
               background: "white",
               border: "1px solid #ddd",

@@ -8,6 +8,8 @@ import {
   useEdgesState,
   addEdge,
   ConnectionMode,
+  Handle,
+  Position,
 } from "@xyflow/react";
 import type {
   Node,
@@ -52,7 +54,8 @@ interface DatabaseRelationship {
 }
 
 interface HoverNode {
-  position: XYPosition;
+  flowPosition: XYPosition;
+  screenPosition: XYPosition;
   visible: boolean;
 }
 
@@ -346,6 +349,8 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
         >
           {data.node_name}
         </div>
+        <Handle type="target" position={Position.Left} />
+        <Handle type="source" position={Position.Right} />
       </div>
 
       {/* Label below the node */}
@@ -379,8 +384,11 @@ const TopicNode: React.FC<ConceptNodeProps> = (props) => (
 );
 
 // Add Node Hover Component
-const AddNodeHover: React.FC<{ position: XYPosition; onClick: () => void }> = ({
-  position,
+const AddNodeHover: React.FC<{
+  screenPosition: XYPosition;
+  onClick: () => void;
+}> = ({
+  screenPosition,
   onClick,
 }) => {
   return (
@@ -388,8 +396,8 @@ const AddNodeHover: React.FC<{ position: XYPosition; onClick: () => void }> = ({
       onClick={onClick}
       style={{
         position: "absolute",
-        left: position.x - 25,
-        top: position.y - 25,
+        left: screenPosition.x - 25,
+        top: screenPosition.y - 25,
         width: "50px",
         height: "50px",
         borderRadius: "50%",
@@ -705,7 +713,8 @@ const Flow: React.FC = () => {
   >(mockDatabaseRelationships);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [hoverNode, setHoverNode] = useState<HoverNode>({
-    position: { x: 0, y: 0 },
+    flowPosition: { x: 0, y: 0 },
+    screenPosition: { x: 0, y: 0 },
     visible: false,
   });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -858,7 +867,7 @@ const Flow: React.FC = () => {
 
     simulation.nodes(simulationNodes as any);
     simulation.force("center", d3.forceCenter(width / 2, height / 2));
-    simulation.force("charge", d3.forceManyBody().strength(-260));
+    simulation.force("charge", d3.forceManyBody().strength(-200));
     simulation.force(
       "collision",
       d3
@@ -886,15 +895,39 @@ const Flow: React.FC = () => {
           );
 
           const baseDistance = 180;
+          const isParentChild =
+            sourceNode?.data?.parent_node_id === targetNode?.id ||
+            targetNode?.data?.parent_node_id === sourceNode?.id;
+
+          if (isParentChild) {
+            return baseDistance - 50;
+          }
+
           if (
             sourceNode?.data?.node_type === "topic" ||
             targetNode?.data?.node_type === "topic"
           ) {
-            return baseDistance + 60;
+            return baseDistance + 40;
           }
           return baseDistance;
         })
-        .strength(0.25)
+        .strength((link: any) => {
+          const resolveNode = (value: any) =>
+            typeof value === "string" ? value : value.id;
+
+          const sourceNode = nodes.find(
+            (node) => node.id === resolveNode(link.source)
+          );
+          const targetNode = nodes.find(
+            (node) => node.id === resolveNode(link.target)
+          );
+
+          const isParentChild =
+            sourceNode?.data?.parent_node_id === targetNode?.id ||
+            targetNode?.data?.parent_node_id === sourceNode?.id;
+
+          return isParentChild ? 0.6 : 0.35;
+        })
     );
 
     simulation.on("tick", () => {
@@ -962,23 +995,29 @@ const Flow: React.FC = () => {
       const bounds = containerRef.current?.getBoundingClientRect();
       if (!bounds) return;
 
-      const position = reactFlowInstance.screenToFlowPosition({
+      const flowPosition = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      const screenPosition = {
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
-      });
+      };
 
       // Check if mouse is over any existing node
       const isOverNode = nodes.some((node) => {
         const nodeSize = node.data.node_type === "topic" ? 60 : 40;
         const distance = Math.sqrt(
-          Math.pow(position.x - node.position.x, 2) +
-            Math.pow(position.y - node.position.y, 2)
+          Math.pow(flowPosition.x - node.position.x, 2) +
+            Math.pow(flowPosition.y - node.position.y, 2)
         );
         return distance < nodeSize;
       });
 
       setHoverNode({
-        position,
+        flowPosition,
+        screenPosition,
         visible: !isOverNode,
       });
     },
@@ -992,10 +1031,10 @@ const Flow: React.FC = () => {
 
   // Handle add node from hover
   const handleAddNodeFromHover = useCallback(() => {
-    setPendingNodePosition(hoverNode.position);
+    setPendingNodePosition(hoverNode.flowPosition);
     setIsModalOpen(true);
     setHoverNode((prev) => ({ ...prev, visible: false }));
-  }, [hoverNode.position]);
+  }, [hoverNode.flowPosition]);
 
   // Handle save new node
   const handleSaveNewNode = useCallback(
@@ -1152,7 +1191,7 @@ const Flow: React.FC = () => {
           {/* Hover Add Node */}
           {hoverNode.visible && (
             <AddNodeHover
-              position={hoverNode.position}
+              screenPosition={hoverNode.screenPosition}
               onClick={handleAddNodeFromHover}
             />
           )}

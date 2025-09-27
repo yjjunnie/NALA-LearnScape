@@ -313,9 +313,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
     border: "2px solid rgba(0, 0, 0, 0.1)",
   };
 
-  const getHandleStyle = (
-    extra: React.CSSProperties
-  ): React.CSSProperties => ({
+  const getHandleStyle = (extra: React.CSSProperties): React.CSSProperties => ({
     ...handleStyleBase,
     ...extra,
   });
@@ -579,25 +577,27 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       />
-      {isHovered && data?.label && data.label.trim() !== "" && (
-        <EdgeLabelRenderer>
-          <div
-            style={{
-              position: "absolute",
-              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-              pointerEvents: "none",
-              background: "rgba(0, 0, 0, 0.75)",
-              color: "#fff",
-              padding: "4px 8px",
-              borderRadius: "4px",
-              fontSize: "10px",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {data.label}
-          </div>
-        </EdgeLabelRenderer>
-      )}
+      {isHovered &&
+        typeof data?.label === "string" &&
+        data.label.trim() !== "" && (
+          <EdgeLabelRenderer>
+            <div
+              style={{
+                position: "absolute",
+                transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+                pointerEvents: "none",
+                background: "rgba(0, 0, 0, 0.75)",
+                color: "#fff",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                fontSize: "10px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {data.label}
+            </div>
+          </EdgeLabelRenderer>
+        )}
     </>
   );
 };

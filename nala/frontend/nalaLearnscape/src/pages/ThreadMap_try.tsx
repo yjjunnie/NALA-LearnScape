@@ -387,10 +387,7 @@ const TopicNode: React.FC<ConceptNodeProps> = (props) => (
 const AddNodeHover: React.FC<{
   screenPosition: XYPosition;
   onClick: () => void;
-}> = ({
-  screenPosition,
-  onClick,
-}) => {
+}> = ({ screenPosition, onClick }) => {
   return (
     <div
       onClick={onClick}

@@ -21,7 +21,7 @@ import type {
   ReactFlowInstance,
   XYPosition,
   NodeChange,
-  NodeDragHandler,
+  OnNodeDrag,
 } from "@xyflow/react";
 import * as d3 from "d3";
 import { Trash2 } from "lucide-react";
@@ -112,9 +112,7 @@ const Flow: React.FC = () => {
 
         if (!nodeColor) {
           nodeColor =
-            dbNode.node_type === "topic"
-              ? getTopicColor(baseColor)
-              : baseColor;
+            dbNode.node_type === "topic" ? getTopicColor(baseColor) : baseColor;
         }
 
         const existing = existingMap.get(dbNode.node_id);
@@ -553,8 +551,8 @@ const Flow: React.FC = () => {
     [onNodesChange]
   );
 
-  const handleNodeDragStart = useCallback<NodeDragHandler<FlowNode>>(
-    (_, node) => {
+  const handleNodeDragStart: OnNodeDrag<FlowNode> = useCallback(
+    (event, node) => {
       setSelectedNode(node.id);
       draggedNodeIdRef.current = node.id;
       if (simulationRef.current) {
@@ -564,8 +562,8 @@ const Flow: React.FC = () => {
     []
   );
 
-  const handleNodeDrag = useCallback<NodeDragHandler<FlowNode>>(
-    (_, node) => {
+  const handleNodeDrag: OnNodeDrag<FlowNode> = useCallback(
+    (event, node) => {
       isSimulationTickRef.current = true;
       setNodes((prev) =>
         prev.map((existing) =>
@@ -588,8 +586,8 @@ const Flow: React.FC = () => {
     [setNodes]
   );
 
-  const handleNodeDragStop = useCallback<NodeDragHandler<FlowNode>>(
-    (_, node) => {
+  const handleNodeDragStop: OnNodeDrag<FlowNode> = useCallback(
+    (event, node) => {
       draggedNodeIdRef.current = null;
       if (simulationRef.current) {
         const nodesInSim = simulationRef.current.nodes() as any[];

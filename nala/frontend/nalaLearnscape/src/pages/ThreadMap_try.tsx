@@ -120,7 +120,7 @@ const Flow: React.FC = () => {
     const anchorX = screenPosition.x - bounds.left;
     const anchorY = screenPosition.y - bounds.top;
 
-    const collapsedSize = { width: 320, height: 240 };
+    const collapsedSize = { width: 420, height: 320 };
     const margin = 16;
 
     const collapsedLeft = Math.min(
@@ -971,7 +971,7 @@ const Flow: React.FC = () => {
                   border: "1px dashed #cbd5f5",
                   borderRadius: "10px",
                   background: "#ffffff",
-                  minHeight: activePopup.expanded ? "100%" : "280px",
+                  minHeight: activePopup.expanded ? "100%" : "360px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",

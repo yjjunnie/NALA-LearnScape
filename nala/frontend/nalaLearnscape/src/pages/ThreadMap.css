@@ -1,0 +1,175 @@
+.thread-map-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  text-align: left;
+  color: #102a43;
+}
+
+.thread-map-header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #0b3c61;
+}
+
+.thread-map-header p {
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.6;
+  color: #335f7c;
+}
+
+.thread-map-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 1.75rem;
+  align-items: start;
+}
+
+.thread-map-controls {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 16px 32px rgba(15, 62, 92, 0.08);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  position: sticky;
+  top: 2rem;
+}
+
+.thread-map-controls h2 {
+  font-size: 1.125rem;
+  margin: 0 0 0.75rem;
+  color: #0b3c61;
+}
+
+.thread-map-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.thread-map-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 500;
+}
+
+.thread-map-form input,
+.thread-map-form select {
+  border: 1px solid #c7d9ea;
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.95rem;
+  color: #0b3c61;
+  background: #f6fbff;
+}
+
+.thread-map-form input[type="range"] {
+  padding: 0;
+  accent-color: #0288d1;
+}
+
+.thread-map-form select:focus,
+.thread-map-form input:focus {
+  outline: 2px solid rgba(2, 136, 209, 0.35);
+  outline-offset: 1px;
+}
+
+.thread-map-form button {
+  margin-top: 0.5rem;
+  border: none;
+  background: linear-gradient(135deg, #0288d1, #03a9f4);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(2, 136, 209, 0.25);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.thread-map-form button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(2, 136, 209, 0.3);
+}
+
+.thread-map-canvas {
+  background: radial-gradient(circle at top left, #f5fbff 0%, #e0f2ff 100%);
+  border-radius: 20px;
+  box-shadow: inset 0 0 0 1px rgba(2, 136, 209, 0.08),
+    0 20px 40px rgba(12, 70, 104, 0.18);
+  min-height: 640px;
+  position: relative;
+  overflow: hidden;
+}
+
+.thread-map-canvas .reactflow-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.mindmap-flow .react-flow__node {
+  cursor: grab;
+}
+
+.mindmap-flow .react-flow__node:active {
+  cursor: grabbing;
+}
+
+.mindmap-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  transform: translate(-50%, -50%);
+}
+
+.mindmap-node-circle {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  box-shadow: 0 12px 30px rgba(11, 60, 97, 0.25);
+}
+
+.mindmap-node-label {
+  font-weight: 600;
+  color: #0b3c61;
+  text-align: center;
+  max-width: 160px;
+  line-height: 1.3;
+  text-shadow: 0 2px 6px rgba(11, 60, 97, 0.15);
+}
+
+.mindmap-node--selected .mindmap-node-circle {
+  box-shadow: 0 0 0 4px rgba(2, 136, 209, 0.25), 0 16px 36px rgba(11, 60, 97, 0.3);
+}
+
+.mindmap-node--selected .mindmap-node-label {
+  color: #026aa7;
+}
+
+.mindmap-flow .react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.mindmap-flow .react-flow__minimap-mask {
+  fill: rgba(2, 136, 209, 0.15);
+}
+
+@media (max-width: 960px) {
+  .thread-map-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .thread-map-controls {
+    position: static;
+  }
+}

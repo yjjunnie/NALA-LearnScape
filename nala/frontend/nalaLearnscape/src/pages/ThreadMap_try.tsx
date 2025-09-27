@@ -22,6 +22,8 @@ import type {
   XYPosition,
   NodeChange,
   OnNodeDrag,
+  OnMove,
+  Viewport,
 } from "@xyflow/react";
 import * as d3 from "d3";
 import { Trash2 } from "lucide-react";
@@ -60,6 +62,9 @@ const Flow: React.FC = () => {
     DatabaseRelationship[]
   >(mockDatabaseRelationships);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [activePopup, setActivePopup] = useState<
+    { nodeId: string; expanded: boolean } | null
+  >(null);
   const [hoverNode, setHoverNode] = useState<HoverNode>({
     flowPosition: { x: 0, y: 0 },
     screenPosition: { x: 0, y: 0 },
@@ -72,12 +77,97 @@ const Flow: React.FC = () => {
     FlowNode,
     FlowEdge
   > | null>(null);
+  const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
   const simulationRef = useRef<d3.Simulation<any, undefined> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingNodePositionRef = useRef<XYPosition | null>(null);
   const isSimulationTickRef = useRef<boolean>(false);
   const draggedNodeIdRef = useRef<string | null>(null);
+  const simulationTickCountRef = useRef<number>(0);
   const edgeTypes = useMemo(() => ({ hoverLabel: HoverLabelEdge }), []);
+  const popupNode = useMemo(
+    () =>
+      activePopup
+        ? nodes.find((node) => node.id === activePopup.nodeId) ?? null
+        : null,
+    [activePopup, nodes]
+  );
+  const popupLayout = useMemo(() => {
+    if (!activePopup || !reactFlowInstance || !containerRef.current) {
+      return null;
+    }
+
+    const nodeInternals = reactFlowInstance.getNode(activePopup.nodeId);
+    if (!nodeInternals) {
+      return null;
+    }
+
+    const bounds = containerRef.current.getBoundingClientRect();
+    const measured = (nodeInternals as any).measured;
+    const nodeWidth = measured?.width ?? nodeInternals.width ?? 0;
+    const nodeHeight = measured?.height ?? nodeInternals.height ?? 0;
+    const absolutePosition =
+      (nodeInternals as any).positionAbsolute ?? nodeInternals.position ?? { x: 0, y: 0 };
+
+    const centerX = absolutePosition.x + nodeWidth / 2;
+    const centerY = absolutePosition.y + nodeHeight / 2;
+
+    const screenPosition = reactFlowInstance.flowToScreenPosition({
+      x: centerX,
+      y: centerY,
+    });
+
+    const anchorX = screenPosition.x - bounds.left;
+    const anchorY = screenPosition.y - bounds.top;
+
+    const collapsedSize = { width: 320, height: 240 };
+    const margin = 16;
+
+    const collapsedLeft = Math.min(
+      Math.max(anchorX + 24, margin),
+      bounds.width - collapsedSize.width - margin
+    );
+    const collapsedTop = Math.min(
+      Math.max(anchorY - collapsedSize.height / 2, margin),
+      bounds.height - collapsedSize.height - margin
+    );
+
+    return {
+      anchorX,
+      anchorY,
+      collapsedLeft,
+      collapsedTop,
+      collapsedWidth: collapsedSize.width,
+      collapsedHeight: collapsedSize.height,
+      containerWidth: bounds.width,
+      containerHeight: bounds.height,
+    };
+  }, [activePopup, nodes, reactFlowInstance, viewport]);
+  const popupSizing = useMemo(() => {
+    if (!activePopup || !popupLayout) {
+      return null;
+    }
+
+    const collapsedWidth = popupLayout.collapsedWidth;
+    const collapsedHeight = popupLayout.collapsedHeight;
+    const expandedWidth = Math.max(collapsedWidth, popupLayout.containerWidth - 40);
+    const expandedHeight = Math.max(
+      collapsedHeight,
+      popupLayout.containerHeight - 40
+    );
+
+    const width = activePopup.expanded ? expandedWidth : collapsedWidth;
+    const height = activePopup.expanded ? expandedHeight : collapsedHeight;
+
+    const top = activePopup.expanded
+      ? Math.max(20, (popupLayout.containerHeight - height) / 2)
+      : popupLayout.collapsedTop;
+    const left = activePopup.expanded
+      ? Math.max(20, (popupLayout.containerWidth - width) / 2)
+      : popupLayout.collapsedLeft;
+
+    return { width, height, top, left };
+  }, [activePopup, popupLayout]);
 
   // Sync nodes with database entries while preserving positions
   useEffect(() => {
@@ -200,6 +290,17 @@ const Flow: React.FC = () => {
     );
   }, [dbRelationships, setEdges]);
 
+  useEffect(() => {
+    if (!activePopup) {
+      return;
+    }
+
+    const nodeExists = nodes.some((node) => node.id === activePopup.nodeId);
+    if (!nodeExists) {
+      setActivePopup(null);
+    }
+  }, [activePopup, nodes]);
+
   // Ensure simulation stops on unmount
   useEffect(() => {
     return () => {
@@ -225,6 +326,7 @@ const Flow: React.FC = () => {
     }
 
     const simulation = simulationRef.current;
+    simulationTickCountRef.current = 0;
 
     const nodeMap = new Map(nodes.map((node) => [node.id, node]));
 
@@ -266,6 +368,8 @@ const Flow: React.FC = () => {
 
     simulation.nodes(simulationNodes as any);
     simulation.force("center", d3.forceCenter(width / 2, height / 2));
+    simulation.alphaDecay(0.25);
+    simulation.velocityDecay(0.4);
     simulation.force(
       "charge",
       d3
@@ -400,6 +504,25 @@ const Flow: React.FC = () => {
           };
         })
       );
+
+      simulationTickCountRef.current += 1;
+      const shouldHalt =
+        simulation.alpha() < 0.02 || simulationTickCountRef.current > 120;
+
+      if (shouldHalt) {
+        (simulation.nodes() as any[]).forEach((node) => {
+          node.vx = 0;
+          node.vy = 0;
+        });
+        simulation.stop();
+      }
+    });
+
+    simulation.on("end", () => {
+      (simulation.nodes() as any[]).forEach((node) => {
+        node.vx = 0;
+        node.vy = 0;
+      });
     });
 
     simulation.alpha(0.9).restart();
@@ -438,10 +561,26 @@ const Flow: React.FC = () => {
   // Handle node click
   const handleNodeClick: NodeMouseHandler<FlowNode> = useCallback(
     (event, node) => {
-      setSelectedNode(selectedNode === node.id ? null : node.id);
+      event.stopPropagation();
+      setSelectedNode((prev) => (prev === node.id ? null : node.id));
+      setActivePopup((prev) => {
+        if (prev?.nodeId === node.id) {
+          return null;
+        }
+        return { nodeId: node.id, expanded: false };
+      });
     },
-    [selectedNode]
+    []
   );
+
+  const handleMove = useCallback<OnMove>((_, nextViewport) => {
+    setViewport(nextViewport);
+  }, []);
+
+  const handlePaneClick = useCallback(() => {
+    setSelectedNode(null);
+    setActivePopup(null);
+  }, []);
 
   // Handle mouse move for hover node
   const handleMouseMove = useCallback(
@@ -545,6 +684,7 @@ const Flow: React.FC = () => {
     (changes: NodeChange<FlowNode>[]) => {
       onNodesChange(changes);
       if (simulationRef.current) {
+        simulationTickCountRef.current = 0;
         simulationRef.current.alpha(0.7).restart();
       }
     },
@@ -552,10 +692,11 @@ const Flow: React.FC = () => {
   );
 
   const handleNodeDragStart: OnNodeDrag<FlowNode> = useCallback(
-    (event, node) => {
+    (_event, node) => {
       setSelectedNode(node.id);
       draggedNodeIdRef.current = node.id;
       if (simulationRef.current) {
+        simulationTickCountRef.current = 0;
         simulationRef.current.alphaTarget(0.3).restart();
       }
     },
@@ -563,7 +704,7 @@ const Flow: React.FC = () => {
   );
 
   const handleNodeDrag: OnNodeDrag<FlowNode> = useCallback(
-    (event, node) => {
+    (_event, node) => {
       isSimulationTickRef.current = true;
       setNodes((prev) =>
         prev.map((existing) =>
@@ -587,7 +728,7 @@ const Flow: React.FC = () => {
   );
 
   const handleNodeDragStop: OnNodeDrag<FlowNode> = useCallback(
-    (event, node) => {
+    (_event, node) => {
       draggedNodeIdRef.current = null;
       if (simulationRef.current) {
         const nodesInSim = simulationRef.current.nodes() as any[];
@@ -597,6 +738,7 @@ const Flow: React.FC = () => {
           simNode.fy = null;
         }
         simulationRef.current.alphaTarget(0);
+        simulationTickCountRef.current = 0;
         simulationRef.current.alpha(0.4).restart();
       }
     },
@@ -615,6 +757,7 @@ const Flow: React.FC = () => {
       )
     );
     setSelectedNode(null);
+    setActivePopup((prev) => (prev?.nodeId === selectedNode ? null : prev));
   }, [selectedNode]);
 
   const getNodeCount = (): number => dbNodes.length;
@@ -703,6 +846,8 @@ const Flow: React.FC = () => {
           onNodeDrag={handleNodeDrag}
           onNodeDragStop={handleNodeDragStop}
           onInit={setReactFlowInstance}
+          onMove={handleMove}
+          onPaneClick={handlePaneClick}
           fitView
           attributionPosition="bottom-left"
           connectionMode={ConnectionMode.Loose}
@@ -718,13 +863,127 @@ const Flow: React.FC = () => {
           />
 
           {/* Hover Add Node */}
-          {hoverNode.visible && (
-            <AddNodeHover
-              screenPosition={hoverNode.screenPosition}
-              onClick={handleAddNodeFromHover}
-            />
-          )}
+        {hoverNode.visible && (
+          <AddNodeHover
+            screenPosition={hoverNode.screenPosition}
+            onClick={handleAddNodeFromHover}
+          />
+        )}
         </ReactFlow>
+
+        {activePopup && popupLayout && popupSizing && (
+          <div
+            style={{
+              position: "absolute",
+              top: popupSizing.top,
+              left: popupSizing.left,
+              width: popupSizing.width,
+              height: popupSizing.height,
+              background: "#ffffff",
+              borderRadius: "12px",
+              boxShadow: "0 18px 45px rgba(15, 23, 42, 0.25)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              zIndex: 20,
+            }}
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div
+              style={{
+                padding: "12px 16px",
+                background: popupNode?.data.color || "#1f2937",
+                color: "#ffffff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontWeight: 600, fontSize: "14px" }}>
+                  {popupNode?.data.node_name || "Node"}
+                </span>
+                <span style={{ fontSize: "11px", opacity: 0.85 }}>
+                  Embedded page preview
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setActivePopup((prev) =>
+                      prev
+                        ? { ...prev, expanded: !prev.expanded }
+                        : prev
+                    );
+                  }}
+                  style={{
+                    border: "none",
+                    background: "rgba(255,255,255,0.2)",
+                    color: "#fff",
+                    padding: "6px 10px",
+                    borderRadius: "6px",
+                    fontSize: "11px",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  {activePopup.expanded ? "Collapse" : "Open Full Page"}
+                </button>
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setActivePopup(null);
+                  }}
+                  style={{
+                    border: "none",
+                    background: "rgba(255,255,255,0.15)",
+                    color: "#fff",
+                    width: "28px",
+                    height: "28px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    fontSize: "14px",
+                  }}
+                  aria-label="Close embedded page"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                background: "#f8fafc",
+                padding: "16px",
+                color: "#475569",
+                fontSize: "13px",
+                lineHeight: 1.5,
+              }}
+            >
+              <div
+                style={{
+                  border: "1px dashed #cbd5f5",
+                  borderRadius: "10px",
+                  background: "#ffffff",
+                  minHeight: activePopup.expanded ? "100%" : "280px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#94a3b8",
+                  fontStyle: "italic",
+                }}
+              >
+                Page content placeholder
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Node Input Modal */}

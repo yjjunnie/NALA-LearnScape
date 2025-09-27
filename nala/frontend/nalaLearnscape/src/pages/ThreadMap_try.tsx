@@ -16,6 +16,7 @@ import type {
   NodeMouseHandler,
   ReactFlowInstance,
   XYPosition,
+  OnNodesChange,
 } from "@xyflow/react";
 
 import * as d3 from "d3";
@@ -372,6 +373,10 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
   );
 };
 
+const TopicNode: React.FC<ConceptNodeProps> = (props) => (
+  <ConceptNode {...props} />
+);
+
 // Add Node Hover Component
 const AddNodeHover: React.FC<{ position: XYPosition; onClick: () => void }> = ({
   position,
@@ -691,7 +696,7 @@ const nodeTypes = {
 };
 
 const Flow: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<NodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [dbNodes, setDbNodes] = useState<DatabaseNode[]>(mockDatabaseNodes);
   const [dbRelationships, setDbRelationships] = useState<
@@ -709,22 +714,63 @@ const Flow: React.FC = () => {
     useState<ReactFlowInstance | null>(null);
   const simulationRef = useRef<d3.Simulation<any, undefined> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pendingNodePositionRef = useRef<XYPosition | null>(null);
+  const isSimulationTickRef = useRef<boolean>(false);
 
-  // Convert database data to React Flow format
-  const convertDatabaseToFlow = useCallback((): {
-    flowNodes: Node[];
-    flowEdges: Edge[];
-  } => {
-    const flowNodes: Node[] = dbNodes.map((dbNode) => {
-      const baseColor = getColorForModule(dbNode.node_module_id);
-      const nodeColor =
-        dbNode.node_type === "topic" ? getTopicColor(baseColor) : baseColor;
+  // Sync nodes with database entries while preserving positions
+  useEffect(() => {
+    let pendingUsed = false;
+    const pendingSnapshot = pendingNodePositionRef.current;
 
-      return {
-        id: dbNode.node_id,
-        type: "conceptNode",
-        position: { x: Math.random() * 800, y: Math.random() * 600 },
-        data: {
+    setNodes((prevNodes) => {
+      const containerBounds = containerRef.current;
+      const width = containerBounds?.clientWidth ?? 800;
+      const height = containerBounds?.clientHeight ?? 600;
+      const existingMap = new Map(prevNodes.map((node) => [node.id, node]));
+
+      const updatedNodes = dbNodes.map((dbNode) => {
+        const baseColor = getColorForModule(dbNode.node_module_id);
+        const nodeColor =
+          dbNode.node_type === "topic" ? getTopicColor(baseColor) : baseColor;
+
+        const existing = existingMap.get(dbNode.node_id) as
+          | Node<NodeData>
+          | undefined;
+
+        let position = existing?.position;
+
+        if (!position) {
+          if (pendingSnapshot && !pendingUsed) {
+            position = { ...pendingSnapshot };
+            pendingUsed = true;
+          } else {
+            const parentNode = prevNodes.find(
+              (node) => node.id === dbNode.parent_node_id
+            );
+
+            if (parentNode) {
+              position = {
+                x:
+                  parentNode.position.x +
+                  (Math.random() - 0.5) * 200,
+                y:
+                  parentNode.position.y +
+                  (Math.random() - 0.5) * 200,
+              };
+            } else {
+              position = {
+                x:
+                  width / 2 +
+                  (Math.random() - 0.5) * (Math.min(width, 600) * 0.6),
+                y:
+                  height / 2 +
+                  (Math.random() - 0.5) * (Math.min(height, 600) * 0.6),
+              };
+            }
+          }
+        }
+
+        const data: NodeData = {
           node_id: dbNode.node_id,
           node_name: dbNode.node_name,
           node_description: dbNode.node_description,
@@ -732,80 +778,151 @@ const Flow: React.FC = () => {
           parent_node_id: dbNode.parent_node_id,
           node_module_id: dbNode.node_module_id,
           color: nodeColor,
-        },
-        selected: selectedNode === dbNode.node_id,
-      };
+        };
+
+        const baseNode: Node<NodeData> = existing
+          ? {
+              ...existing,
+              type:
+                dbNode.node_type === "topic" ? "topicNode" : "conceptNode",
+              position: position ?? existing.position,
+              data,
+              selected: selectedNode === dbNode.node_id,
+            }
+          : {
+              id: dbNode.node_id,
+              type:
+                dbNode.node_type === "topic" ? "topicNode" : "conceptNode",
+              position: position ?? { x: 0, y: 0 },
+              data,
+              selected: selectedNode === dbNode.node_id,
+            };
+
+        return baseNode;
+      });
+
+      return updatedNodes;
     });
 
-    const flowEdges: Edge[] = dbRelationships.map((rel) => ({
-      id: `e${rel.node_id_1}-${rel.node_id_2}`,
-      source: rel.node_id_1,
-      target: rel.node_id_2,
-      type: "smoothstep",
-      style: { stroke: "#b1b1b7", strokeWidth: 2 },
-      animated: false,
-      label: rel.relationship_type,
-    }));
+    if (pendingUsed) {
+      pendingNodePositionRef.current = null;
+    }
+  }, [dbNodes, selectedNode, setNodes]);
 
-    return { flowNodes, flowEdges };
-  }, [dbNodes, dbRelationships, selectedNode]);
-
-  // Initialize nodes and edges from database
+  // Sync edges with database relationships
   useEffect(() => {
-    const { flowNodes, flowEdges } = convertDatabaseToFlow();
-    setNodes(flowNodes);
-    setEdges(flowEdges);
-  }, [convertDatabaseToFlow, setNodes, setEdges]);
+    setEdges(
+      dbRelationships.map((rel) => ({
+        id: `e${rel.node_id_1}-${rel.node_id_2}`,
+        source: rel.node_id_1,
+        target: rel.node_id_2,
+        type: "smoothstep",
+        style: { stroke: "#b1b1b7", strokeWidth: 2 },
+        animated: false,
+        label: rel.relationship_type,
+      }))
+    );
+  }, [dbRelationships, setEdges]);
 
-  // D3 Force Layout
+  // Ensure simulation stops on unmount
+  useEffect(() => {
+    return () => {
+      simulationRef.current?.stop();
+    };
+  }, []);
+
+  // Reconfigure D3 simulation when nodes/edges change outside of tick updates
   useEffect(() => {
     if (nodes.length === 0) return;
 
-    // Stop existing simulation
-    if (simulationRef.current) {
-      simulationRef.current.stop();
+    const triggeredBySimulation = isSimulationTickRef.current;
+    isSimulationTickRef.current = false;
+    if (triggeredBySimulation) {
+      return;
     }
 
-    const simulation = d3
-      .forceSimulation(nodes as any)
-      .force("charge", d3.forceManyBody().strength(-300))
-      .force("center", d3.forceCenter(400, 300))
-      .force(
-        "collision",
-        d3.forceCollide().radius((d: any) => {
+    const width = containerRef.current?.clientWidth ?? 800;
+    const height = containerRef.current?.clientHeight ?? 600;
+
+    if (!simulationRef.current) {
+      simulationRef.current = d3.forceSimulation();
+    }
+
+    const simulation = simulationRef.current;
+
+    const simulationNodes = nodes.map((node) => ({
+      ...node,
+      x: node.position.x,
+      y: node.position.y,
+    }));
+
+    const linkData = edges.map((edge) => ({
+      source: edge.source,
+      target: edge.target,
+    }));
+
+    simulation.nodes(simulationNodes as any);
+    simulation.force("center", d3.forceCenter(width / 2, height / 2));
+    simulation.force("charge", d3.forceManyBody().strength(-260));
+    simulation.force(
+      "collision",
+      d3
+        .forceCollide()
+        .radius((d: any) => {
           const nodeData = d.data as NodeData;
-          return nodeData.node_type === "topic" ? 80 : 60;
+          return nodeData.node_type === "topic" ? 90 : 70;
         })
-      )
-      .force(
-        "link",
-        d3
-          .forceLink(edges)
-          .id((d: any) => d.id)
-          .distance(150)
-      )
-      .alphaDecay(0.05)
-      .on("tick", () => {
-        setNodes((prevNodes) =>
-          prevNodes.map((node, index) => ({
+        .strength(1.1)
+    );
+    simulation.force(
+      "link",
+      d3
+        .forceLink(linkData as any)
+        .id((d: any) => d.id)
+        .distance((link: any) => {
+          const resolveNode = (value: any) =>
+            typeof value === "string" ? value : value.id;
+
+          const sourceNode = nodes.find(
+            (node) => node.id === resolveNode(link.source)
+          );
+          const targetNode = nodes.find(
+            (node) => node.id === resolveNode(link.target)
+          );
+
+          const baseDistance = 180;
+          if (
+            sourceNode?.data?.node_type === "topic" ||
+            targetNode?.data?.node_type === "topic"
+          ) {
+            return baseDistance + 60;
+          }
+          return baseDistance;
+        })
+        .strength(0.25)
+    );
+
+    simulation.on("tick", () => {
+      isSimulationTickRef.current = true;
+      setNodes((prevNodes) =>
+        prevNodes.map((node) => {
+          const simNode = simulationNodes.find((n) => n.id === node.id);
+          if (!simNode) return node;
+          return {
             ...node,
             position: {
-              x: (simulation.nodes()[index] as any).x || node.position.x,
-              y: (simulation.nodes()[index] as any).y || node.position.y,
+              x: simNode.x ?? node.position.x,
+              y: simNode.y ?? node.position.y,
             },
-          }))
-        );
-      });
+          };
+        })
+      );
+    });
 
-    simulationRef.current = simulation;
+    simulation.alpha(0.9).restart();
+  }, [nodes, edges, setNodes]);
 
-    return () => {
-      if (simulationRef.current) {
-        simulationRef.current.stop();
-      }
-    };
-  }, [nodes.length, edges, setNodes]);
-
+  // D3 Force Layout
   // Handle connection
   const onConnect: OnConnect = useCallback(
     (params) => {
@@ -897,6 +1014,8 @@ const Flow: React.FC = () => {
     ) => {
       if (!pendingNodePosition) return;
 
+      pendingNodePositionRef.current = pendingNodePosition;
+
       const newNodeId = (
         Math.max(...dbNodes.map((n) => parseInt(n.node_id)), 0) + 1
       ).toString();
@@ -914,6 +1033,16 @@ const Flow: React.FC = () => {
       setPendingNodePosition(null);
     },
     [pendingNodePosition, dbNodes]
+  );
+
+  const handleNodesChange = useCallback<OnNodesChange>(
+    (changes) => {
+      onNodesChange(changes);
+      if (simulationRef.current) {
+        simulationRef.current.alpha(0.7).restart();
+      }
+    },
+    [onNodesChange]
   );
 
   // Delete selected node
@@ -1007,7 +1136,7 @@ const Flow: React.FC = () => {
           nodes={nodes}
           nodeTypes={nodeTypes}
           edges={edges}
-          onNodesChange={onNodesChange}
+          onNodesChange={handleNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={handleNodeClick}

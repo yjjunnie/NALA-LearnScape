@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
+@theme {
+  --font-fredoka: "Fredoka", "GlacialIndifference", sans-serif;
+  --font-glacial: "GlacialIndifference", "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply font-glacial font-normal;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-fredoka font-bold;
+  }
+}
+
 @layer reactflow {
   @import "@xyflow/react/dist/style.css";
 }

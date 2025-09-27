@@ -1,11 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Box,
-  Paper,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Paper, Stack, Tooltip, Typography } from "@mui/material";
+import { PieChart, pieArcLabelClasses } from "@mui/x-charts/PieChart";
 
 type LearningSlice = {
   id: string;
@@ -71,24 +66,6 @@ const prototypeFetchLearningStyle = async (): Promise<LearningStyleResponse> => 
   });
 };
 
-const radius = 80;
-
-const polarToCartesian = (center: number, r: number, angle: number) => {
-  const radians = ((angle - 90) * Math.PI) / 180;
-  return {
-    x: center + r * Math.cos(radians),
-    y: center + r * Math.sin(radians),
-  };
-};
-
-const describeSegment = (startAngle: number, endAngle: number, r: number) => {
-  const start = polarToCartesian(100, r, endAngle);
-  const end = polarToCartesian(100, r, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-
-  return `M 100 100 L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 1 ${end.x} ${end.y} Z`;
-};
-
 const LearningStyleOverview: React.FC = () => {
   const [data, setData] = useState<LearningSlice[]>([]);
   const [currentStyle, setCurrentStyle] = useState<string>("-");
@@ -106,21 +83,34 @@ const LearningStyleOverview: React.FC = () => {
     [data]
   );
 
-  const slicesWithAngles = useMemo(() => {
-    let runningTotal = 0;
-    return data.map((slice) => {
-      const startAngle = runningTotal * 360;
-      const portion = slice.value / total;
-      runningTotal += portion;
-      const endAngle = runningTotal * 360;
+  const pieSeriesData = useMemo(
+    () =>
+      data.map((slice) => ({
+        id: slice.id,
+        value: slice.value,
+        label: slice.label,
+        color: slice.color,
+      })),
+    [data]
+  );
 
-      return {
-        ...slice,
-        startAngle,
-        endAngle,
-      };
-    });
-  }, [data, total]);
+  const chartColors = useMemo(
+    () => pieSeriesData.map((item) => item.color),
+    [pieSeriesData]
+  );
+
+  const handleHighlightChange: NonNullable<
+    React.ComponentProps<typeof PieChart>["onHighlightChange"]
+  > = (
+    _event,
+    item
+  ) => {
+    if (item?.dataIndex != null) {
+      setHoveredSlice(data[item.dataIndex] ?? null);
+      return;
+    }
+    setHoveredSlice(null);
+  };
 
   return (
     <Paper
@@ -142,14 +132,14 @@ const LearningStyleOverview: React.FC = () => {
             color: "#4C73FF",
             letterSpacing: 1,
             textTransform: "uppercase",
-            fontWeight: 700,
+            fontWeight: 400,
           }}
         >
           Current Learning Style
         </Typography>
         <Typography
           variant="h3"
-          className="font-['Fredoka',sans-serif]"
+          className="font-fredoka font-bold"
           sx={{
             color: "primary.main",
             fontSize: { xs: "1.6rem", md: "1.8rem" },
@@ -165,35 +155,62 @@ const LearningStyleOverview: React.FC = () => {
         className="w-full"
       >
         <Box className="relative flex items-center justify-center">
-          {hoveredSlice && (
-        <Box className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 rounded-[16px] bg-[rgba(76,115,255,0.92)] px-[14px] py-2 text-white">
-              <Typography variant="subtitle1" fontWeight={700}>
-                {hoveredSlice.label}
+          <PieChart
+            colors={chartColors}
+            height={240}
+            onHighlightChange={handleHighlightChange}
+            slotProps={{
+              legend: { hidden: true },
+              tooltip: {
+                sx: {
+                  fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+                  fontWeight: 400,
+                },
+              },
+            }}
+            series={[
+              {
+                arcLabel: ({ value }) =>
+                  `${Math.round(((value as number) / total) * 100)}%`,
+                arcLabelMinAngle: 12,
+                cornerRadius: 6,
+                data: pieSeriesData,
+                faded: {
+                  additionalRadius: -12,
+                  innerRadius: 36,
+                },
+                highlightScope: { faded: "global", highlighted: "item" },
+                innerRadius: 40,
+                outerRadius: 90,
+                paddingAngle: 2,
+              },
+            ]}
+            sx={{
+              [`& .${pieArcLabelClasses.root}`]: {
+                fill: "#0F1F4A",
+                fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+                fontSize: 12,
+                fontWeight: 400,
+              },
+            }}
+            width={260}
+          />
+          <Box className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <Stack spacing={0.5} alignItems="center">
+              <Typography
+                variant="h6"
+                className="font-fredoka font-bold"
+                color="primary.main"
+              >
+                {hoveredSlice?.label ?? currentStyle}
               </Typography>
-              <Typography variant="body2" color="primary.main">
-                {Math.round((hoveredSlice.value / total) * 100)}%
+              <Typography variant="body2" color="text.secondary">
+                {hoveredSlice
+                  ? `${Math.round((hoveredSlice.value / total) * 100)}% emphasis`
+                  : "Primary focus"}
               </Typography>
-            </Box>
-          )}
-          <svg
-            viewBox="0 0 200 200"
-            role="img"
-            aria-label="Learning style distribution"
-            className="h-auto w-full"
-          >
-            {slicesWithAngles.map((slice) => (
-              <path
-                key={slice.id}
-                d={describeSegment(slice.startAngle, slice.endAngle, radius)}
-                fill={slice.color}
-                stroke="#ffffff"
-                strokeWidth={1.5}
-                onMouseEnter={() => setHoveredSlice(slice)}
-                onMouseLeave={() => setHoveredSlice(null)}
-              />
-            ))}
-            <circle cx="100" cy="100" r="42" fill="#ffffff" />
-          </svg>
+            </Stack>
+          </Box>
         </Box>
         <Stack spacing={1.5} className="w-full">
           {data.map((slice) => (
@@ -211,7 +228,7 @@ const LearningStyleOverview: React.FC = () => {
               <Box sx={{ flexGrow: 1 }}>
                 <Typography
                   variant="subtitle1"
-                  className="font-['GlacialIndifference',sans-serif] font-semibold"
+                  className="font-glacial font-normal"
                 >
                   {slice.label}
                 </Typography>
@@ -230,7 +247,8 @@ const LearningStyleOverview: React.FC = () => {
                     sx: {
                       backgroundColor: "rgba(40,72,209,0.95)",
                       borderRadius: 2,
-                      fontFamily: '"GlacialIndifference", sans-serif',
+                      fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
+                      fontWeight: 400,
                       fontSize: "0.75rem",
                       px: 1.5,
                       py: 1,
@@ -242,7 +260,7 @@ const LearningStyleOverview: React.FC = () => {
                 }}
               >
                 <Box
-                  className="inline-flex h-[26px] w-[26px] cursor-default items-center justify-center rounded-full bg-[#e1e9ff] font-['Fredoka',sans-serif] font-bold text-[#1b46d1]"
+                  className="inline-flex h-[26px] w-[26px] cursor-default items-center justify-center rounded-full bg-[#e1e9ff] font-fredoka font-bold text-[#1b46d1]"
                   onMouseEnter={() => setHoveredSlice(slice)}
                   onMouseLeave={() => setHoveredSlice(null)}
                 >

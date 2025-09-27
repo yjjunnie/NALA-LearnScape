@@ -1,294 +1,478 @@
-import React, { useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
-import { Box, Stack, Typography } from "@mui/material";
-import DragTimeBlock from "./DragTimeBlock";
+import React, { useState, useRef, useCallback } from "react";
 
-type ScheduleItem = {
+// Simple data structures
+interface ScheduleItem {
   id: string;
-  label: string;
+  title: string;
+  start: number; // minutes from midnight
   duration: number; // minutes
-  start: number; // minutes from 0000
   color: string;
-};
-
-const TOTAL_MINUTES = 24 * 60;
-
-const clamp = (value: number, min: number, max: number): number => {
-  if (value < min) return min;
-  if (value > max) return max;
-  return value;
-};
-
-export interface SchedulerProps {
-  headerAction?: ReactNode;
 }
 
-const formatTime = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return `${hours.toString().padStart(2, "0")}${mins
-    .toString()
-    .padStart(2, "0")}`;
+// Constants
+const MINUTES_PER_DAY = 24 * 60;
+const PIXELS_PER_HOUR = 120;
+const TIMELINE_WIDTH = 24 * PIXELS_PER_HOUR;
+const SNAP_INTERVAL = 15; // Snap to 15-minute intervals
+
+// Utility functions
+const timeToMinutes = (timeStr: string): number => {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
 };
 
+const minutesToTime = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+};
+
+const formatDuration = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
+};
+
+// Snap to 15-minute intervals
+const snapToInterval = (minutes: number): number => {
+  return Math.round(minutes / SNAP_INTERVAL) * SNAP_INTERVAL;
+};
+
+// Sample data
 const initialSchedule: ScheduleItem[] = [
   {
-    id: "module-1",
-    label: "Linear Algebra - Vectors",
+    id: "1",
+    title: "Linear Algebra - Vectors",
+    start: timeToMinutes("08:00"),
     duration: 90,
-    start: 8 * 60,
-    color: "#7EA8FF",
+    color: "#7EA8FF"
   },
   {
-    id: "module-2",
-    label: "Calculus - Integrals",
+    id: "2", 
+    title: "Calculus - Integrals",
+    start: timeToMinutes("10:30"),
     duration: 60,
-    start: 10 * 60 + 30,
-    color: "#4C73FF",
+    color: "#4C73FF"
   },
   {
-    id: "module-3",
-    label: "Dual Coding Practice",
+    id: "3",
+    title: "Coding Practice", 
+    start: timeToMinutes("13:00"),
     duration: 120,
-    start: 13 * 60,
-    color: "#3D5BDB",
-  },
+    color: "#3D5BDB"
+  }
 ];
 
-const Scheduler: React.FC<SchedulerProps> = ({ headerAction }) => {
-  const [schedule, setSchedule] = useState<ScheduleItem[]>(initialSchedule);
-  const [activeBlock, setActiveBlock] = useState<string | null>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
+// Drop preview component
+interface DropPreviewProps {
+  start: number;
+  duration: number;
+  isValid: boolean;
+}
 
-  const totalDurationLabel = useMemo(() => {
-    const total = schedule.reduce((sum, item) => sum + item.duration, 0);
-    const hours = Math.floor(total / 60);
-    const minutes = total % 60;
-    const parts = [];
-
-    if (hours > 0) {
-      parts.push(`${hours} hr${hours > 1 ? "s" : ""}`);
-    }
-    if (minutes > 0) {
-      parts.push(`${minutes} min`);
-    }
-
-    return parts.join(" ") || "0 min";
-  }, [schedule]);
-
-  const handleDragStart = (
-    event: React.DragEvent<HTMLDivElement>,
-    id: string
-  ): void => {
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", id);
-    setActiveBlock(id);
-  };
-
-  const handleDragEnd = (): void => {
-    setActiveBlock(null);
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>): void => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-  };
-
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>): void => {
-    event.preventDefault();
-
-    const id = event.dataTransfer.getData("text/plain") || activeBlock;
-    if (!id || !trackRef.current) {
-      return;
-    }
-
-    const rect = trackRef.current.getBoundingClientRect();
-    const pointerX = clamp(event.clientX - rect.left, 0, rect.width);
-    const ratio = pointerX / rect.width;
-    const minutes = Math.round(ratio * TOTAL_MINUTES);
-
-    setSchedule((prev) =>
-      {
-        const nextSchedule = [...prev];
-        const currentIndex = nextSchedule.findIndex((item) => item.id === id);
-        if (currentIndex === -1) {
-          return prev;
-        }
-
-        const currentItem = nextSchedule[currentIndex];
-        const desiredStart = clamp(minutes, 0, TOTAL_MINUTES - currentItem.duration);
-        const others = nextSchedule
-          .filter((item) => item.id !== id)
-          .sort((a, b) => a.start - b.start);
-
-        const originalStart = currentItem.start;
-        let updatedStart = originalStart;
-        let placed = false;
-        let previousEnd = 0;
-
-        for (const other of others) {
-          const otherStart = Math.max(other.start, previousEnd);
-          const gapStart = previousEnd;
-          const gapEnd = otherStart;
-
-          if (gapEnd - gapStart >= currentItem.duration) {
-            const candidateStart = clamp(
-              desiredStart,
-              gapStart,
-              gapEnd - currentItem.duration
-            );
-            if (candidateStart >= gapStart && candidateStart + currentItem.duration <= gapEnd) {
-              updatedStart = candidateStart;
-              placed = true;
-              break;
-            }
-          }
-
-          previousEnd = Math.max(previousEnd, other.start + other.duration);
-        }
-
-        if (!placed) {
-          const gapStart = previousEnd;
-          const gapEnd = TOTAL_MINUTES;
-          if (gapEnd - gapStart >= currentItem.duration) {
-            updatedStart = clamp(
-              desiredStart,
-              gapStart,
-              gapEnd - currentItem.duration
-            );
-            placed = true;
-          }
-        }
-
-        if (!placed) {
-          return prev;
-        }
-
-        const updatedItem: ScheduleItem = {
-          ...currentItem,
-          start: updatedStart,
-        };
-
-        const updatedSchedule = [...others, updatedItem].sort((a, b) => a.start - b.start);
-        return updatedSchedule;
-      }
-    );
-
-    setActiveBlock(null);
-  };
-
+const DropPreview: React.FC<DropPreviewProps> = ({ start, duration, isValid }) => {
+  const leftPos = (start / MINUTES_PER_DAY) * TIMELINE_WIDTH;
+  const width = (duration / MINUTES_PER_DAY) * TIMELINE_WIDTH;
+  
   return (
-    <Box
-      className="flex flex-col gap-[18px] rounded-[32px] p-6 backdrop-blur-[6px]"
-      sx={{
-        backgroundColor: "rgba(255,255,255,0.2)",
-        borderRadius: "32px",
-        border: "1px solid rgba(255,255,255,0.35)",
-        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)",
-
+    <div
+      className={`absolute top-16 bottom-4 rounded-2xl border-2 border-dashed transition-all ${
+        isValid 
+          ? 'bg-green-200/50 border-green-400' 
+          : 'bg-red-200/50 border-red-400'
+      }`}
+      style={{
+        left: `${leftPos}px`,
+        width: `${width}px`,
       }}
     >
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        justifyContent="space-between"
-        alignItems={{ xs: "flex-start", md: "center" }}
-        gap={1.5}
-        className="w-full"
+      <div className="p-3 h-full flex items-center justify-center">
+        <div className={`text-sm font-medium ${isValid ? 'text-green-700' : 'text-red-700'}`}>
+          {isValid ? '✓ Drop here' : '✗ Invalid position'}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Schedule block component
+interface ScheduleBlockProps {
+  item: ScheduleItem;
+  onDragStart: (e: React.DragEvent, id: string) => void;
+  onResize: (id: string, edge: 'left' | 'right', startX: number) => void;
+  isDragging?: boolean;
+}
+
+const ScheduleBlock: React.FC<ScheduleBlockProps> = ({ 
+  item, 
+  onDragStart, 
+  onResize,
+  isDragging 
+}) => {
+  const leftPos = (item.start / MINUTES_PER_DAY) * TIMELINE_WIDTH;
+  const width = (item.duration / MINUTES_PER_DAY) * TIMELINE_WIDTH;
+  
+  const startTime = minutesToTime(item.start);
+  const endTime = minutesToTime(item.start + item.duration);
+  const durationText = formatDuration(item.duration);
+
+  const handleResizeStart = (e: React.MouseEvent, edge: 'left' | 'right') => {
+    e.stopPropagation();
+    e.preventDefault();
+    onResize(item.id, edge, e.clientX);
+  };
+
+  const handleDragStart = (e: React.DragEvent) => {
+    // Add a drag image
+    const dragImg = document.createElement('div');
+    dragImg.style.cssText = `
+      position: absolute;
+      top: -1000px;
+      background: ${item.color};
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    `;
+    dragImg.textContent = item.title;
+    document.body.appendChild(dragImg);
+    e.dataTransfer.setDragImage(dragImg, 50, 20);
+    
+    // Clean up drag image after a short delay
+    setTimeout(() => document.body.removeChild(dragImg), 0);
+    
+    onDragStart(e, item.id);
+  };
+
+  if (isDragging) {
+    return (
+      <div
+        className="absolute top-16 bottom-4 rounded-2xl border-2 border-dashed border-gray-400 bg-gray-200/50"
+        style={{
+          left: `${leftPos}px`,
+          width: `${width}px`,
+        }}
       >
-        <Typography
-          variant="h6"
-          sx={{
-            fontSize: { xs: "1.1rem", md: "1.25rem" },
-            color: "rgba(255,255,255,0.95)",
-            letterSpacing: 0.4,
-          }}
+        <div className="p-3 h-full flex items-center justify-center text-gray-500 text-sm">
+          Dragging...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      draggable
+      onDragStart={handleDragStart}
+      className="absolute top-16 bottom-4 group cursor-grab active:cursor-grabbing rounded-2xl border-2 border-white/30 text-white shadow-lg transition-all hover:shadow-xl hover:scale-[1.02] hover:border-white/50"
+      style={{
+        left: `${leftPos}px`,
+        width: `${width}px`,
+        backgroundColor: item.color,
+      }}
+    >
+      {/* Left resize handle */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-l-2xl flex items-center justify-center"
+        onMouseDown={(e) => handleResizeStart(e, 'left')}
+      >
+        <div className="w-0.5 h-6 bg-white/70 rounded" />
+      </div>
+      
+      {/* Content */}
+      <div className="p-3 h-full flex flex-col justify-between pointer-events-none">
+        <div>
+          <div className="font-semibold text-sm leading-tight">{item.title}</div>
+          <div className="text-xs opacity-80 mt-1">{durationText}</div>
+        </div>
+        <div className="text-xs font-medium">
+          {startTime} - {endTime}
+        </div>
+      </div>
+
+      {/* Right resize handle */}
+      <div
+        className="absolute right-0 top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-r-2xl flex items-center justify-center"
+        onMouseDown={(e) => handleResizeStart(e, 'right')}
+      >
+        <div className="w-0.5 h-6 bg-white/70 rounded" />
+      </div>
+    </div>
+  );
+};
+
+// Main scheduler component
+const Scheduler: React.FC = () => {
+  const [schedule, setSchedule] = useState<ScheduleItem[]>(initialSchedule);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragPreview, setDragPreview] = useState<{
+    start: number;
+    duration: number;
+    isValid: boolean;
+  } | null>(null);
+  const [resizing, setResizing] = useState<{
+    id: string;
+    edge: 'left' | 'right';
+    startX: number;
+    originalItem: ScheduleItem;
+  } | null>(null);
+  
+  const timelineRef = useRef<HTMLDivElement>(null);
+
+  // Calculate total study time
+  const totalMinutes = schedule.reduce((sum, item) => sum + item.duration, 0);
+  const totalHours = Math.floor(totalMinutes / 60);
+  const remainingMins = totalMinutes % 60;
+  const totalTimeText = totalHours > 0 ? `${totalHours}h ${remainingMins}m` : `${remainingMins}m`;
+
+  // Reset to initial state
+  const handleReset = () => {
+    setSchedule([...initialSchedule]);
+    setDraggedId(null);
+    setDragPreview(null);
+    setResizing(null);
+  };
+
+  // Check if a position is valid (no collisions)
+  const isValidPosition = useCallback((start: number, duration: number, excludeId?: string) => {
+    if (start < 0 || start + duration > MINUTES_PER_DAY) return false;
+    
+    return !schedule.some(item => {
+      if (item.id === excludeId) return false;
+      const itemEnd = item.start + item.duration;
+      const newEnd = start + duration;
+      return !(start >= itemEnd || newEnd <= item.start);
+    });
+  }, [schedule]);
+
+  // Find the nearest valid position
+  const findNearestValidPosition = useCallback((targetStart: number, duration: number, excludeId?: string) => {
+    // Try the target position first
+    if (isValidPosition(targetStart, duration, excludeId)) {
+      return targetStart;
+    }
+
+    const otherItems = schedule
+      .filter(item => item.id !== excludeId)
+      .sort((a, b) => a.start - b.start);
+
+    // Try before first item
+    if (otherItems.length === 0 || otherItems[0].start >= duration) {
+      return Math.max(0, Math.min(targetStart, otherItems[0]?.start - duration || MINUTES_PER_DAY - duration));
+    }
+
+    // Try gaps between items
+    for (let i = 0; i < otherItems.length - 1; i++) {
+      const gapStart = otherItems[i].start + otherItems[i].duration;
+      const gapEnd = otherItems[i + 1].start;
+      
+      if (gapEnd - gapStart >= duration) {
+        const preferredStart = Math.max(gapStart, Math.min(targetStart, gapEnd - duration));
+        return preferredStart;
+      }
+    }
+
+    // Try after last item
+    const lastItem = otherItems[otherItems.length - 1];
+    const afterLast = lastItem.start + lastItem.duration;
+    if (afterLast + duration <= MINUTES_PER_DAY) {
+      return Math.max(afterLast, Math.min(targetStart, MINUTES_PER_DAY - duration));
+    }
+
+    return targetStart; // Fallback
+  }, [schedule, isValidPosition]);
+
+  // Drag handlers
+  const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+    setDraggedId(id);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    if (!draggedId || !timelineRef.current) return;
+
+    const rect = timelineRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const targetMinutes = snapToInterval((x / rect.width) * MINUTES_PER_DAY);
+
+    const draggedItem = schedule.find(item => item.id === draggedId);
+    if (!draggedItem) return;
+
+    const nearestStart = findNearestValidPosition(targetMinutes, draggedItem.duration, draggedId);
+    const isValid = isValidPosition(nearestStart, draggedItem.duration, draggedId);
+
+    setDragPreview({
+      start: nearestStart,
+      duration: draggedItem.duration,
+      isValid
+    });
+  }, [draggedId, schedule, findNearestValidPosition, isValidPosition]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    // Only clear preview if we're leaving the timeline completely
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragPreview(null);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    
+    if (!dragPreview || !draggedId) return;
+
+    if (dragPreview.isValid) {
+      setSchedule(prev => 
+        prev.map(item => 
+          item.id === draggedId 
+            ? { ...item, start: dragPreview.start }
+            : item
+        ).sort((a, b) => a.start - b.start)
+      );
+    }
+
+    setDraggedId(null);
+    setDragPreview(null);
+  }, [draggedId, dragPreview]);
+
+  // Resize handlers
+  const handleResize = useCallback((id: string, edge: 'left' | 'right', startX: number) => {
+    const item = schedule.find(i => i.id === id);
+    if (!item) return;
+
+    const resizeState = { id, edge, startX, originalItem: item };
+    setResizing(resizeState);
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!timelineRef.current) return;
+
+      const rect = timelineRef.current.getBoundingClientRect();
+      const deltaX = e.clientX - resizeState.startX;
+      const deltaMinutes = snapToInterval((deltaX / rect.width) * MINUTES_PER_DAY);
+
+      let newStart = resizeState.originalItem.start;
+      let newDuration = resizeState.originalItem.duration;
+
+      if (resizeState.edge === 'left') {
+        const maxStartShift = resizeState.originalItem.duration - 15;
+        const actualShift = Math.min(deltaMinutes, maxStartShift);
+        newStart = Math.max(0, resizeState.originalItem.start + actualShift);
+        newDuration = resizeState.originalItem.duration - (newStart - resizeState.originalItem.start);
+      } else {
+        const maxEndPosition = MINUTES_PER_DAY;
+        const maxDuration = maxEndPosition - resizeState.originalItem.start;
+        newDuration = Math.max(15, Math.min(resizeState.originalItem.duration + deltaMinutes, maxDuration));
+      }
+
+      setSchedule(prev => prev.map(item => 
+        item.id === resizeState.id ? { ...item, start: newStart, duration: newDuration } : item
+      ));
+    };
+
+    const handleMouseUp = () => {
+      setResizing(null);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [schedule]);
+
+  // Generate hour markers
+  const hourMarkers = Array.from({ length: 25 }, (_, hour) => ({
+    hour,
+    left: (hour * 60 / MINUTES_PER_DAY) * TIMELINE_WIDTH,
+    label: `${hour.toString().padStart(2, '0')}:00`
+  }));
+
+  // Generate 15-minute grid lines
+  const gridLines = Array.from({ length: 96 }, (_, index) => {
+    const minutes = index * 15;
+    const left = (minutes / MINUTES_PER_DAY) * TIMELINE_WIDTH;
+    const isHour = minutes % 60 === 0;
+    return { minutes, left, isHour };
+  });
+
+  return (
+    <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-3xl p-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="text-white/90 font-medium">
+          Total study time: {totalTimeText}
+        </div>
+        <button
+          onClick={handleReset}
+          className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-medium transition-colors"
         >
-          Recommended study plan for today:
-        </Typography>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={{ xs: 1, sm: 2 }}
-          alignItems={{ xs: "flex-start", sm: "center" }}
-          sx={{
-            width: "100%",
-            justifyContent: { sm: "flex-end" },
-            flexWrap: "wrap",
-            rowGap: 0.5,
-          }}
-        >
-          <Typography
-            variant="subtitle1"
-            className="font-medium text-white/90"
-            sx={{
-              color: "rgba(255,255,255,0.9)",
-              fontWeight: 500,
-              textAlign: { xs: "left", sm: "right" },
-            }}
-          >
-            Total study time: {totalDurationLabel}
-          </Typography>
-          {headerAction}
-        </Stack>
-      </Stack>
-      <Box className="grid grid-cols-[auto_1fr] items-center gap-[18px] lg:grid-cols-[auto_1fr_auto]">
-        <Typography className="font-['Fredoka',sans-serif] text-base font-semibold text-[#2447b5]">
-          0000
-        </Typography>
-        <Box
-          className="relative h-[140px] rounded-[32px] border border-white/60 bg-[rgba(255,255,255,0.95)] py-5 shadow-[inset_0_0_0_1px_rgba(76,115,255,0.12)]"
-          ref={trackRef}
+          Reset
+        </button>
+      </div>
+
+      {/* Timeline */}
+      <div className="overflow-x-auto">
+        <div
+          ref={timelineRef}
+          className="relative bg-white/95 rounded-3xl border border-white/60"
+          style={{ width: TIMELINE_WIDTH, height: 250, minWidth: TIMELINE_WIDTH }}
           onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          {schedule.map((item) => {
-            const leftPercent = (item.start / TOTAL_MINUTES) * 100;
-            const widthPercent = (item.duration / TOTAL_MINUTES) * 100;
+          {/* Grid lines */}
+          {gridLines.map(({ minutes, left, isHour }) => (
+            <div 
+              key={minutes} 
+              className={`absolute top-0 bottom-0 ${isHour ? 'w-0.5 bg-blue-400/50' : 'w-px bg-blue-300/20'}`} 
+              style={{ left }} 
+            />
+          ))}
 
-            return (
-              <DragTimeBlock
-                key={item.id}
-                id={item.id}
-                label={item.label}
-                duration={item.duration}
-                color={item.color}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                style={{
-                  left: `${leftPercent}%`,
-                  width: `${widthPercent}%`,
-                  opacity: activeBlock === item.id ? 0.75 : 1,
-                }}
-                className="absolute top-[28px] bottom-[28px] flex cursor-grab flex-col justify-between rounded-[24px] border border-transparent p-[18px] text-[#0c1e4a] active:cursor-grabbing"
-              />
-            );
-          })}
-          <div className="pointer-events-none absolute inset-0">
-            {Array.from({ length: 7 }).map((_, index) => {
-              const stepMinutes = (index + 1) * (TOTAL_MINUTES / 8);
-              const label = formatTime(Math.round(stepMinutes));
-              const leftPercent = (stepMinutes / TOTAL_MINUTES) * 100;
-              return (
-                <div
-                  key={label}
-                  className="absolute top-[14px] bottom-[14px] flex -translate-x-1/2 flex-col items-center gap-[6px]"
-                  style={{ left: `${leftPercent}%` }}
-                >
-                  <span className="flex-1 w-[2px] bg-[rgba(76,115,255,0.2)]" />
-                  <span className="text-[0.75rem] font-['GlacialIndifference',sans-serif] text-[#1a2c5e]">
-                    {label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </Box>
-        <Typography
-          className="font-['Fredoka',sans-serif] text-base font-semibold text-[#2447b5] justify-self-end lg:justify-self-auto"
-        >
-          2359
-        </Typography>
-      </Box>
-    </Box>
+          {/* Hour markers */}
+          {hourMarkers.map(({ hour, left, label }) => (
+            <div key={hour} className="absolute top-2 z-10" style={{ left: left - 20 }}>
+              <div className="bg-white/90 px-2 py-1 rounded text-xs font-semibold text-blue-900 shadow-sm">
+                {label}
+              </div>
+            </div>
+          ))}
+
+          {/* Drop preview */}
+          {dragPreview && (
+            <DropPreview
+              start={dragPreview.start}
+              duration={dragPreview.duration}
+              isValid={dragPreview.isValid}
+            />
+          )}
+
+          {/* Schedule blocks */}
+          {schedule.map(item => (
+            <ScheduleBlock
+              key={item.id}
+              item={item}
+              onDragStart={handleDragStart}
+              onResize={handleResize}
+              isDragging={draggedId === item.id}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Instructions */}
+      <div className="text-center text-white/60 text-sm mt-4 space-y-1">
+        <div>← Scroll horizontally to view full timeline →</div>
+        <div className="text-xs">
+          Drag blocks to move • Drag edges to resize • Snaps to 15-minute intervals
+        </div>
+      </div>
+    </div>
   );
 };
 

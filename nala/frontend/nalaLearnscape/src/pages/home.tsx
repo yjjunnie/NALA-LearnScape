@@ -2,15 +2,10 @@ import React, { useState } from "react";
 import {
   Box,
   IconButton,
-  useMediaQuery,
-  useTheme,
-  Fade,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { MenuRounded as MenuRoundedIcon } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
-
-import Welcome from "../components/welcome";
+import Welcome from "../components/Welcome";
 import ThreadMapSection from "../components/ThreadMapSection";
 import SideNav from "../components/SideNav";
 

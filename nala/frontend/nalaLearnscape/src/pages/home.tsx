@@ -8,6 +8,7 @@ import { MenuRounded as MenuRoundedIcon } from "@mui/icons-material";
 import Welcome from "../components/Welcome";
 import ThreadMapSection from "../components/ThreadMapSection";
 import SideNav from "../components/SideNav";
+import LearningStyleOverview from "../components/LearningStyleOverview";
 
 const Home: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -47,31 +48,10 @@ const Home: React.FC = () => {
 
       <div>
         
-        {/* Welcome + Schedule Section */}
-          <Box>
-            <Welcome />
-          </Box>
-
-        {/* Course Threadmap Section */}
-        <Grid
-          item
-          xs={12}
-          lg={8}
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <Box
-            sx={{
-              height: "100%",
-              minHeight: { xs: 400, md: 500 },
-            }}
-          >
-            <ThreadMapSection />
-          </Box>
-        </Grid>
-
+        <Welcome />
+        <LearningStyleOverview/>
+        <ThreadMapSection />
+        
         {/* Insights Card Section */}
         <div className="w-full lg:w-1/3">
           <div className="flex flex-col space-y-2 sm:space-y-3">

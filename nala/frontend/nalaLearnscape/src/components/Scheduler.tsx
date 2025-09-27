@@ -401,9 +401,9 @@ const Scheduler: React.FC = () => {
   });
 
   return (
-    <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-3xl p-6">
+    <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-3xl p-4">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-2">
         <div className="text-white/90 font-medium">
           Total study time: {totalTimeText}
         </div>

@@ -23,9 +23,6 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
-    fontWeightRegular: 400,
-    fontWeightMedium: 500,
-    fontWeightBold: 700,
     h1: {
       fontFamily: '"Fredoka", "GlacialIndifference", sans-serif',
       fontWeight: 700,
@@ -52,28 +49,23 @@ const theme = createTheme({
     },
     subtitle1: {
       fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: 400,
     },
     subtitle2: {
       fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: 400,
     },
     body1: {
       fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: 400,
     },
     body2: {
       fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: 400,
     },
     button: {
       textTransform: "none",
       fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: 400,
+      fontWeight: 600,
     },
     caption: {
       fontFamily: '"GlacialIndifference", "Helvetica Neue", Arial, sans-serif',
-      fontWeight: 400,
     },
   },
 });

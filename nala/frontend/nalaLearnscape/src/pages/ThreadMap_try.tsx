@@ -817,7 +817,7 @@ const Flow: React.FC = () => {
         id: `e${rel.node_id_1}-${rel.node_id_2}`,
         source: rel.node_id_1,
         target: rel.node_id_2,
-        type: "smoothstep",
+        type: "straight",
         style: { stroke: "#b1b1b7", strokeWidth: 2 },
         animated: false,
         label: rel.relationship_type,
@@ -851,11 +851,34 @@ const Flow: React.FC = () => {
 
     const simulation = simulationRef.current;
 
+    const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+
+    const findRootTopicId = (
+      node: FlowNode | undefined,
+      visited: Set<string> = new Set()
+    ): string | null => {
+      if (!node || visited.has(node.id)) {
+        return null;
+      }
+      visited.add(node.id);
+      if (node.data.node_type === "topic") {
+        return node.id;
+      }
+      if (!node.data.parent_node_id) {
+        return null;
+      }
+      return findRootTopicId(nodeMap.get(node.data.parent_node_id), visited);
+    };
+
     const simulationNodes = nodes.map((node) => ({
       ...node,
       x: node.position.x,
       y: node.position.y,
     }));
+
+    const simulationNodeMap = new Map(
+      simulationNodes.map((node) => [node.id, node])
+    );
 
     const linkData = edges.map((edge) => ({
       source: edge.source,
@@ -864,14 +887,21 @@ const Flow: React.FC = () => {
 
     simulation.nodes(simulationNodes as any);
     simulation.force("center", d3.forceCenter(width / 2, height / 2));
-    simulation.force("charge", d3.forceManyBody().strength(-200));
+    simulation.force(
+      "charge",
+      d3
+        .forceManyBody()
+        .strength((d: any) =>
+          (d.data as NodeData).node_type === "topic" ? -420 : -200
+        )
+    );
     simulation.force(
       "collision",
       d3
         .forceCollide()
         .radius((d: any) => {
           const nodeData = d.data as NodeData;
-          return nodeData.node_type === "topic" ? 90 : 70;
+          return nodeData.node_type === "topic" ? 110 : 70;
         })
         .strength(1.1)
     );
@@ -891,21 +921,22 @@ const Flow: React.FC = () => {
             (node) => node.id === resolveNode(link.target)
           );
 
-          const baseDistance = 180;
+          const baseDistance = 220;
           const isParentChild =
             sourceNode?.data?.parent_node_id === targetNode?.id ||
             targetNode?.data?.parent_node_id === sourceNode?.id;
 
           if (isParentChild) {
-            return baseDistance - 50;
+            return 110;
           }
 
-          if (
-            sourceNode?.data?.node_type === "topic" ||
-            targetNode?.data?.node_type === "topic"
-          ) {
-            return baseDistance + 40;
+          const sourceRoot = findRootTopicId(sourceNode);
+          const targetRoot = findRootTopicId(targetNode);
+
+          if (sourceRoot && targetRoot && sourceRoot === targetRoot) {
+            return 160;
           }
+
           return baseDistance;
         })
         .strength((link: any) => {
@@ -923,8 +954,55 @@ const Flow: React.FC = () => {
             sourceNode?.data?.parent_node_id === targetNode?.id ||
             targetNode?.data?.parent_node_id === sourceNode?.id;
 
-          return isParentChild ? 0.6 : 0.35;
+          if (isParentChild) {
+            return 0.9;
+          }
+
+          const sourceRoot = findRootTopicId(sourceNode);
+          const targetRoot = findRootTopicId(targetNode);
+
+          if (sourceRoot && targetRoot && sourceRoot === targetRoot) {
+            return 0.5;
+          }
+
+          return 0.25;
         })
+    );
+
+    simulation.force(
+      "concept-x",
+      d3
+        .forceX((d: any) => {
+          const data = d.data as NodeData;
+          if (data.node_type === "concept" && data.parent_node_id) {
+            const parentNode = simulationNodeMap.get(data.parent_node_id);
+            if (parentNode) {
+              return parentNode.x ?? parentNode.position?.x ?? width / 2;
+            }
+          }
+          return d.x ?? width / 2;
+        })
+        .strength((d: any) =>
+          (d.data as NodeData).node_type === "concept" ? 0.12 : 0.02
+        )
+    );
+
+    simulation.force(
+      "concept-y",
+      d3
+        .forceY((d: any) => {
+          const data = d.data as NodeData;
+          if (data.node_type === "concept" && data.parent_node_id) {
+            const parentNode = simulationNodeMap.get(data.parent_node_id);
+            if (parentNode) {
+              return parentNode.y ?? parentNode.position?.y ?? height / 2;
+            }
+          }
+          return d.y ?? height / 2;
+        })
+        .strength((d: any) =>
+          (d.data as NodeData).node_type === "concept" ? 0.12 : 0.02
+        )
     );
 
     simulation.on("tick", () => {
@@ -957,7 +1035,7 @@ const Flow: React.FC = () => {
         id: `e${params.source}-${params.target}`,
         source: params.source,
         target: params.target,
-        type: "smoothstep",
+        type: "straight",
         style: { stroke: "#b1b1b7", strokeWidth: 2 },
       };
 
@@ -1003,8 +1081,8 @@ const Flow: React.FC = () => {
       };
 
       // Check if mouse is over any existing node
-      const isOverNode = nodes.some((node) => {
-        const nodeSize = node.data.node_type === "topic" ? 60 : 40;
+      const isTooCloseToNode = nodes.some((node) => {
+        const nodeSize = node.data.node_type === "topic" ? 120 : 80;
         const distance = Math.sqrt(
           Math.pow(flowPosition.x - node.position.x, 2) +
             Math.pow(flowPosition.y - node.position.y, 2)
@@ -1015,7 +1093,7 @@ const Flow: React.FC = () => {
       setHoverNode({
         flowPosition,
         screenPosition,
-        visible: !isOverNode,
+        visible: !isTooCloseToNode,
       });
     },
     [reactFlowInstance, nodes]

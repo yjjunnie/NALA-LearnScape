@@ -1,7 +1,4 @@
 from django.db import models
-from unittest import mock
-from app.services.classifierjson import learning_style_from_json 
-filepath = "app/services/chat_history/newlearningstyle.json"
 
 class Module(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -39,23 +36,49 @@ class Relationship(models.Model):
         return f'Relationship: {self.first_node.name} {self.rs_type} {self.second_node.name}'
     
 class Student(models.Model):
+    LEARNING_STYLE_CHOICES = [
+        ('RETRIEVAL', 'Retrieval Practice'),
+        ('SPACED', 'Spaced Practice'),
+        ('ELABORATION', 'Elaboration'),
+        ('CONCRETE', 'Concrete Examples'),
+        ('INTERLEAVING', 'Interleaving'),
+        ('DUAL_CODING', 'Dual Coding'),
+    ]
+    
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    enrolled_modules = models.ManyToManyField(Module, related_name='students',blank=True)
-    learningStyleBreakdown = models.JSONField(learning_style_from_json(filepath), blank=True, null=True)  # e.g., {"Retrieval Practice": 30, "Spaced Practice": 20, ...}
+    enrolled_modules = models.ManyToManyField(Module, related_name='students', blank=True)
     
-    learningStyleDesc = {
-        "Retrieval Practice" : "Testing yourself to strengthen memory and recall",
-        "Spaced Practice" : "Learning over time with breaks between sessions",
-        "Elaboration" : "Explaining discrete ideas with many details",
-        "Concrete Examples" : "Use specific examples to understand abstract ideas",
-        "Interleaving" : "Mixing different topics or skills during study sessions",
-        "Dual Coding" : "Using both visual and verbal information processing",
-    }
+    learningStyleBreakdown = models.JSONField(default=dict, blank=True)
+    
+    learningStyle = models.CharField(
+        max_length=20, 
+        choices=LEARNING_STYLE_CHOICES,
+        default='RETRIEVAL',
+        blank=True,
+        null=True
+    )
 
     def get_learning_style_description(self):
-        return self.learningStyleDesc.get(self.learningStyle, "")
+        """Get description for the current learning style."""
+        # Auto-determine primary style from breakdown
+        if self.learningStyleBreakdown:
+            key_map = {'Retrieval Practice': 'RETRIEVAL', 'Elaboration': 'ELABORATION', 
+                      'Concrete Examples': 'CONCRETE', 'Interleaving': 'INTERLEAVING', 'Dual Coding': 'DUAL_CODING'}
+            primary = max((k for k in self.learningStyleBreakdown if k in key_map), 
+                         key=lambda k: self.learningStyleBreakdown[k], default=None)
+            if primary:
+                self.learningStyle = key_map[primary]
+        
+        descriptions = {
+            "RETRIEVAL": "Testing yourself to strengthen memory and recall",
+            "ELABORATION": "Explaining discrete ideas with many details",
+            "CONCRETE": "Use specific examples to understand abstract ideas",
+            "INTERLEAVING": "Mixing different topics or skills during study sessions",
+            "DUAL_CODING": "Using both visual and verbal information processing",
+        }
+        return descriptions.get(self.learningStyle, "")
     
     def __str__(self):
         return f'Student: [{self.id}] {self.name}'
@@ -69,5 +92,3 @@ class Concept(Node):
     
     def __str__(self):
          return f'Concept: {self.name or "Unnamed"} [ [{self.related_topic.module.index if self.related_topic and self.related_topic.module else "No Module"}] Topic "{self.related_topic.name if self.related_topic else "No Topic"}"]'
-
-

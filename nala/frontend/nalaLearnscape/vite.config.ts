@@ -10,4 +10,13 @@ export default defineConfig({
     // "Invalid hook call" errors when dependencies ship their own copy.
     dedupe: ["react", "react-dom"],
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  }
 });

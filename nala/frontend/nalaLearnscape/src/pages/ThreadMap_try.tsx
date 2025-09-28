@@ -85,6 +85,30 @@ const Flow: React.FC = () => {
   > | null>(null);
   const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
 
+  // Popup state for drag and resize
+  const [popupPosition, setPopupPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [popupSize, setPopupSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [isDraggingPopup, setIsDraggingPopup] = useState(false);
+  const [isResizingPopup, setIsResizingPopup] = useState(false);
+  const [dragStart, setDragStart] = useState<{
+    x: number;
+    y: number;
+    popupX: number;
+    popupY: number;
+  } | null>(null);
+  const [resizeStart, setResizeStart] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
   // Refs for simulation management
   const simulationRef = useRef<d3.Simulation<any, undefined> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -309,6 +333,8 @@ const Flow: React.FC = () => {
   useEffect(() => {
     if (activePopup && !nodes.some((node) => node.id === activePopup.nodeId)) {
       setActivePopup(null);
+      setPopupPosition(null);
+      setPopupSize(null);
     }
   }, [activePopup, nodes]);
 
@@ -754,6 +780,134 @@ const Flow: React.FC = () => {
 
   const getNodeCount = (): number => dbNodes.length;
   const getEdgeCount = (): number => dbRelationships.length;
+
+  // Popup drag handlers
+  const handlePopupMouseDown = useCallback(
+    (event: React.MouseEvent) => {
+      if (!popupSizing) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      setIsDraggingPopup(true);
+      setDragStart({
+        x: event.clientX,
+        y: event.clientY,
+        popupX: popupSizing.left,
+        popupY: popupSizing.top,
+      });
+    },
+    [popupSizing]
+  );
+
+  const handlePopupMouseMove = useCallback(
+    (event: MouseEvent) => {
+      if (isDraggingPopup && dragStart && containerRef.current) {
+        event.preventDefault();
+
+        const deltaX = event.clientX - dragStart.x;
+        const deltaY = event.clientY - dragStart.y;
+        const bounds = containerRef.current.getBoundingClientRect();
+
+        const newX = Math.max(
+          0,
+          Math.min(
+            bounds.width - (popupSizing?.width || 420),
+            dragStart.popupX + deltaX
+          )
+        );
+        const newY = Math.max(
+          0,
+          Math.min(
+            bounds.height - (popupSizing?.height || 320),
+            dragStart.popupY + deltaY
+          )
+        );
+
+        setPopupPosition({ x: newX, y: newY });
+      }
+
+      if (isResizingPopup && resizeStart && containerRef.current) {
+        event.preventDefault();
+
+        const deltaX = event.clientX - resizeStart.x;
+        const deltaY = event.clientY - resizeStart.y;
+        const bounds = containerRef.current.getBoundingClientRect();
+
+        const newWidth = Math.max(
+          300,
+          Math.min(
+            bounds.width - (popupPosition?.x || 0),
+            resizeStart.width + deltaX
+          )
+        );
+        const newHeight = Math.max(
+          200,
+          Math.min(
+            bounds.height - (popupPosition?.y || 0),
+            resizeStart.height + deltaY
+          )
+        );
+
+        setPopupSize({ width: newWidth, height: newHeight });
+      }
+    },
+    [
+      isDraggingPopup,
+      isResizingPopup,
+      dragStart,
+      resizeStart,
+      popupSizing,
+      popupPosition,
+    ]
+  );
+
+  const handlePopupMouseUp = useCallback(() => {
+    setIsDraggingPopup(false);
+    setIsResizingPopup(false);
+    setDragStart(null);
+    setResizeStart(null);
+  }, []);
+
+  const handleResizeMouseDown = useCallback(
+    (event: React.MouseEvent) => {
+      if (!popupSizing) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      setIsResizingPopup(true);
+      setResizeStart({
+        x: event.clientX,
+        y: event.clientY,
+        width: popupSizing.width,
+        height: popupSizing.height,
+      });
+    },
+    [popupSizing]
+  );
+
+  // Add global mouse event listeners for popup drag/resize
+  useEffect(() => {
+    if (isDraggingPopup || isResizingPopup) {
+      document.addEventListener("mousemove", handlePopupMouseMove);
+      document.addEventListener("mouseup", handlePopupMouseUp);
+      document.body.style.cursor = isDraggingPopup ? "move" : "nw-resize";
+      document.body.style.userSelect = "none";
+
+      return () => {
+        document.removeEventListener("mousemove", handlePopupMouseMove);
+        document.removeEventListener("mouseup", handlePopupMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      };
+    }
+  }, [
+    isDraggingPopup,
+    isResizingPopup,
+    handlePopupMouseMove,
+    handlePopupMouseUp,
+  ]);
 
   return (
     <div style={{ width: "100vw", height: "100vh", position: "relative" }}>

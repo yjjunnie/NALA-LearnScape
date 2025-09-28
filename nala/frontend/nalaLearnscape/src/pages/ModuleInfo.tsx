@@ -87,12 +87,12 @@ export default function ModuleInfo() {
 
       <div className="flex gap-6">
         {/* Knowledge Capsules Column */}
-        <div className="flex-1 bg-[#f0f4ff] p-4 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">Knowledge Capsules</h3>
+        <div className="flex-1 p-4">
+          <h2 className="font-['Fredoka'] font-bold text-[#004aad] text-3xl mb-2">Knowledge Capsules</h2>
           {module.topics && module.topics.length > 0 ? (
-            <ul className="list-disc pl-6">
+            <ul className="pl-6">
               {module.topics.map((topic) => (
-                <li key={topic.id}>{topic.name}</li>
+                <li key={topic.id}>Week {topic.id}: {topic.name}</li>
               ))}
             </ul>
           ) : (
@@ -101,8 +101,8 @@ export default function ModuleInfo() {
         </div>
 
         {/* ThreadMap Column */}
-        <div className="flex-1 bg-[#fef9f0] p-4 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">ThreadMap</h3>
+        <div className="flex-1 p-4">
+        <h2 className="font-['Fredoka'] font-bold text-[#004aad] text-3xl mb-2">ThreadMap</h2>
           {/* Replace with your ThreadMap component */}
           <p className="text-gray-500">ThreadMap visualization placeholder</p>
         </div>

@@ -32,13 +32,13 @@ const SideNav: React.FC<SideNavProps> = ({ isOpen, onClose }) => {
         label: "Home", 
         path: "/", 
         icon: <HomeIcon />,
-        description: "Return to dashboard" 
+        description: "View your dashboard" 
       },
       { 
-        label: "Course", 
+        label: "Courses", 
         path: "/Courses", 
         icon: <CourseIcon />,
-        description: "Browse course content" 
+        description: "Browse your courses" 
       },
     ],
     []

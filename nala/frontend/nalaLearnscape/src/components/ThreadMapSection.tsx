@@ -143,7 +143,7 @@ const ThreadMapSection: React.FC = () => {
       elevation={0}
       className="flex flex-col gap-4"
       sx={{
-        borderRadius: 5,
+        borderRadius: 1,
         px: { xs: 3, md: 4 },
         py: { xs: 3, md: 4 },
         backgroundColor: "#ffffff",

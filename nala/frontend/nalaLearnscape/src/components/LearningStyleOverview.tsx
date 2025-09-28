@@ -1,28 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  Box,
-  Paper,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { useEffect, useState } from "react";
+import { PieChart } from '@mui/x-charts/PieChart';
+import { Tooltip } from '@mui/material';
+import '../theme.ts';
 
-type LearningSlice = {
-  id: string;
-  label: string;
-  value: number;
-  color: string;
-  description: string;
-};
-
-type LearningStyleResponse = {
-  currentStyle: string;
-  slices: LearningSlice[];
-};
-
-const prototypeFetchLearningStyle = async (): Promise<LearningStyleResponse> => {
-  // Placeholder for Django view integration.
-  return new Promise((resolve) => {
+const fetchLearningStyle = async () => {
+  return new Promise(resolve => {
     setTimeout(() => {
       resolve({
         currentStyle: "Elaboration",
@@ -30,25 +12,23 @@ const prototypeFetchLearningStyle = async (): Promise<LearningStyleResponse> => 
           {
             id: "elaboration",
             label: "Elaboration",
-            value: 25,
+            value: 45,
             color: "#4C73FF",
-            description:
-              "Connecting new ideas to existing knowledge to deepen understanding.",
+            description: "Connecting new ideas to existing knowledge to deepen understanding.",
           },
           {
             id: "concrete",
             label: "Concrete Examples",
-            value: 20,
+            value: 10,
             color: "#7EA8FF",
             description: "Grounding concepts with tangible, real-world examples.",
           },
           {
             id: "spaced",
             label: "Spaced Practice",
-            value: 20,
+            value: 10,
             color: "#A0C1FF",
-            description:
-              "Breaking study time into multiple sessions to support long-term retention.",
+            description: "Breaking study time into multiple sessions to support long-term retention.",
           },
           {
             id: "dual",
@@ -62,8 +42,7 @@ const prototypeFetchLearningStyle = async (): Promise<LearningStyleResponse> => 
             label: "Retrieval Practice",
             value: 20,
             color: "#13338C",
-            description:
-              "Testing yourself to strengthen recall and expose knowledge gaps.",
+            description: "Testing yourself to strengthen recall and expose knowledge gaps.",
           },
         ],
       });
@@ -71,189 +50,120 @@ const prototypeFetchLearningStyle = async (): Promise<LearningStyleResponse> => 
   });
 };
 
-const radius = 80;
-
-const polarToCartesian = (center: number, r: number, angle: number) => {
-  const radians = ((angle - 90) * Math.PI) / 180;
-  return {
-    x: center + r * Math.cos(radians),
-    y: center + r * Math.sin(radians),
-  };
-};
-
-const describeSegment = (startAngle: number, endAngle: number, r: number) => {
-  const start = polarToCartesian(100, r, endAngle);
-  const end = polarToCartesian(100, r, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-
-  return `M 100 100 L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 1 ${end.x} ${end.y} Z`;
-};
-
-const LearningStyleOverview: React.FC = () => {
-  const [data, setData] = useState<LearningSlice[]>([]);
-  const [currentStyle, setCurrentStyle] = useState<string>("-");
-  const [hoveredSlice, setHoveredSlice] = useState<LearningSlice | null>(null);
+const LearningStyleOverview = () => {
+  const [data, setData] = useState([]);
+  const [currentStyle, setCurrentStyle] = useState("-");
 
   useEffect(() => {
-    prototypeFetchLearningStyle().then((response) => {
+    fetchLearningStyle().then((response) => {
       setData(response.slices);
       setCurrentStyle(response.currentStyle);
     });
   }, []);
 
-  const total = useMemo(
-    () => data.reduce((sum, slice) => sum + slice.value, 0) || 1,
-    [data]
-  );
+  const total = data.reduce((sum, slice) => sum + slice.value, 0) || 1;
 
-  const slicesWithAngles = useMemo(() => {
-    let runningTotal = 0;
-    return data.map((slice) => {
-      const startAngle = runningTotal * 360;
-      const portion = slice.value / total;
-      runningTotal += portion;
-      const endAngle = runningTotal * 360;
-
-      return {
-        ...slice,
-        startAngle,
-        endAngle,
-      };
-    });
-  }, [data, total]);
+  // Transform data for MUI PieChart
+  const pieData = data.map((slice) => ({
+    id: slice.id,
+    value: slice.value,
+    label: slice.label,
+    color: slice.color,
+  }));
 
   return (
-    <Paper
-      elevation={0}
-      className="flex flex-col gap-[18px]"
-      sx={{
-        borderRadius: { xs: 4, md: 5 },
-        px: { xs: 3, md: 4 },
-        py: { xs: 3, md: 4 },
+    <div
+      className="rounded-3xl px-6 py-4 md:px-8 md:py-5 w-full"
+      style={{
         background: "linear-gradient(180deg, #ffffff 0%, #f3f6ff 100%)",
-        boxShadow: "0 24px 50px rgba(76,115,255,0.18)",
-        border: "1px solid rgba(76,115,255,0.14)",
+        border: "2px solid rgba(76,115,255,0.14)",
       }}
     >
-      <Stack spacing={1.5} className="flex flex-col gap-[6px]">
-        <Typography
-          variant="subtitle2"
-          sx={{
-            color: "#4C73FF",
-            letterSpacing: 1,
-            textTransform: "uppercase",
-            fontWeight: 700,
-          }}
-        >
+      <div className="mb-4">
+        <subtitle1 className="text-sm font-bold font-family-body tracking-wider uppercase text-[#4C73FF] mb-1">
           Current Learning Style
-        </Typography>
-        <Typography
-          variant="h3"
-          className="font-['Fredoka',sans-serif]"
-          sx={{
-            color: "primary.main",
-            fontSize: { xs: "1.6rem", md: "1.8rem" },
-          }}
-        >
+        </subtitle1>
+        <h1 className="font-bold text-3xl md:text-3xl text-[#4C73FF]">
           {currentStyle}
-        </Typography>
-      </Stack>
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={{ xs: 3, md: 4 }}
-        alignItems="center"
-        className="w-full"
-      >
-        <Box className="relative flex items-center justify-center">
-          {hoveredSlice && (
-        <Box className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 rounded-[16px] bg-[rgba(76,115,255,0.92)] px-[14px] py-2 text-white">
-              <Typography variant="subtitle1" fontWeight={700}>
-                {hoveredSlice.label}
-              </Typography>
-              <Typography variant="body2" color="primary.main">
-                {Math.round((hoveredSlice.value / total) * 100)}%
-              </Typography>
-            </Box>
-          )}
-          <svg
-            viewBox="0 0 200 200"
-            role="img"
-            aria-label="Learning style distribution"
-            className="h-auto w-full"
-          >
-            {slicesWithAngles.map((slice) => (
-              <path
-                key={slice.id}
-                d={describeSegment(slice.startAngle, slice.endAngle, radius)}
-                fill={slice.color}
-                stroke="#ffffff"
-                strokeWidth={1.5}
-                onMouseEnter={() => setHoveredSlice(slice)}
-                onMouseLeave={() => setHoveredSlice(null)}
-              />
-            ))}
-            <circle cx="100" cy="100" r="42" fill="#ffffff" />
-          </svg>
-        </Box>
-        <Stack spacing={1.5} className="w-full">
+        </h1>
+      </div>
+      
+      <div className="flex flex-col md:flex-row gap-6 items-center md:items-center">
+        <div className="flex-shrink-0">
+          <PieChart
+            series={[
+              {
+                data: pieData,
+                innerRadius: 40,
+                outerRadius: 85,
+                paddingAngle: 2,
+                highlightScope: { fade: 'global', highlight: 'item' },
+                faded: { innerRadius: 37, additionalRadius: -15 },
+                valueFormatter: (item: {value: number}) => `${item.value}%`,
+              },
+            ]}
+            width={170}
+            height={170}
+            slotProps={{
+              legend: { hidden: true },
+              tooltip: {
+                sx: {
+                  fontFamily: 'Times-New-Roman'
+                }
+              }
+            }}
+          />
+        </div>
+        
+        <div className="flex-1 space-y-2 w-full min-w-0">
           {data.map((slice) => (
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={1.5}
+            <div
               key={slice.id}
-              className="rounded-[18px] bg-[rgba(232,241,255,0.6)] px-4 py-3"
+              className="flex items-center gap-3 rounded-2xl px-3 py-2 bg-[rgba(232,241,255,0.6)]"
             >
-              <Box
-                className="h-4 w-4 rounded-full"
-                sx={{ backgroundColor: slice.color }}
+              <div
+                className="w-4 h-4 rounded-full flex-shrink-0"
+                style={{ backgroundColor: slice.color }}
               />
-              <Box sx={{ flexGrow: 1 }}>
-                <Typography
-                  variant="subtitle1"
-                  className="font-['GlacialIndifference',sans-serif] font-semibold"
-                >
+              <div className="flex-1 min-w-0">
+                <div className="font-['GlacialIndifference',sans-serif] font-semibold text-base truncate">
                   {slice.label}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
+                </div>
+                <div className="text-sm text-gray-600">
                   {Math.round((slice.value / total) * 100)}%
-                </Typography>
-              </Box>
-              <Tooltip
+                </div>
+              </div>
+              <Tooltip 
                 title={slice.description}
-                placement="top"
                 arrow
-                enterDelay={100}
-                leaveDelay={0}
-                slotProps={{
+                placement="top"
+                componentsProps={{
                   tooltip: {
                     sx: {
-                      backgroundColor: "rgba(40,72,209,0.95)",
-                      borderRadius: 2,
+                      backgroundColor: 'rgba(40,72,209,0.95)',
+                      fontSize: '12px',
                       fontFamily: '"GlacialIndifference", sans-serif',
-                      fontSize: "0.75rem",
-                      px: 1.5,
-                      py: 1,
-                    },
-                  },
-                  arrow: {
-                    sx: { color: "rgba(40,72,209,0.95)" },
-                  },
+                      maxWidth: '250px',
+                      '& .MuiTooltip-arrow': {
+                        color: 'rgba(40,72,209,0.95)',
+                      },
+                      padding: '8px 12px',
+                      textAlign: 'center',
+                      borderRadius: '8px',
+                      marginRight: '8px',
+                    }
+                  }
                 }}
               >
-                <Box
-                  className="inline-flex h-[26px] w-[26px] cursor-default items-center justify-center rounded-full bg-[#e1e9ff] font-['Fredoka',sans-serif] font-bold text-[#1b46d1]"
-                  onMouseEnter={() => setHoveredSlice(slice)}
-                  onMouseLeave={() => setHoveredSlice(null)}
-                >
+                <div className="flex-shrink-0 w-6 h-6 bg-[#e1e9ff] text-[#1b46d1] rounded-full flex items-center justify-center text-sm font-['Fredoka',sans-serif] font-bold cursor-help">
                   ?
-                </Box>
+                </div>
               </Tooltip>
-            </Stack>
+            </div>
           ))}
-        </Stack>
-      </Stack>
-    </Paper>
+        </div>
+      </div>
+    </div>
   );
 };
 

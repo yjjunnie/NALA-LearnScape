@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "./fonts.css"; /* Import your fonts */
+@import "./fonts.css"; 
 
 @layer reactflow {
   @import "@xyflow/react/dist/style.css";
@@ -10,15 +10,7 @@
   --font-family-body: "GlacialIndifference", ui-sans-serif, system-ui, sans-serif;
 }
 
-:root {
-  background-color: #e8f1ff;
-}
-
-body {
+html, body, #root {
+  height: 100%;
   margin: 0;
-}
-
-#root {
-  min-height: 100vh;
-  width: 100%;
 }

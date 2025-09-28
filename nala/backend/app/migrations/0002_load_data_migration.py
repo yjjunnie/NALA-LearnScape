@@ -97,3 +97,4 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(load_data, reverse_code=unload_data),
     ]
+

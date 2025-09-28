@@ -5,8 +5,15 @@ import {
   getStraightPath,
   useReactFlow,
 } from "@xyflow/react";
-import type { EdgeProps, XYPosition } from "@xyflow/react";
-import type { FlowEdge, FlowNode } from "./types";
+import type { Edge, EdgeProps, Node, XYPosition } from "@xyflow/react";
+import type { DatabaseNode } from "./types";
+
+type ThreadMapNodeData = DatabaseNode & {
+  color?: string;
+};
+
+type ThreadMapFlowNode = Node<ThreadMapNodeData>;
+type ThreadMapFlowEdge = Edge;
 
 const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
   const {
@@ -22,13 +29,16 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
     data,
   } = props;
 
-  const { getEdges, getNode } = useReactFlow<FlowNode, FlowEdge>();
+  const { getEdges, getNode } = useReactFlow<
+    ThreadMapFlowNode,
+    ThreadMapFlowEdge
+  >();
   const edges = getEdges();
 
   const sourceNode = getNode(source);
   const targetNode = getNode(target);
 
-  type ExtendedNode = FlowNode & {
+  type ExtendedNode = ThreadMapFlowNode & {
     width?: number | null;
     height?: number | null;
     position?: XYPosition;
@@ -39,7 +49,7 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
     };
   };
 
-  const getNodeMetrics = (node?: FlowNode | null) => {
+  const getNodeMetrics = (node?: ThreadMapFlowNode | null) => {
     if (!node) {
       return null;
     }

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-import type { DatabaseNode } from "./types";
+import type { DatabaseNode, NodeModule } from "./types";
 
 type NodeType = "concept" | "topic";
 
@@ -15,6 +15,7 @@ interface NodeInputModalProps {
     parentNodeId?: string
   ) => void;
   availableNodes: DatabaseNode[];
+  availableModules: NodeModule[];
 }
 
 const NodeInputModal: React.FC<NodeInputModalProps> = ({
@@ -22,6 +23,7 @@ const NodeInputModal: React.FC<NodeInputModalProps> = ({
   onClose,
   onSave,
   availableNodes,
+  availableModules,
 }) => {
   const [nodeName, setNodeName] = useState<string>("");
   const [nodeType, setNodeType] = useState<NodeType>("concept");
@@ -29,20 +31,46 @@ const NodeInputModal: React.FC<NodeInputModalProps> = ({
   const [moduleId, setModuleId] = useState<string>("");
   const [parentNodeId, setParentNodeId] = useState<string>("");
 
-  const handleSave = () => {
-    if (nodeName.trim()) {
-      onSave(
-        nodeName.trim(),
-        nodeType,
-        nodeDescription.trim(),
-        moduleId,
-        parentNodeId || undefined
-      );
-      setNodeName("");
-      setNodeDescription("");
-      setParentNodeId("");
-      onClose();
+  useEffect(() => {
+    if (!isOpen) {
+      return;
     }
+
+    setNodeName("");
+    setNodeDescription("");
+    setParentNodeId("");
+
+    const defaultModuleId = availableModules[0]?.module_id ?? "";
+    setModuleId(defaultModuleId);
+  }, [isOpen, availableModules]);
+
+  const handleSave = () => {
+    const trimmedName = nodeName.trim();
+    const trimmedDescription = nodeDescription.trim();
+    const selectedModuleId = moduleId || availableModules[0]?.module_id || "";
+
+    if (!trimmedName || !selectedModuleId) {
+      return;
+    }
+
+    if (nodeType === "concept" && parentNodeId) {
+      const parentNode = availableNodes.find((node) => node.id === parentNodeId);
+      if (parentNode && parentNode.module_id !== selectedModuleId) {
+        return;
+      }
+    }
+
+    onSave(
+      trimmedName,
+      nodeType,
+      trimmedDescription,
+      selectedModuleId,
+      parentNodeId || undefined
+    );
+    setNodeName("");
+    setNodeDescription("");
+    setParentNodeId("");
+    onClose();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -55,7 +83,9 @@ const NodeInputModal: React.FC<NodeInputModalProps> = ({
 
   if (!isOpen) return null;
 
-  const topicNodes = availableNodes.filter((node) => node.type === "topic");
+  const topicNodes = availableNodes.filter(
+    (node) => node.type === "topic" && (!moduleId || node.module_id === moduleId)
+  );
 
   return (
     <div
@@ -197,9 +227,10 @@ const NodeInputModal: React.FC<NodeInputModalProps> = ({
               fontSize: "14px",
             }}
           >
-            {nodeModules.map((module) => (
+            {availableModules.map((module) => (
               <option key={module.module_id} value={module.module_id}>
-                {module.module_name} ({module.module_id})
+                {module.module_name || `Module ${module.module_id}`} (
+                {module.module_index || module.module_id})
               </option>
             ))}
           </select>

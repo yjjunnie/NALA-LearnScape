@@ -36,6 +36,7 @@ import type {
   DatabaseNode,
   DatabaseRelationship,
   HoverNode,
+  NodeModule,
 } from "./threadMap/types";
 import {
   getColorForModule,
@@ -46,6 +47,28 @@ import ConceptNode from "./threadMap/ConceptNode";
 import NodeInputModal from "./threadMap/NodeInputModal";
 import HoverLabelEdge from "./threadMap/HoverLabelEdge";
 import AddNodeHover from "./threadMap/AddNodeHover";
+
+type RawDatabaseNode = {
+  id: number | string;
+  type?: string | null;
+  name?: string | null;
+  summary?: string | null;
+  related_topic?: number | string | null;
+  module_id?: number | string | null;
+};
+
+type RawDatabaseRelationship = {
+  id: number | string;
+  first_node?: number | string | null;
+  second_node?: number | string | null;
+  rs_type?: string | null;
+};
+
+type RawModuleResponse = {
+  id?: number | string | null;
+  index?: number | string | null;
+  name?: string | null;
+};
 
 const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   const nodeTypes = useMemo(
@@ -61,29 +84,246 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   const [dbRelationships, setDbRelationships] = useState<
     DatabaseRelationship[]
   >([]);
+  const [moduleLookup, setModuleLookup] = useState<Record<string, NodeModule>>(
+    {}
+  );
 
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
 
-  useEffect(() => {
-    try {
-      const fetchNodeData = async () => {
-        const response = await fetch("/api/nodes/");
-        const data = await response.json();
-        setDbNodes(data);
-      };
-      fetchNodeData();
-      const fetchRelationshipData = async () => {
-        const response = await fetch("/api/relationships/");
-        const data = await response.json();
-        setDbRelationships(data);
-      };
-      fetchRelationshipData();
-    } catch (err) {
-      setErr("Threadmap data failed to load. Please try again later.");
-      console.log(err);
+  const availableModules = useMemo(() => {
+    const moduleIds = new Set<string>();
+    if (module_id) {
+      moduleIds.add(module_id);
     }
-  }, []);
+    dbNodes.forEach((node) => moduleIds.add(node.module_id));
+
+    const modules: NodeModule[] = [];
+    moduleIds.forEach((id) => {
+      const info = moduleLookup[id];
+      if (info) {
+        modules.push(info);
+      } else {
+        modules.push({
+          module_id: id,
+          color: getColorForModule(id, moduleLookup),
+        });
+      }
+    });
+
+    return modules;
+  }, [dbNodes, moduleLookup, module_id]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!module_id) {
+      setDbNodes([]);
+      setDbRelationships([]);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const fetchThreadMapData = async () => {
+      try {
+        const [nodesResponse, relationshipsResponse] = await Promise.all([
+          fetch(`/api/nodes/${module_id}`),
+          fetch(`/api/relationships/${module_id}`),
+        ]);
+
+        if (!nodesResponse.ok) {
+          throw new Error(`Failed to fetch nodes for module ${module_id}`);
+        }
+
+        if (!relationshipsResponse.ok) {
+          throw new Error(
+            `Failed to fetch relationships for module ${module_id}`
+          );
+        }
+
+        const rawNodes = (await nodesResponse.json()) as RawDatabaseNode[];
+        const rawRelationships =
+          (await relationshipsResponse.json()) as RawDatabaseRelationship[];
+
+        if (!isMounted) {
+          return;
+        }
+
+        const normalizedNodes: DatabaseNode[] = Array.isArray(rawNodes)
+          ? rawNodes.map((node) => ({
+              id: String(node.id),
+              type: node.type === "topic" ? "topic" : "concept",
+              name: node.name ?? "",
+              summary: node.summary ?? undefined,
+              related_topic:
+                node.related_topic !== null && node.related_topic !== undefined
+                  ? String(node.related_topic)
+                  : undefined,
+              module_id: String(node.module_id ?? module_id),
+            }))
+          : [];
+
+        const normalizedRelationships: DatabaseRelationship[] = Array.isArray(
+          rawRelationships
+        )
+          ? rawRelationships
+              .filter(
+                (relationship) =>
+                  relationship.first_node !== null &&
+                  relationship.first_node !== undefined &&
+                  relationship.second_node !== null &&
+                  relationship.second_node !== undefined
+              )
+              .map((relationship) => ({
+                id: String(relationship.id),
+                first_node: String(relationship.first_node),
+                second_node: String(relationship.second_node),
+                rs_type: relationship.rs_type ?? "",
+              }))
+          : [];
+
+        setDbNodes(normalizedNodes);
+        setDbRelationships(normalizedRelationships);
+        setErr(null);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+        console.error("Error fetching thread map data:", error);
+        setErr("Threadmap data failed to load. Please try again later.");
+      }
+    };
+
+    fetchThreadMapData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [module_id]);
+
+  useEffect(() => {
+    if (!module_id || moduleLookup[module_id]) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchModule = async () => {
+      try {
+        const response = await fetch(`/api/module/${module_id}/`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch module ${module_id}`);
+        }
+
+        const rawModule = (await response.json()) as RawModuleResponse;
+
+        if (!isMounted) {
+          return;
+        }
+
+        setModuleLookup((prev) => {
+          const moduleKey = String(rawModule.id ?? module_id);
+          const baseColor = prev[moduleKey]?.color ?? getColorForModule(moduleKey, prev);
+          return {
+            ...prev,
+            [moduleKey]: {
+              module_id: moduleKey,
+              module_name: rawModule.name ?? prev[moduleKey]?.module_name,
+              module_index:
+                rawModule.index !== undefined && rawModule.index !== null
+                  ? String(rawModule.index)
+                  : prev[moduleKey]?.module_index,
+              color: baseColor,
+            },
+          };
+        });
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error("Error fetching module metadata:", error);
+        setModuleLookup((prev) => {
+          if (prev[module_id]) {
+            return prev;
+          }
+          const fallbackColor = getColorForModule(module_id, prev);
+          return {
+            ...prev,
+            [module_id]: {
+              module_id,
+              color: fallbackColor,
+            },
+          };
+        });
+      }
+    };
+
+    fetchModule();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [module_id, moduleLookup]);
+
+  useEffect(() => {
+    const moduleIds = Array.from(new Set(dbNodes.map((node) => node.module_id)));
+    const missingIds = moduleIds.filter((moduleId) => !moduleLookup[moduleId]);
+
+    if (missingIds.length === 0) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchModules = async () => {
+      const results = await Promise.all(
+        missingIds.map(async (id) => {
+          try {
+            const response = await fetch(`/api/module/${id}/`);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch module ${id}`);
+            }
+            const rawModule = (await response.json()) as RawModuleResponse;
+            return { id, rawModule };
+          } catch (error) {
+            console.error("Error fetching module metadata:", error);
+            return { id, rawModule: null };
+          }
+        })
+      );
+
+      if (!isMounted) {
+        return;
+      }
+
+      setModuleLookup((prev) => {
+        const next = { ...prev };
+        results.forEach(({ id, rawModule }) => {
+          const moduleKey = String(rawModule?.id ?? id);
+          const existing = prev[moduleKey];
+          const baseColor = existing?.color ?? getColorForModule(moduleKey, prev);
+          next[moduleKey] = {
+            module_id: moduleKey,
+            module_name: rawModule?.name ?? existing?.module_name,
+            module_index:
+              rawModule?.index !== undefined && rawModule?.index !== null
+                ? String(rawModule.index)
+                : existing?.module_index,
+            color: baseColor,
+          };
+        });
+        return next;
+      });
+    };
+
+    fetchModules();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [dbNodes, moduleLookup]);
 
   const [activePopup, setActivePopup] = useState<{
     nodeId: string;
@@ -257,7 +497,8 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       });
 
       const updatedNodes = dbNodes.map((node) => {
-        const baseColor = getColorForModule(node.module_id);
+        const moduleInfo = moduleLookup[node.module_id];
+        const baseColor = getColorForModule(node.module_id, moduleLookup);
         let nodeColor = colorCache.get(node.id);
 
         if (!nodeColor) {
@@ -316,6 +557,8 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
           node_type: node.type,
           parent_node_id: node.related_topic,
           node_module_id: node.module_id,
+          node_module_name: moduleInfo?.module_name,
+          node_module_index: moduleInfo?.module_index,
           color: nodeColor,
         };
 
@@ -344,7 +587,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     if (pendingUsed) {
       pendingNodePositionRef.current = null;
     }
-  }, [dbNodes, selectedNode, setNodes]);
+  }, [dbNodes, moduleLookup, selectedNode, setNodes]);
 
   // Sync edges with database relationships
   useEffect(() => {
@@ -685,9 +928,13 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
 
       pendingNodePositionRef.current = pendingNodePosition;
 
-      const newNodeId = (
-        Math.max(...dbNodes.map((n) => parseInt(n.id)), 0) + 1
-      ).toString();
+      const numericIds = dbNodes
+        .map((n) => Number(n.id))
+        .filter((id) => Number.isFinite(id)) as number[];
+      const nextNumericId =
+        numericIds.length > 0 ? Math.max(...numericIds) + 1 : null;
+      const newNodeId =
+        nextNumericId !== null ? String(nextNumericId) : `temp-${Date.now()}`;
       const newDbNode: DatabaseNode = {
         id: newNodeId,
         type: nodeType,
@@ -699,14 +946,37 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
 
       setDbNodes((prev) => [...prev, newDbNode]);
 
+      setModuleLookup((prev) => {
+        if (prev[moduleId]) {
+          return prev;
+        }
+        const fallbackColor = getColorForModule(moduleId, prev);
+        return {
+          ...prev,
+          [moduleId]: {
+            module_id: moduleId,
+            color: fallbackColor,
+          },
+        };
+      });
+
       if (parentNodeId) {
         setDbRelationships((prev) => {
-          const nextId =
-            prev.length > 0 ? Math.max(...prev.map((rel) => rel.id)) + 1 : 1;
+          const numericRelationshipIds = prev
+            .map((rel) => Number(rel.id))
+            .filter((id) => Number.isFinite(id)) as number[];
+          const nextRelationshipId =
+            numericRelationshipIds.length > 0
+              ? Math.max(...numericRelationshipIds) + 1
+              : null;
+          const newRelationshipId =
+            nextRelationshipId !== null
+              ? String(nextRelationshipId)
+              : `rel-${Date.now()}`;
           return [
             ...prev,
             {
-              id: nextId,
+              id: newRelationshipId,
               first_node: parentNodeId,
               second_node: newNodeId,
               rs_type: "",
@@ -1220,6 +1490,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         }}
         onSave={handleSaveNewNode}
         availableNodes={dbNodes}
+        availableModules={availableModules}
       />
     </div>
   );

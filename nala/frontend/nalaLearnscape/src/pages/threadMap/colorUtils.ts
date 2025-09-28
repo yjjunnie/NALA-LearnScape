@@ -1,29 +1,41 @@
-export const getColorForModule = (moduleId: string): string => {
-  const module = nodeModules.find((m) => m.module_id === moduleId);
-  if (module) return module.color;
+import type { NodeModule } from "./types";
 
-  const colors = [
-    "#00bcd4",
-    "#5c9cfc",
-    "#4a85f5",
-    "#ff6b35",
-    "#4caf50",
-    "#9c27b0",
-    "#ff9800",
-    "#e91e63",
-  ];
-  const hash = moduleId.split("").reduce((a, b) => {
-    a = (a << 5) - a + b.charCodeAt(0);
-    return a & a;
+const MODULE_COLORS = [
+  "#00bcd4",
+  "#5c9cfc",
+  "#4a85f5",
+  "#ff6b35",
+  "#4caf50",
+  "#9c27b0",
+  "#ff9800",
+  "#e91e63",
+];
+
+const computeColorFromId = (seed: string): string => {
+  const hash = seed.split("").reduce((acc, char) => {
+    acc = (acc << 5) - acc + char.charCodeAt(0);
+    return acc & acc;
   }, 0);
-  return colors[Math.abs(hash) % colors.length];
+  return MODULE_COLORS[Math.abs(hash) % MODULE_COLORS.length];
+};
+
+export const getColorForModule = (
+  moduleId: string,
+  modules: Record<string, NodeModule | undefined>
+): string => {
+  const module = modules[moduleId];
+  if (module?.color) {
+    return module.color;
+  }
+
+  return computeColorFromId(moduleId);
 };
 
 export const getTopicColor = (moduleColor: string): string => {
   const hex = moduleColor.replace("#", "");
   const r = Math.max(0, parseInt(hex.substring(0, 2), 16) - 20);
-  const g = Math.max(0, parseInt(hex.substring(2, 2), 16) - 20);
-  const b = Math.max(0, parseInt(hex.substring(4, 2), 16) - 20);
+  const g = Math.max(0, parseInt(hex.substring(2, 4), 16) - 20);
+  const b = Math.max(0, parseInt(hex.substring(4, 6), 16) - 20);
   return `#${r.toString(16).padStart(2, "0")}${g
     .toString(16)
     .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
@@ -76,19 +88,10 @@ const hslToHex = (h: number, s: number, l: number): string => {
   return `#${r}${g}${b}`;
 };
 
-export const generateDistinctTopicColor = (usedColors: Set<string>): string => {
-  const basePalette = [
-    "#00bcd4",
-    "#5c9cfc",
-    "#4a85f5",
-    "#ff6b35",
-    "#4caf50",
-    "#9c27b0",
-    "#ff9800",
-    "#e91e63",
-  ];
-
-  for (const color of basePalette) {
+export const generateDistinctTopicColor = (
+  usedColors: Set<string>
+): string => {
+  for (const color of MODULE_COLORS) {
     if (!usedColors.has(color)) {
       return color;
     }

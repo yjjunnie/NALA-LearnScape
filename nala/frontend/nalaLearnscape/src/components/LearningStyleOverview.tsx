@@ -80,10 +80,10 @@ const LearningStyleOverview = () => {
       }}
     >
       <div className="mb-4">
-        <subtitle1 className="text-sm font-bold font-family-body tracking-wider uppercase text-[#4C73FF] mb-1">
+        <h2 className="text-sm font-bold font-family-body tracking-wider uppercase text-[#4C73FF] mb-1">
           Current Learning Style
-        </subtitle1>
-        <h1 className="font-bold text-3xl md:text-3xl text-[#4C73FF]">
+        </h2>
+        <h1 className="font-bold font-['Fredoka'] text-3xl md:text-3xl text-[#4C73FF]">
           {currentStyle}
         </h1>
       </div>
@@ -99,17 +99,19 @@ const LearningStyleOverview = () => {
                 paddingAngle: 2,
                 highlightScope: { fade: 'global', highlight: 'item' },
                 faded: { innerRadius: 37, additionalRadius: -15 },
-                valueFormatter: (item: {value: number}) => `${item.value}%`,
+                valueFormatter: (item) => `${item.value}%`,
               },
             ]}
             width={170}
             height={170}
             slotProps={{
-              legend: { hidden: true },
-              tooltip: {
-                sx: {
-                  fontFamily: 'Times-New-Roman'
+            legend: { hidden: true },
+            tooltip: {
+              sx: {
+                '& *': {
+                  fontFamily: '"GlacialIndifference", sans-serif !important',
                 }
+              }
               }
             }}
           />

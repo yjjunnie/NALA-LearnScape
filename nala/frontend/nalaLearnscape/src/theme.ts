@@ -9,9 +9,6 @@ const theme = createTheme({
       main: "#FFB347",
     },
   },
-  typography: {
-    fontFamily: '"GlacialIndifference", ui-sans-serif, system-ui, sans-serif',
-  },
 });
 
 export default theme;

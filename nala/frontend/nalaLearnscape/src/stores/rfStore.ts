@@ -1,42 +1,36 @@
+import { create } from "zustand";
 import {
-    Edge,
-    EdgeChange,
-    Node,
-    NodeChange,
-    OnNodesChange,
-    OnEdgesChange,
-    applyNodeChanges,
-    applyEdgeChanges,
-  } from '@xyflow/react';
-  import { createWithEqualityFn } from 'zustand/traditional';
-   
-  export type RFState = {
-    nodes: Node[];
-    edges: Edge[];
-    onNodesChange: OnNodesChange;
-    onEdgesChange: OnEdgesChange;
-  };
-   
-  const useStore = createWithEqualityFn<RFState>((set, get) => ({
-    nodes: [
-      {
-        id: 'root',
-        type: 'default',
-        data: { label: 'React Flow Mind Map' },
-        position: { x: 0, y: 0 },
-      },
-    ],
-    edges: [],
-    onNodesChange: (changes: NodeChange[]) => {
-      set({
-        nodes: applyNodeChanges(changes, get().nodes),
-      });
-    },
-    onEdgesChange: (changes: EdgeChange[]) => {
-      set({
-        edges: applyEdgeChanges(changes, get().edges),
-      });
-    },
-  }));
-   
-  export default useStore;
+  applyEdgeChanges,
+  applyNodeChanges,
+  type Edge,
+  type Node,
+  type OnEdgesChange,
+  type OnNodesChange,
+} from "@xyflow/react";
+
+type RFState = {
+  nodes: Node[];
+  edges: Edge[];
+  onNodesChange: OnNodesChange;
+  onEdgesChange: OnEdgesChange;
+  setGraph: (nodes: Node[], edges: Edge[]) => void;
+};
+
+const initialNodes: Node[] = [];
+const initialEdges: Edge[] = [];
+
+const useRFStore = create<RFState>((set, get) => ({
+  nodes: initialNodes,
+  edges: initialEdges,
+  onNodesChange: (changes) =>
+    set({
+      nodes: applyNodeChanges(changes, get().nodes),
+    }),
+  onEdgesChange: (changes) =>
+    set({
+      edges: applyEdgeChanges(changes, get().edges),
+    }),
+  setGraph: (nodes, edges) => set({ nodes, edges }),
+}));
+
+export default useRFStore;

@@ -1,49 +1,29 @@
 @import "tailwindcss";
+@import "./fonts.css";
 
 @layer reactflow {
-  @import '@xyflow/react/dist/style.css';
+  @import "@xyflow/react/dist/style.css";
+}
+
+@theme {
+  --font-family-display: "Fredoka", ui-serif, serif;
+  --font-family-body: "GlacialIndifference", ui-sans-serif, system-ui, sans-serif;
+  --color-primary-light: #7EA8FF;
+  --color-primary-dark: #2B4BC7;
+  --color-secondary: #FFB347;
+  --color-background: #E8F1FF;
+  --color-text-primary: #1A2C5E;
+  --color-text-secondary: #4C73FF;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-body);
+  margin: 0;
 }
 
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  min-height: 100vh;
+  width: 100%;
 }
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-

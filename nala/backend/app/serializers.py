@@ -38,6 +38,13 @@ class TopicSerializer(serializers.ModelSerializer):
                 'name': obj.module.name
             }
         return None
+    
+class ThreadMapTopicSerializer(serializers.ModelSerializer):
+    module_id = serializers.IntegerField(source='module.id', read_only=True)
+    type = 'topic'
+    class Meta:
+        model = Topic
+        fields = ['id', 'type', 'name', 'summary', 'module_id']
 
 class ConceptSerializer(serializers.ModelSerializer):
     module_info = serializers.SerializerMethodField()
@@ -67,6 +74,15 @@ class ConceptSerializer(serializers.ModelSerializer):
             }
         return None
 
+class ThreadMapConceptSerializer(serializers.ModelSerializer):
+    module_id = serializers.IntegerField(source='module.id', read_only=True)
+    related_topic = serializers.IntegerField(source='related_topic.id', read_only=True)
+    type = 'concept'
+    
+    class Meta:
+        model = Concept
+        fields = ['id', 'type', 'name', 'summary', 'related_topic', 'module_id',]
+        
 class RelationshipSerializer(serializers.ModelSerializer):
     first_node_info = serializers.SerializerMethodField()
     second_node_info = serializers.SerializerMethodField()
@@ -88,6 +104,14 @@ class RelationshipSerializer(serializers.ModelSerializer):
             'id': obj.second_node.id,
             'name': obj.second_node.name
         }
+        
+class ThreadMapRelationshipSerializer(serializers.ModelSerializer):
+    first_node = serializers.IntegerField(source='first_node.id', read_only=True)
+    second_node = serializers.IntegerField(source='second_node.id', read_only=True)
+    
+    class Meta:
+        model = Relationship
+        fields = ['id', 'first_node', 'second_node', 'rs_type']
 
 class StudentSerializer(serializers.ModelSerializer):
     enrolled_modules_info = serializers.SerializerMethodField()

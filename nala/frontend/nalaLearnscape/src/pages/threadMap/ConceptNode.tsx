@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { Handle, Position } from "@xyflow/react";
 
-import type { NodeData } from "./types";
+import type { DatabaseNode } from "./types";
 import { nodeModules } from "./mockData";
 
+type ConceptNodeData = DatabaseNode & {
+  color?: string;
+};
+
 interface ConceptNodeProps {
-  data: NodeData;
+  data: ConceptNodeData;
   selected?: boolean;
 }
 
@@ -13,14 +17,15 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
   data,
   selected = false,
 }) => {
-  const size = data.node_type === "topic" ? 120 : 80;
-  const fontSize = data.node_type === "topic" ? "16px" : "14px";
+  const size = data.type === "topic" ? 120 : 80;
+  const fontSize = data.type === "topic" ? "16px" : "14px";
 
   const moduleInfo = nodeModules.find(
-    (m) => m.module_id === data.node_module_id
+    (m) => m.module_id === data.module_id
   );
-  const moduleNumber = data.node_module_id.replace(/\D/g, "");
+  const moduleNumber = moduleInfo?.module_id;
 
+  // State to track which handle is hovered
   const [hoveredHandle, setHoveredHandle] = useState<string | null>(null);
 
   const handleStyleBase: React.CSSProperties = {
@@ -89,11 +94,13 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
     textAlign: "center",
     color: "#1f2937",
     fontFamily: '"Fredoka", sans-serif',
-    fontWeight: data.node_type === "topic" ? 700 : 600,
-    fontSize: data.node_type === "topic" ? "16px" : "13px",
+    fontWeight: data.type === "topic" ? 700 : 600,
+    fontSize: data.type === "topic" ? "16px" : "13px",
     lineHeight: 1.25,
     maxWidth: circleSize,
-    wordBreak: "break-word",
+    wordBreak: "normal", // Avoid breaking words
+    overflowWrap: "break-word", // Allow wrapping of long words when necessary
+    whiteSpace: "normal", // Allow text to wrap to the next line if needed
   };
 
   return (
@@ -129,9 +136,9 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           position: "relative",
           overflow: "hidden",
         }}
-        title={`${data.node_name}${
-          data.node_description ? "\n" + data.node_description : ""
-        }\nModule: ${moduleInfo?.module_name || data.node_module_id}`}
+        title={`${data.name}${
+          data.summary ? "\n Description: " + data.summary : ""
+        }\nModule: ${moduleInfo?.module_name || data.module_id}`}
       >
         <div
           style={{
@@ -145,7 +152,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
         >
           <div
             style={{
-              fontSize: data.node_type === "topic" ? "24px" : "18px",
+              fontSize: data.type === "topic" ? "24px" : "18px",
               fontWeight: 700,
             }}
           >
@@ -154,7 +161,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
 
           <div
             style={{
-              fontSize: data.node_type === "topic" ? "11px" : "10px",
+              fontSize: data.type === "topic" ? "11px" : "10px",
               lineHeight: "1.2",
               maxWidth: "90%",
               overflow: "hidden",
@@ -254,7 +261,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           "+"
         )}
       </div>
-      <div style={nameStyles}>{data.node_name}</div>
+      <div style={nameStyles}>{data.name}</div>
     </div>
   );
 };

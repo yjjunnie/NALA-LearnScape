@@ -24,15 +24,14 @@ import type {
   OnMove,
   Viewport,
   EdgeMouseHandler,
+  Node,
+  Edge,
 } from "@xyflow/react";
 import * as d3 from "d3";
 import { Trash2 } from "lucide-react";
 import "@xyflow/react/dist/style.css";
 import "../App.css";
 import type {
-  FlowNode,
-  FlowEdge,
-  NodeData,
   DatabaseNode,
   DatabaseRelationship,
   HoverNode,
@@ -51,6 +50,13 @@ import NodeInputModal from "./threadMap/NodeInputModal";
 import HoverLabelEdge from "./threadMap/HoverLabelEdge";
 import AddNodeHover from "./threadMap/AddNodeHover";
 
+type ThreadMapNodeData = DatabaseNode & {
+  color?: string;
+};
+
+type ThreadMapFlowNode = Node<ThreadMapNodeData>;
+type ThreadMapFlowEdge = Edge;
+
 const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
   const nodeTypes = useMemo(
     () => ({ conceptNode: ConceptNode, topicNode: ConceptNode }),
@@ -58,8 +64,8 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
   );
   const edgeTypes = useMemo(() => ({ hoverLabel: HoverLabelEdge }), []);
   const [err, setErr] = useState<string | null>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<ThreadMapFlowNode>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<ThreadMapFlowEdge>([]);
   const [dbNodes, setDbNodes] = useState<DatabaseNode[]>([]);
   const [dbRelationships, setDbRelationships] = useState<
     DatabaseRelationship[]
@@ -101,8 +107,8 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
   const [pendingNodePosition, setPendingNodePosition] =
     useState<XYPosition | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance<
-    FlowNode,
-    FlowEdge
+    ThreadMapFlowNode,
+    ThreadMapFlowEdge
   > | null>(null);
   const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
 
@@ -312,13 +318,8 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
           shouldRunSimulationRef.current = true;
         }
 
-        const data: NodeData = {
-          node_id: node.id,
-          node_name: node.name,
-          node_description: node.summary,
-          node_type: node.type,
-          parent_node_id: node.related_topic,
-          node_module_id: node.module_id,
+        const data: ThreadMapNodeData = {
+          ...node,
           color: nodeColor,
         };
 
@@ -333,7 +334,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
               selected: selectedNode === node.id.toString(), // toString because flownode id is string
             }
           : {
-              id: node.id,
+              id: node.id.toString(),
               type: node.type === "topic" ? "topicNode" : "conceptNode",
               position: position ?? { x: 0, y: 0 },
               data,
@@ -405,15 +406,15 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
     const nodeMap = new Map(nodes.map((node) => [node.id, node]));
 
     const findRootTopicId = (
-      node: FlowNode | undefined,
+      node: ThreadMapFlowNode | undefined,
       visited: Set<string> = new Set()
     ): string | null => {
       if (!node || visited.has(node.id)) return null;
       visited.add(node.id);
-      if (node.data.node_type === "topic") return node.id;
-      if (!node.data.parent_node_id) return null;
+      if (node.data.type === "topic") return node.id;
+      if (node.data.related_topic == null) return null;
       return findRootTopicId(
-        nodeMap.get(node.data.parent_node_id.toString()),
+        nodeMap.get(node.data.related_topic.toString()),
         visited
       );
     };
@@ -445,7 +446,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
       d3
         .forceManyBody()
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "topic" ? -320 : -160
+          (d.data as ThreadMapNodeData).type === "topic" ? -320 : -160
         )
         .distanceMax(240)
     );
@@ -455,8 +456,8 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
       d3
         .forceCollide()
         .radius((d: any) => {
-          const nodeData = d.data as NodeData;
-          return nodeData.node_type === "topic" ? 95 : 60;
+          const nodeData = d.data as ThreadMapNodeData;
+          return nodeData.type === "topic" ? 95 : 60;
         })
         .strength(0.9)
         .iterations(2)
@@ -478,8 +479,8 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
           );
 
           const isParentChild =
-            sourceNode?.data?.parent_node_id === targetNode?.id ||
-            targetNode?.data?.parent_node_id === sourceNode?.id;
+            sourceNode?.data?.related_topic?.toString() === targetNode?.id ||
+            targetNode?.data?.related_topic?.toString() === sourceNode?.id;
           if (isParentChild) return 110;
 
           const sourceRoot = findRootTopicId(sourceNode);
@@ -499,8 +500,8 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
           );
 
           const isParentChild =
-            sourceNode?.data?.parent_node_id === targetNode?.id ||
-            targetNode?.data?.parent_node_id === sourceNode?.id;
+            sourceNode?.data?.related_topic?.toString() === targetNode?.id ||
+            targetNode?.data?.related_topic?.toString() === sourceNode?.id;
           if (isParentChild) return 0.9;
 
           const sourceRoot = findRootTopicId(sourceNode);
@@ -515,10 +516,10 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
       "concept-x",
       d3
         .forceX((d: any) => {
-          const data = d.data as NodeData;
-          if (data.node_type === "concept" && data.parent_node_id) {
+          const data = d.data as ThreadMapNodeData;
+          if (data.type === "concept" && data.related_topic) {
             const parentNode = simulationNodeMap.get(
-              data.parent_node_id.toString()
+              data.related_topic.toString()
             );
             if (parentNode)
               return parentNode.x ?? parentNode.position?.x ?? width / 2;
@@ -526,7 +527,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
           return d.x ?? width / 2;
         })
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "concept" ? 0.12 : 0.02
+          (d.data as ThreadMapNodeData).type === "concept" ? 0.12 : 0.02
         )
     );
 
@@ -534,10 +535,10 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
       "concept-y",
       d3
         .forceY((d: any) => {
-          const data = d.data as NodeData;
-          if (data.node_type === "concept" && data.parent_node_id) {
+          const data = d.data as ThreadMapNodeData;
+          if (data.type === "concept" && data.related_topic) {
             const parentNode = simulationNodeMap.get(
-              data.parent_node_id.toString()
+              data.related_topic.toString()
             );
             if (parentNode)
               return parentNode.y ?? parentNode.position?.y ?? height / 2;
@@ -545,7 +546,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
           return d.y ?? height / 2;
         })
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "concept" ? 0.12 : 0.02
+          (d.data as ThreadMapNodeData).type === "concept" ? 0.12 : 0.02
         )
     );
 
@@ -604,7 +605,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
   );
 
   // Handle node click - only select, don't trigger layout
-  const handleNodeClick: NodeMouseHandler<FlowNode> = useCallback(
+  const handleNodeClick: NodeMouseHandler<ThreadMapFlowNode> = useCallback(
     (event, node) => {
       event.stopPropagation();
       setSelectedNode((prev) => (prev === node.id ? null : node.id));
@@ -618,7 +619,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
   );
 
   // Handle edge click - select edge for deletion
-  const handleEdgeClick: EdgeMouseHandler<FlowEdge> = useCallback(
+  const handleEdgeClick: EdgeMouseHandler<ThreadMapFlowEdge> = useCallback(
     (event, edge) => {
       event.stopPropagation();
       setSelectedEdge((prev) => (prev === edge.id ? null : edge.id));
@@ -656,7 +657,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
       };
 
       const isTooCloseToNode = nodes.some((node) => {
-        const nodeSize = node.data.node_type === "topic" ? 120 : 80;
+        const nodeSize = node.data.type === "topic" ? 120 : 80;
         const distance = Math.sqrt(
           Math.pow(flowPosition.x - node.position.x, 2) +
             Math.pow(flowPosition.y - node.position.y, 2)
@@ -730,7 +731,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
   );
 
   const handleNodesChange = useCallback(
-    (changes: NodeChange<FlowNode>[]) => {
+    (changes: NodeChange<ThreadMapFlowNode>[]) => {
       // Only allow position and dimension changes during drag, prevent other movements
       const filteredChanges = changes.filter((change) => {
         if (change.type === "position" && !draggedNodeIdRef.current) {
@@ -744,7 +745,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
     [onNodesChange]
   );
 
-  const handleNodeDragStart: OnNodeDrag<FlowNode> = useCallback(
+  const handleNodeDragStart: OnNodeDrag<ThreadMapFlowNode> = useCallback(
     (_event, node) => {
       setSelectedNode(node.id);
       draggedNodeIdRef.current = node.id;
@@ -757,7 +758,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
     []
   );
 
-  const handleNodeDrag: OnNodeDrag<FlowNode> = useCallback(
+  const handleNodeDrag: OnNodeDrag<ThreadMapFlowNode> = useCallback(
     (_event, node) => {
       setNodes((prev) =>
         prev.map((existing) =>
@@ -782,7 +783,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
     [setNodes]
   );
 
-  const handleNodeDragStop: OnNodeDrag<FlowNode> = useCallback(
+  const handleNodeDragStop: OnNodeDrag<ThreadMapFlowNode> = useCallback(
     (_event, node) => {
       draggedNodeIdRef.current = null;
       shouldRunSimulationRef.current = true;
@@ -1057,7 +1058,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <ReactFlow<FlowNode, FlowEdge>
+        <ReactFlow<ThreadMapFlowNode, ThreadMapFlowEdge>
           nodes={nodes}
           nodeTypes={nodeTypes}
           edges={edges}
@@ -1080,7 +1081,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
           <Background color="#f0f0f0" gap={20} />
           <Controls />
           <MiniMap
-            nodeColor={(node: FlowNode) => node.data.color || "#00bcd4"}
+            nodeColor={(node: ThreadMapFlowNode) => node.data.color || "#00bcd4"}
             style={{ background: "white", border: "1px solid #ddd" }}
           />
 
@@ -1127,7 +1128,7 @@ const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
             >
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <span style={{ fontWeight: 600, fontSize: "14px" }}>
-                  {popupNode?.data.node_name || "Node"}
+                  {popupNode?.data.name || "Node"}
                 </span>
                 <span style={{ fontSize: "11px", opacity: 0.85 }}>
                   Embedded page preview

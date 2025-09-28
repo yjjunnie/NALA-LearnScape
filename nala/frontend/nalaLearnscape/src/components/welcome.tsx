@@ -23,7 +23,7 @@ const Welcome: React.FC = () => {
         <div className="flex flex-col md:flex-row w-full justify-between items-start md:items-center gap-3 md:gap-4">
           <div className="flex flex-row items-center">
             <div className="flex-grow">
-              <h3 className=" text-white text-5xl font-fredoka font-bold">
+              <h3 className=" text-white text-5xl font-family-display font-bold">
                 Welcome back, John!
               </h3>
               <p className="text-white/80 font-glacial tracking-[0.4px] mt-2">

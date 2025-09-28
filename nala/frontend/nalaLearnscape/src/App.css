@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "./fonts.css"; 
+@import "./fonts.css";
 
 @layer reactflow {
   @import "@xyflow/react/dist/style.css";
@@ -8,9 +8,22 @@
 @theme {
   --font-family-display: "Fredoka", ui-serif, serif;
   --font-family-body: "GlacialIndifference", ui-sans-serif, system-ui, sans-serif;
+  --color-primary-light: #7EA8FF;
+  --color-primary-dark: #2B4BC7;
+  --color-secondary: #FFB347;
+  --color-background: #E8F1FF;
+  --color-text-primary: #1A2C5E;
+  --color-text-secondary: #4C73FF;
 }
 
-html, body, #root {
-  height: 100%;
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-body);
   margin: 0;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
 }

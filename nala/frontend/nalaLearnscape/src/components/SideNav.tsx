@@ -35,10 +35,10 @@ const SideNav: React.FC<SideNavProps> = ({ isOpen, onClose }) => {
         description: "View your dashboard" 
       },
       { 
-        label: "Courses", 
-        path: "/Courses", 
+        label: "Modules", 
+        path: "/Modules", 
         icon: <CourseIcon />,
-        description: "Browse your courses" 
+        description: "Browse your modules" 
       },
     ],
     []
@@ -88,6 +88,7 @@ const SideNav: React.FC<SideNavProps> = ({ isOpen, onClose }) => {
             sx={{ 
               color: "#1A2C5E",
               fontWeight: 700,
+              fontFamily: 'Fredoka',
             }}
           >
             Navigation
@@ -156,6 +157,7 @@ const SideNav: React.FC<SideNavProps> = ({ isOpen, onClose }) => {
                     color: location.pathname === item.path
                       ? "primary.main"
                       : "text.primary",
+                    fontFamily: 'Fredoka',
                   },
                 }}
                 secondaryTypographyProps={{

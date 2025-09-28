@@ -1,25 +1,18 @@
+// src/pages/Modules.tsx
 import React, { useState } from "react";
-import {
-  IconButton,
-} from "@mui/material";
-import { MenuRounded as MenuRoundedIcon } from "@mui/icons-material";
-import Welcome from "../components/Welcome";
-import ThreadMapSection from "../components/ThreadMapSection";
+import { IconButton } from "@mui/material";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import SideNav from "../components/SideNav";
-import LearningStyleOverview from "../components/LearningStyleOverview";
 
-const Home: React.FC = () => {
+export const Modules: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const toggleDrawer = () => {
-    setIsDrawerOpen(!isDrawerOpen);
-  };
 
-  const handleCloseDrawer = () => {
-    setIsDrawerOpen(false);
-  };
+  const toggleDrawer = () => setIsDrawerOpen(!isDrawerOpen);
+  const handleCloseDrawer = () => setIsDrawerOpen(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8">
+      {/* Blue Header Container with Inline Navigation and Title */}
       <div className="bg-primary-dark rounded-xl shadow-lg mb-8 p-4 md:p-6">
         <div className="flex items-center gap-8">
           {/* Navigation Button */}
@@ -46,36 +39,20 @@ const Home: React.FC = () => {
           </IconButton>
           
           <h1 className="text-2xl md:text-3xl font-bold text-white flex-1 font-family-display">
-            Home
+            Modules
           </h1>
         </div>
       </div>
 
-    {/* Bento Grid Container */}
-<div className="grid grid-cols-12 gap-4 md:gap-6 max-w-8xl mx-auto" style={{ gridTemplateRows: 'auto auto' }}>
-  {/* Welcome Component */}
-  <div className="col-span-12 lg:col-span-7 lg:row-start-1">
-    <Welcome />
-  </div>
+      {/* Page Content */}
+      <div className="bg-white rounded-xl p-6">
+        <p className="text-slate-600 text-lg">Here you can browse your modules.</p>
+      </div>
 
-  {/* Right column container */}
-  <div className="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-end-3 flex flex-col gap-4 md:gap-6">
-    <LearningStyleOverview studentId={1} />
-    <div className="flex-1 bg-gradient-to-br from-purple-100 to-blue-100 border border-purple-200/40 rounded-3xl p-6 flex items-center justify-center">
-      {/* Placeholder content */}
-    </div>
-  </div>
-
-  {/* Thread Map Section */}
-  <div className="col-span-12 lg:col-span-7 lg:col-start-1 lg:row-start-2">
-    <ThreadMapSection />
-  </div>
-</div>
-
-      {/* Side Navigation */}
+      {/* Side Navigation Drawer */}
       <SideNav isOpen={isDrawerOpen} onClose={handleCloseDrawer} />
     </div>
   );
 };
 
-export default Home;
+export default Modules;

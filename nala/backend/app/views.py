@@ -66,6 +66,6 @@ def percentage_learning_style(request):
 
 @api_view(["GET"])
 def taxonomy_progression(request):
-    filepath = "app/services/chat_history/1221_short.json"
+    filepath = "app/services/chat_history/newlinearalgprogression.json"
     results = calculate_taxonomy_progression_time(filepath)
     return Response(results)

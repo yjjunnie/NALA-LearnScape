@@ -2,9 +2,15 @@ from rest_framework import serializers
 from .models import (Module, Node, Relationship, Student, Topic, Concept)
 
 class ModuleSerializer(serializers.ModelSerializer):
+    topics = serializers.SerializerMethodField() 
+
     class Meta:
         model = Module
-        fields = ['id', 'index', 'name', 'created_at']
+        fields = ['id', 'index', 'name', 'created_at', 'topics']
+
+    def get_topics(self, obj):
+        topics = Topic.objects.filter(module=obj)
+        return TopicSerializer(topics, many=True).data
 
 class NodeSerializer(serializers.ModelSerializer):
     module_info = serializers.SerializerMethodField()

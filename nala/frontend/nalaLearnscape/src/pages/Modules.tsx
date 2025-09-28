@@ -4,11 +4,39 @@ import axios from "axios";
 import { IconButton } from "@mui/material";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import SideNav from "../components/SideNav";
+import { Link } from 'react-router-dom';
 
 interface Module {
   id: number;
   index: number;
   name: string;
+}
+
+const taxonomy_levels = {
+  "Remember": {
+    "Level": 1,
+    "Description": "Recall facts and basic concepts",
+  },
+  "Understand": {
+    "Level": 2,
+    "Description": "Explain ideas or concepts",
+  },
+  "Apply": {
+    "Level": 3,
+    "Description": "Use information in new situations",
+  },
+  "Analyse": {
+    "Level": 4,
+    "Description": "Draw connections among ideas",
+  },
+  "Evaluate": {
+    "Level": 5,
+    "Description": "Justify a stand or decision",
+  },
+  "Create": {
+    "Level": 6,
+    "Description": "Produce new or original work",
+  },
 }
 
 export const Modules: React.FC = () => {
@@ -72,7 +100,7 @@ export const Modules: React.FC = () => {
       </div>
 
       {/* Page Content */}
-      <div className="bg-white rounded-xl p-6 flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         {loading ? (
           <p className="text-slate-600 text-lg">Loading modules...</p>
         ) : error ? (
@@ -81,13 +109,18 @@ export const Modules: React.FC = () => {
           <p className="text-slate-600 text-lg">No modules found.</p>
         ) : (
           studentModules.map((module) => (
-            <div
+            <Link key={module.id} to={`./${module.id}`}>
+              <div
               key={module.id}
-              className="flex items-center gap-3 rounded-2xl px-3 py-2 bg-[rgba(232,241,255,0.6)]"
-            >
-              <p className="font-medium">{module.name}</p>
-              <span className="text-sm text-slate-500">Index: {module.index}</span>
-            </div>
+              className="flex-row items-center gap-3 rounded-[8px] px-8 py-8 bg-[#cddcf7] w-[50%]"
+              >
+                <h2 className="font-['GlacialIndifference'] font-bold ">{module.index}</h2>
+                <h1 className="font-['Fredoka'] font-bold text-4xl lg:text-5xl">{module.name}</h1>
+                <div>
+                  <h3>Knowledge Level:</h3>
+                </div>
+              </div>
+            </Link>
           ))
         )}
       </div>

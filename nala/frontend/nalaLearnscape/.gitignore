@@ -2,6 +2,10 @@
 __pycache__/
 *.pyc
 
+# Ignore backup files
+*.bak
+*.sql
+
 # Logs
 logs
 *.log

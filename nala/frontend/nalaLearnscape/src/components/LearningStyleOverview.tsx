@@ -6,11 +6,13 @@ import axios from "axios";
 
 const LearningStyleOverview = () => {
   const [rawData, setRawData] = useState({});
+  const [primaryStyle, setPrimaryStyle] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get(`/api/student/1/`);
+        setPrimaryStyle(response.data.learning_style_display || "");
         setRawData(response.data.learningStyleBreakdown || {});
       } catch (error) {
         console.error("Failed to fetch learning style", error);
@@ -38,9 +40,6 @@ const LearningStyleOverview = () => {
     }));
 
   // Find highest value style
-  const currentStyle = data.length > 0 
-    ? data.reduce((max, item) => item.value > max.value ? item : max).label
-    : "-";
 
   const total = data.reduce((sum, item) => sum + item.value, 0) || 1;
 
@@ -57,7 +56,7 @@ const LearningStyleOverview = () => {
           Current Learning Style
         </h2>
         <h1 className="font-bold font-['Fredoka'] text-3xl md:text-3xl text-[#4C73FF]">
-          {currentStyle}
+          {primaryStyle}
         </h1>
       </div>
       

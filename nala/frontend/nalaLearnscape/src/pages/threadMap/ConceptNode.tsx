@@ -19,8 +19,9 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
   const moduleInfo = nodeModules.find(
     (m) => m.module_id === data.node_module_id
   );
-  const moduleNumber = data.node_module_id.replace(/\D/g, "");
+  const moduleNumber = moduleInfo?.module_id;
 
+  // State to track which handle is hovered
   const [hoveredHandle, setHoveredHandle] = useState<string | null>(null);
 
   const handleStyleBase: React.CSSProperties = {

@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.shortcuts import redirect, get_object_or_404
 from django.utils import timezone
 from rest_framework import status
@@ -47,15 +48,26 @@ def getStudent(request, pk):
     return Response(serializedData)
 
 @api_view(["GET"])
-def getNodes(request):
-    nodes = Node.objects.all()
-    serializedData = NodeSerializer(nodes, many=True).data
+def getTopicAndConcepts(request, module_id=None):
+    if module_id:
+        topic_nodes = Topic.objects.filter(module__id=module_id)
+        concept_nodes = Concept.objects.filter(module__id=module_id)
+    else:
+        topic_nodes = Topic.objects.all()
+        concept_nodes = Concept.objects.all()
+    serializedData = ThreadMapTopicSerializer(topic_nodes, many=True).data
+    serializedData += ThreadMapConceptSerializer(concept_nodes, many=True).data
     return Response(serializedData)
 
 @api_view(["GET"])
-def getRelationships(request):
-    relationships = Relationship.objects.all()
-    serializedData = RelationshipSerializer(relationships, many=True).data
+def getRelationships(request, module_id=None):
+    if module_id:
+        relationships = Relationship.objects.filter(
+            Q(first_node__module__id=module_id) | Q(second_node__module__id=module_id) # Filter relationships where either node belongs to the module
+        )
+    else:
+        relationships = Relationship.objects.all()
+    serializedData = ThreadMapRelationshipSerializer(relationships, many=True).data
     return Response(serializedData)
 
 @api_view(["GET"])

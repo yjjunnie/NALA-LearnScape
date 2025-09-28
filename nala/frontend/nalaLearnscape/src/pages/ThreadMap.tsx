@@ -51,7 +51,7 @@ import NodeInputModal from "./threadMap/NodeInputModal";
 import HoverLabelEdge from "./threadMap/HoverLabelEdge";
 import AddNodeHover from "./threadMap/AddNodeHover";
 
-const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
+const ThreadMap: React.FC<{ module_id: number }> = ({ module_id }) => {
   const nodeTypes = useMemo(
     () => ({ conceptNode: ConceptNode, topicNode: ConceptNode }),
     []
@@ -71,13 +71,13 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   useEffect(() => {
     try {
       const fetchNodeData = async () => {
-        const response = await fetch("/api/nodes/");
+        const response = await fetch("/api/nodes/" + module_id);
         const data = await response.json();
         setDbNodes(data);
       };
       fetchNodeData();
       const fetchRelationshipData = async () => {
-        const response = await fetch("/api/relationships/");
+        const response = await fetch("/api/relationships/" + module_id);
         const data = await response.json();
         setDbRelationships(data);
       };
@@ -87,16 +87,6 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       console.log(err);
     }
   }, []);
-
-  // Filter nodes and relationships based on moduleId
-  const filteredNodes = dbNodes.filter(
-    (node) => node.node_module_id === module_id
-  );
-  const filteredRelationships = dbRelationships.filter(
-    (rel) =>
-      filteredNodes.some((node) => node.node_id === rel.node_id_1) &&
-      filteredNodes.some((node) => node.node_id === rel.node_id_2)
-  );
 
   const [activePopup, setActivePopup] = useState<{
     nodeId: string;
@@ -263,36 +253,34 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       const width = containerBounds?.clientWidth ?? 800;
       const height = containerBounds?.clientHeight ?? 600;
       const existingMap = new Map(prevNodes.map((node) => [node.id, node])); // Map of existing nodes for quick lookup
-      const colorCache = new Map<string, string>(); // Cache to store assigned colors for nodes
+      const colorCache = new Map<string, string>(); // Cache to store assigned colors for nodes, require string due to flownode id being string
 
       prevNodes.forEach((node) => {
         if (node.data?.color) colorCache.set(node.id, node.data.color);
       });
 
-      const updatedNodes = filteredNodes.map((filtered_node) => {
-        const baseColor = getColorForModule(filtered_node.node_module_id);
-        let nodeColor = colorCache.get(filtered_node.node_id);
+      const updatedNodes = dbNodes.map((node) => {
+        const baseColor = getColorForModule(node.module_id);
+        let nodeColor = colorCache.get(node.id.toString());
 
         if (!nodeColor) {
-          if (filtered_node.node_type === "topic") {
+          if (node.type === "topic") {
             // Ensure distinct colors for topic nodes
             const usedColors = new Set(colorCache.values());
             nodeColor = generateDistinctTopicColor(usedColors);
-          } else if (filtered_node.parent_node_id) {
+          } else if (node.related_topic) {
             // Inherit color from parent concept if available
-            nodeColor = colorCache.get(filtered_node.parent_node_id);
+            nodeColor = colorCache.get(node.related_topic.toString());
           }
         }
 
         if (!nodeColor) {
           // Fallback to module color if no other color assigned
           nodeColor =
-            filtered_node.node_type === "topic"
-              ? getTopicColor(baseColor)
-              : baseColor;
+            node.type === "topic" ? getTopicColor(baseColor) : baseColor;
         }
 
-        const existing = existingMap.get(filtered_node.node_id);
+        const existing = existingMap.get(node.id.toString()); // to
         let position = existing?.position; // Checks if an existing node already has a position
 
         // Only set new position if node doesn't exist
@@ -302,7 +290,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
             pendingUsed = true;
           } else {
             const parentNode = prevNodes.find(
-              (node) => node.id === filtered_node.parent_node_id
+              (node) => node.id === node.parentId
             );
             if (parentNode) {
               position = {
@@ -325,37 +313,31 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         }
 
         const data: NodeData = {
-          node_id: filtered_node.node_id,
-          node_name: filtered_node.node_name,
-          node_description: filtered_node.node_description,
-          node_type: filtered_node.node_type,
-          parent_node_id: filtered_node.parent_node_id,
-          node_module_id: filtered_node.node_module_id,
+          node_id: node.id,
+          node_name: node.name,
+          node_description: node.summary,
+          node_type: node.type,
+          parent_node_id: node.related_topic,
+          node_module_id: node.module_id,
           color: nodeColor,
         };
 
-        colorCache.set(filtered_node.node_id, nodeColor);
+        colorCache.set(node.id.toString(), nodeColor); // toString because flownode id is string
 
         return existing
           ? {
               ...existing,
-              type:
-                filtered_node.node_type === "topic"
-                  ? "topicNode"
-                  : "conceptNode",
+              type: node.type === "topic" ? "topicNode" : "conceptNode",
               position: position ?? existing.position,
               data,
-              selected: selectedNode === filtered_node.node_id,
+              selected: selectedNode === node.id.toString(), // toString because flownode id is string
             }
           : {
-              id: filtered_node.node_id,
-              type:
-                filtered_node.node_type === "topic"
-                  ? "topicNode"
-                  : "conceptNode",
+              id: node.id,
+              type: node.type === "topic" ? "topicNode" : "conceptNode",
               position: position ?? { x: 0, y: 0 },
               data,
-              selected: selectedNode === filtered_node.node_id,
+              selected: selectedNode === node.id.toString(), // toString because flownode id is string
             };
       });
 
@@ -370,21 +352,17 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   // Sync edges with database relationships
   useEffect(() => {
     const hadEdges = edges.length > 0;
-    const newEdges = filteredRelationships.map((rel) => ({
-      id: `e${rel.node_id_1}-${rel.node_id_2}`,
-      source: rel.node_id_1,
-      target: rel.node_id_2,
+    const newEdges = dbRelationships.map((rel) => ({
+      id: rel.toString(),
+      source: rel.first_node.toString(),
+      target: rel.second_node.toString(),
       type: "hoverLabel",
       style: {
-        stroke:
-          selectedEdge === `e${rel.node_id_1}-${rel.node_id_2}`
-            ? "#ff6b6b"
-            : "#b1b1b7",
-        strokeWidth:
-          selectedEdge === `e${rel.node_id_1}-${rel.node_id_2}` ? 3 : 2,
+        stroke: selectedEdge === rel.id.toString() ? "#ff6b6b" : "#b1b1b7",
+        strokeWidth: selectedEdge === rel.id.toString() ? 3 : 2,
       },
       animated: false,
-      data: { label: rel.relationship_type },
+      data: { label: rel.rs_type },
     }));
 
     setEdges(newEdges);
@@ -434,7 +412,10 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       visited.add(node.id);
       if (node.data.node_type === "topic") return node.id;
       if (!node.data.parent_node_id) return null;
-      return findRootTopicId(nodeMap.get(node.data.parent_node_id), visited);
+      return findRootTopicId(
+        nodeMap.get(node.data.parent_node_id.toString()),
+        visited
+      );
     };
 
     const activeDraggedId = draggedNodeIdRef.current;
@@ -536,7 +517,9 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         .forceX((d: any) => {
           const data = d.data as NodeData;
           if (data.node_type === "concept" && data.parent_node_id) {
-            const parentNode = simulationNodeMap.get(data.parent_node_id);
+            const parentNode = simulationNodeMap.get(
+              data.parent_node_id.toString()
+            );
             if (parentNode)
               return parentNode.x ?? parentNode.position?.x ?? width / 2;
           }
@@ -553,7 +536,9 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         .forceY((d: any) => {
           const data = d.data as NodeData;
           if (data.node_type === "concept" && data.parent_node_id) {
-            const parentNode = simulationNodeMap.get(data.parent_node_id);
+            const parentNode = simulationNodeMap.get(
+              data.parent_node_id.toString()
+            );
             if (parentNode)
               return parentNode.y ?? parentNode.position?.y ?? height / 2;
           }
@@ -606,11 +591,10 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       if (!params.source || !params.target) return;
 
       const newRelationship: DatabaseRelationship = {
-        relationship_id:
-          Math.max(...dbRelationships.map((r) => r.relationship_id), 0) + 1,
-        node_id_1: params.source,
-        node_id_2: params.target,
-        relationship_type: "",
+        id: Math.max(...dbRelationships.map((r) => r.id), 0) + 1,
+        first_node: Number(params.source), // Convert to number for db
+        second_node: Number(params.target), // Convert to number for db
+        rs_type: "",
       };
 
       setDbRelationships((prev) => [...prev, newRelationship]);
@@ -704,23 +688,21 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       nodeName: string,
       nodeType: "concept" | "topic",
       nodeDescription: string,
-      moduleId: string,
-      parentNodeId?: string
+      moduleId: number,
+      parentNodeId?: number
     ) => {
       if (!pendingNodePosition) return;
 
       pendingNodePositionRef.current = pendingNodePosition;
 
-      const newNodeId = (
-        Math.max(...dbNodes.map((n) => parseInt(n.node_id)), 0) + 1
-      ).toString();
+      const newNodeId = Math.max(...dbNodes.map((n) => n.id), 0) + 1;
       const newDbNode: DatabaseNode = {
-        node_id: newNodeId,
-        node_type: nodeType,
-        node_name: nodeName,
-        node_description: nodeDescription || undefined,
-        parent_node_id: parentNodeId,
-        node_module_id: moduleId,
+        id: newNodeId,
+        type: nodeType,
+        name: nodeName,
+        summary: nodeDescription || undefined,
+        related_topic: parentNodeId,
+        module_id: moduleId,
       };
 
       setDbNodes((prev) => [...prev, newDbNode]);
@@ -728,16 +710,14 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       if (parentNodeId) {
         setDbRelationships((prev) => {
           const nextId =
-            prev.length > 0
-              ? Math.max(...prev.map((rel) => rel.relationship_id)) + 1
-              : 1;
+            prev.length > 0 ? Math.max(...prev.map((rel) => rel.id)) + 1 : 1;
           return [
             ...prev,
             {
-              relationship_id: nextId,
-              node_id_1: parentNodeId,
-              node_id_2: newNodeId,
-              relationship_type: "",
+              id: nextId,
+              first_node: parentNodeId,
+              second_node: newNodeId,
+              rs_type: "",
             },
           ];
         });
@@ -825,11 +805,13 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   const deleteSelectedNode = useCallback(() => {
     if (!selectedNode) return;
 
-    setDbNodes((prev) => prev.filter((node) => node.node_id !== selectedNode));
+    setDbNodes((prev) =>
+      prev.filter((node) => node.id !== parseInt(selectedNode))
+    );
     setDbRelationships((prev) =>
       prev.filter(
         (rel) =>
-          rel.node_id_1 !== selectedNode && rel.node_id_2 !== selectedNode
+          rel.id !== parseInt(selectedNode) && rel.id !== parseInt(selectedNode)
       )
     );
     setSelectedNode(null);
@@ -841,9 +823,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     if (!selectedEdge) return;
 
     setDbRelationships((prev) =>
-      prev.filter(
-        (rel) => `e${rel.node_id_1}-${rel.node_id_2}` !== selectedEdge
-      )
+      prev.filter((rel) => rel.id !== parseInt(selectedEdge))
     );
     setSelectedEdge(null);
   }, [selectedEdge]);

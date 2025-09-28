@@ -1,12 +1,12 @@
 import type { Node, Edge, XYPosition } from "@xyflow/react";
 
 export interface NodeData extends Record<string, unknown> {
-  node_id: string;
+  node_id: number;
   node_name: string;
   node_description?: string;
   node_type: "topic" | "concept";
-  parent_node_id?: string;
-  node_module_id: string;
+  parent_node_id?: number;
+  node_module_id: number;
   color?: string;
 }
 
@@ -14,19 +14,19 @@ export type FlowNode = Node<NodeData>;
 export type FlowEdge = Edge;
 
 export interface DatabaseNode {
-  node_id: string;
-  node_type: "topic" | "concept";
-  node_name: string;
-  node_description?: string;
-  parent_node_id?: string;
-  node_module_id: string;
+  id: number;
+  type: "topic" | "concept";
+  name: string;
+  summary?: string;
+  related_topic?: number;
+  module_id: number;
 }
 
 export interface DatabaseRelationship {
-  relationship_id: number;
-  node_id_1: string;
-  node_id_2: string;
-  relationship_type: string;
+  id: number;
+  first_node: number;
+  second_node: number;
+  rs_type: string;
 }
 
 export interface HoverNode {
@@ -36,7 +36,7 @@ export interface HoverNode {
 }
 
 export interface NodeModule {
-  module_id: string;
+  module_id: number;
   module_name: string;
   color: string;
 }

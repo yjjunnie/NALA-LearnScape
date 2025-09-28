@@ -1,6 +1,6 @@
 import { nodeModules } from "./mockData";
 
-export const getColorForModule = (moduleId: string): string => {
+export const getColorForModule = (moduleId: number): string => {
   const module = nodeModules.find((m) => m.module_id === moduleId);
   if (module) return module.color;
 
@@ -14,18 +14,20 @@ export const getColorForModule = (moduleId: string): string => {
     "#ff9800",
     "#e91e63",
   ];
-  const hash = moduleId.split("").reduce((a, b) => {
-    a = (a << 5) - a + b.charCodeAt(0);
-    return a & a;
-  }, 0);
+  let hash = moduleId;
+  let result = 0;
+  while (hash > 0) {
+    result = (result << 5) - result + (hash % 10); // Add each digit of the number
+    hash = Math.floor(hash / 10); // Remove the last digit
+  }
   return colors[Math.abs(hash) % colors.length];
 };
 
 export const getTopicColor = (moduleColor: string): string => {
   const hex = moduleColor.replace("#", "");
-  const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - 20);
-  const g = Math.max(0, parseInt(hex.substr(2, 2), 16) - 20);
-  const b = Math.max(0, parseInt(hex.substr(4, 2), 16) - 20);
+  const r = Math.max(0, parseInt(hex.substring(0, 2), 16) - 20);
+  const g = Math.max(0, parseInt(hex.substring(2, 2), 16) - 20);
+  const b = Math.max(0, parseInt(hex.substring(4, 2), 16) - 20);
   return `#${r.toString(16).padStart(2, "0")}${g
     .toString(16)
     .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
@@ -78,9 +80,7 @@ const hslToHex = (h: number, s: number, l: number): string => {
   return `#${r}${g}${b}`;
 };
 
-export const generateDistinctTopicColor = (
-  usedColors: Set<string>
-): string => {
+export const generateDistinctTopicColor = (usedColors: Set<string>): string => {
   const basePalette = [
     "#00bcd4",
     "#5c9cfc",

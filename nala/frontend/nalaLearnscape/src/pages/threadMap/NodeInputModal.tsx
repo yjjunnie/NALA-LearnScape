@@ -12,8 +12,8 @@ interface NodeInputModalProps {
     nodeName: string,
     nodeType: NodeType,
     nodeDescription: string,
-    moduleId: string,
-    parentNodeId?: string
+    moduleId: number,
+    parentNodeId?: number
   ) => void;
   availableNodes: DatabaseNode[];
 }
@@ -27,8 +27,8 @@ const NodeInputModal: React.FC<NodeInputModalProps> = ({
   const [nodeName, setNodeName] = useState<string>("");
   const [nodeType, setNodeType] = useState<NodeType>("concept");
   const [nodeDescription, setNodeDescription] = useState<string>("");
-  const [moduleId, setModuleId] = useState<string>("MOD_001");
-  const [parentNodeId, setParentNodeId] = useState<string>("");
+  const [moduleId, setModuleId] = useState();
+  const [parentNodeId, setParentNodeId] = useState();
 
   const handleSave = () => {
     if (nodeName.trim()) {
@@ -56,7 +56,7 @@ const NodeInputModal: React.FC<NodeInputModalProps> = ({
 
   if (!isOpen) return null;
 
-  const topicNodes = availableNodes.filter((node) => node.node_type === "topic");
+  const topicNodes = availableNodes.filter((node) => node.type === "topic");
 
   return (
     <div
@@ -231,15 +231,17 @@ const NodeInputModal: React.FC<NodeInputModalProps> = ({
             >
               <option value="">No parent</option>
               {topicNodes.map((topic) => (
-                <option key={topic.node_id} value={topic.node_id}>
-                  {topic.node_name}
+                <option key={topic.id} value={topic.id}>
+                  {topic.name}
                 </option>
               ))}
             </select>
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+        <div
+          style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}
+        >
           <button
             onClick={onClose}
             style={{

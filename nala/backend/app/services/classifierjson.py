@@ -481,104 +481,103 @@ def calculate_taxonomy_progression_time(filepath: str) -> List[Dict]:
     
     return progressions
 
-#def analyze_student_progression(filepath: str) -> None:
-    """
-    Analyze and print student progression through Bloom's taxonomy levels.
-    """
-    progressions = calculate_taxonomy_progression_time(filepath)
-    
-    if not progressions:
-        print("No progressions found.")
-        return
-    
-    # Check for errors
-    if len(progressions) == 1 and "error" in progressions[0]:
-        print(f"Error: {progressions[0]['error']}")
-        return
-    
-    # Print individual progressions
-    print("=== BLOOM'S TAXONOMY PROGRESSION ANALYSIS ===\n")
-    
-    for i, prog in enumerate(progressions):
-        if "summary" in prog:
-            print("=== SUMMARY STATISTICS ===")
-            summary = prog["summary"]
-            print(f"Total Progressions: {summary['total_progressions']}")
-            print(f"Average Progression Time: {summary['average_progression_time_minutes']} minutes")
-            print(f"Fastest Progression: {summary['fastest_progression_minutes']} minutes")
-            print(f"Slowest Progression: {summary['slowest_progression_minutes']} minutes")
-            print(f"Highest Level Reached: {summary['highest_level_reached']}")
-            print(f"Total Study Time: {summary['total_study_time_minutes']} minutes")
-            print(f"Levels Achieved: {', '.join(summary['levels_achieved'])}")
-            break
-        
-        print(f"Progression #{i+1}:")
-        print(f"  From: {prog['from_level']} → To: {prog['to_level']}")
-        print(f"  Level Jump: {prog['level_jump']} levels")
-        print(f"  Time Taken: {prog['progression_time_minutes']} minutes ({prog['progression_time_hours']} hours)")
-        print(f"  Messages Between: {prog['total_messages_between']}")
-        print(f"  From Message: \"{prog['from_text'][:100]}...\"")
-        print(f"  To Message: \"{prog['to_text'][:100]}...\"")
-        print()
+# 7 classify chathistory by topic then by blooms taxonomy level
+def classify_chathistory_by_topic_and_taxonomy(filepath):
+    data = load_json(filepath)
+    results = []
 
-#def get_specific_progression(filepath: str, from_level: str, to_level: str) -> Optional[Dict]:
-    """
-    Get progression time between two specific taxonomy levels.
-    
-    Args:
-        filepath: Path to conversation data
-        from_level: Starting taxonomy level
-        to_level: Target taxonomy level
-    
-    Returns:
-        Dictionary with progression information or None if not found
-    """
-    progressions = calculate_taxonomy_progression_time(filepath)
-    
-    for prog in progressions:
-        if "summary" in prog:
+    topic_summary = {
+        "Introducing the Matrix": {
+            "Remember": 0,
+            "Understand": 0,
+            "Apply": 0,
+            "Analyze": 0,
+            "Evaluate": 0,
+            "Create": 0
+        },
+        "Linear Transforms and the Matrix": {
+            "Remember": 0,
+            "Understand": 0,
+            "Apply": 0,
+            "Analyze": 0,
+            "Evaluate": 0,
+            "Create": 0
+        },
+        "Manipulating the Matrix": {
+            "Remember": 0,
+            "Understand": 0,
+            "Apply": 0,
+            "Analyze": 0,
+            "Evaluate": 0,
+            "Create": 0
+        },
+        "Inverting the Matrix": {
+            "Remember": 0,
+            "Understand": 0,
+            "Apply": 0,
+            "Analyze": 0,
+            "Evaluate": 0,
+            "Create": 0
+        }
+    }
+
+    # If it's a list of messages
+    if isinstance(data, list):
+        messages = data
+    # If it's a single conversation dict
+    elif isinstance(data, dict) and "msg_text" in data:
+        messages = [data]
+    else:
+        return []
+
+    for index, msg in enumerate(messages):
+        if msg.get("msg_sender") != "user":
             continue
-        if prog.get("from_level") == from_level and prog.get("to_level") == to_level:
-            return prog
-    
-    return None
 
-#def get_progressions_by_jump_size(filepath: str, jump_size: int) -> List[Dict]:
-    """
-    Get all progressions with a specific level jump size.
-    
-    Args:
-        filepath: Path to conversation data
-        jump_size: Number of levels jumped (1, 2, 3, etc.)
-    
-    Returns:
-        List of progressions with the specified jump size
-    """
-    all_progressions = calculate_taxonomy_progression_time(filepath)
-    
-    filtered_progressions = [
-        prog for prog in all_progressions 
-        if "level_jump" in prog and prog["level_jump"] == jump_size
-    ]
-    
-    return filtered_progressions
+        raw_text = msg.get("msg_text")
+        extracted_text = extract_text_from_msg(raw_text)
+        if not extracted_text:
+            continue
+        
+        result = classify(extracted_text, system="You are a strict classifier."
+        "Classify the user's text into one linear algebra topic from this set: [Introducing the Matrix, Linear Transforms and the Matrix, Manipulating the Matrix, Inverting the Matrix]."
+        "Then, classify the text into one of the following Bloom's Taxonomy levels: [Remember, Understand, Apply, Analyze, Evaluate, Create]. "
+        "Choose EXACTLY ONE best label for each category. Unclassifiable is NOT ALLOWED. Return ONLY a compact JSON string with two keys: 'topic' (a single label from the topic list) and 'bloom_level' (a single label from the Bloom's Taxonomy list), both as strings.")
 
-#def get_taxonomy_summary_only(filepath: str) -> Optional[Dict]:
-    """
-    Get only the summary statistics from taxonomy progression analysis.
-    
-    Args:
-        filepath: Path to conversation data
-    
-    Returns:
-        Dictionary containing summary statistics or None if not found
-    """
-    results = calculate_taxonomy_progression_time(filepath)
-    
-    for result in results:
-        if "summary" in result:
-            return result["summary"]
-    
-    return None
+        data = result.get("text")
+        try:
+            if data is None:  # Check if data is None
+                continue
+            # clean and parse the data from the classify function's data's text output
+            # find the start of the JSON object '{' and the end '}'
+            start = data.find('{')
+            end = data.rfind('}') + 1
+            
+            # get clean JSON string
+            json_string = data[start:end]
+            
+            # convert the string into a python dictionary
+            parsed_data = json.loads(json_string)
 
+            topic = parsed_data.get('topic')
+            bloom_level = parsed_data.get('bloom_level')
 
+            results.append({
+                "topic": topic,
+                "bloom_level": bloom_level,
+            })
+
+            if topic in topic_summary and bloom_level in topic_summary[topic]:
+                topic_summary[topic][bloom_level] += 1
+        except (json.JSONDecodeError, IndexError):
+            continue
+
+    summary = []
+    for topic, counts in topic_summary.items():
+        topic_summary_str = { "topic": topic, "bloom_level_counts": counts }
+        summary.append(topic_summary_str)
+ 
+    return {
+        "results": results,
+        "summary": summary
+    }

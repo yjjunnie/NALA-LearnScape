@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 from django.db.models import Q
+=======
+from sys import api_version
+>>>>>>> c910f49a (7. bloom classifier first by topic then bloom categories)
 from django.shortcuts import redirect, get_object_or_404
 from django.utils import timezone
 from rest_framework import status
@@ -8,7 +12,7 @@ from .models import *
 from .serializers import *
 #import requests
 #import os
-from app.services.classifierjson import classify_messages_from_json, display_messages_from_json, learning_style_from_json, percentage_from_json, calculate_time_spent_per_topic, learning_style_from_json, calculate_taxonomy_progression_time
+from app.services.classifierjson import classify_messages_from_json, display_messages_from_json, learning_style_from_json, percentage_from_json, calculate_time_spent_per_topic, learning_style_from_json, calculate_taxonomy_progression_time, classify_chathistory_by_topic_and_taxonomy
 
 @api_view(['GET'])
 def homepage_view(request):
@@ -80,4 +84,10 @@ def percentage_learning_style(request):
 def taxonomy_progression(request):
     filepath = "app/services/chat_history/newlinearalgprogression.json"
     results = calculate_taxonomy_progression_time(filepath)
+    return Response(results)
+
+@api_view(["GET"])
+def bloom_by_topic_classifier(request):
+    filepath = "app/services/chat_history/studentbloombytopic.json"
+    results = classify_chathistory_by_topic_and_taxonomy(filepath)
     return Response(results)

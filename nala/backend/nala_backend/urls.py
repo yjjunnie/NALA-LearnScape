@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from app import views
-from app.views import homepage_view,classify_chathistory, display_chathistory, percentage_chathistory, time_spent_per_topic, percentage_learning_style, taxonomy_progression
+from app.views import homepage_view,classify_chathistory, display_chathistory, percentage_chathistory, time_spent_per_topic, percentage_learning_style, taxonomy_progression, bloom_by_topic_classifier
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,5 +30,6 @@ urlpatterns = [
     path('api/percentage-chat-history/', views.percentage_chathistory, name="percentage-chathistory"),
     path('api/time-spent-per-topic/', views.time_spent_per_topic, name="time-spent-per-topic"),
     path('api/percentage-learning-style/', views.percentage_learning_style, name="percentage-learningstyle"),
-    path('api/taxonomy-progression/', views.taxonomy_progression, name="taxonomy-progression")
+    path('api/taxonomy-progression/', views.taxonomy_progression, name="taxonomy-progression"),
+    path('api/bloom-by-topic-classifier/', views.bloom_by_topic_classifier, name="bloom-by-topic-classifier")
 ]

@@ -47,6 +47,18 @@ def getStudent(request, pk):
     return Response(serializedData)
 
 @api_view(["GET"])
+def getNodes(request):
+    nodes = Node.objects.all()
+    serializedData = NodeSerializer(nodes, many=True).data
+    return Response(serializedData)
+
+@api_view(["GET"])
+def getRelationships(request):
+    relationships = Relationship.objects.all()
+    serializedData = RelationshipSerializer(relationships, many=True).data
+    return Response(serializedData)
+
+@api_view(["GET"])
 def percentage_learning_style(request):
     filepath = "app/services/chat_history/newlearningstyle.json"
     results = learning_style_from_json(filepath)

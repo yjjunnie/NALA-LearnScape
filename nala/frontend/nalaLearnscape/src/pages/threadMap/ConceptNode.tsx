@@ -93,7 +93,9 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
     fontSize: data.node_type === "topic" ? "16px" : "13px",
     lineHeight: 1.25,
     maxWidth: circleSize,
-    wordBreak: "break-word",
+    wordBreak: "normal", // Avoid breaking words
+    overflowWrap: "break-word", // Allow wrapping of long words when necessary
+    whiteSpace: "normal", // Allow text to wrap to the next line if needed
   };
 
   return (
@@ -130,7 +132,9 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           overflow: "hidden",
         }}
         title={`${data.node_name}${
-          data.node_description ? "\n" + data.node_description : ""
+          data.node_description
+            ? "\n Description: " + data.node_description
+            : ""
         }\nModule: ${moduleInfo?.module_name || data.node_module_id}`}
       >
         <div

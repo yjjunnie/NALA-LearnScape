@@ -37,10 +37,10 @@ import type {
   DatabaseRelationship,
   HoverNode,
 } from "./threadMap/types";
-import {
-  mockDatabaseNodes,
-  mockDatabaseRelationships,
-} from "./threadMap/mockData";
+// import {
+//   mockDatabaseNodes,
+//   mockDatabaseRelationships,
+// } from "./threadMap/mockData";
 import {
   getColorForModule,
   getTopicColor,
@@ -57,16 +57,36 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     []
   );
   const edgeTypes = useMemo(() => ({ hoverLabel: HoverLabelEdge }), []);
-
+  const [err, setErr] = useState<string | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
-  const [dbNodes, setDbNodes] = useState<DatabaseNode[]>(mockDatabaseNodes);
+  const [dbNodes, setDbNodes] = useState<DatabaseNode[]>([]);
   const [dbRelationships, setDbRelationships] = useState<
     DatabaseRelationship[]
-  >(mockDatabaseRelationships);
+  >([]);
 
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const fetchNodeData = async () => {
+        const response = await fetch("/api/nodes/");
+        const data = await response.json();
+        setDbNodes(data);
+      };
+      fetchNodeData();
+      const fetchRelationshipData = async () => {
+        const response = await fetch("/api/relationships/");
+        const data = await response.json();
+        setDbRelationships(data);
+      };
+      fetchRelationshipData();
+    } catch (err) {
+      setErr("Threadmap data failed to load. Please try again later.");
+      console.log(err);
+    }
+  }, []);
 
   // Filter nodes and relationships based on moduleId
   const filteredNodes = dbNodes.filter(

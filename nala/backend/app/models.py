@@ -1,4 +1,6 @@
 from django.db import models
+from app.services.classifierjson import learning_style_from_json 
+filepath = "app/services/chat_history/newlearningstyle.json"
 
 class Module(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -39,20 +41,8 @@ class Student(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-<<<<<<< HEAD
     enrolled_modules = models.ManyToManyField(Module, related_name='students',blank=True)
-=======
-    enrolled_modules = models.ManyToManyField(Module, related_name='students', null=True, blank=True)
->>>>>>> origin/try-uiux
-    learningStyle = models.CharField(max_length=255, choices=
-        [
-            ("retrieval_practice", "Retrieval Practice"),
-            ("spaced_practice", "Spaced Practice"),
-            ("elaboration", "Elaboration"),
-            ("concrete_examples", "Concrete Examples"),
-            ("interleaving", "Interleaving"),
-            ("dual_coding", "Dual Coding")
-        ], blank=True, null=True)
+    learningStyleBreakdown = models.JSONField(learning_style_from_json(filepath), blank=True, null=True)  # e.g., {"Retrieval Practice": 30, "Spaced Practice": 20, ...}
     
     learningStyleDesc = {
         "Retrieval Practice" : "Testing yourself to strengthen memory and recall",

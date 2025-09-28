@@ -7,6 +7,8 @@ export interface NodeData extends Record<string, unknown> {
   node_type: "topic" | "concept";
   parent_node_id?: string;
   node_module_id: string;
+  node_module_name?: string;
+  node_module_index?: string;
   color?: string;
 }
 
@@ -37,6 +39,7 @@ export interface HoverNode {
 
 export interface NodeModule {
   module_id: string;
-  module_name: string;
+  module_name?: string;
+  module_index?: string;
   color: string;
 }

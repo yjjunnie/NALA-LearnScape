@@ -1,4 +1,5 @@
 from django.db import models
+from unittest import mock
 from app.services.classifierjson import learning_style_from_json 
 filepath = "app/services/chat_history/newlearningstyle.json"
 

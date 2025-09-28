@@ -29,6 +29,7 @@ import type {
 import * as d3 from "d3";
 import { Trash2 } from "lucide-react";
 import "@xyflow/react/dist/style.css";
+import "../App.css";
 import type {
   FlowNode,
   FlowEdge,
@@ -110,13 +111,14 @@ const Flow: React.FC = () => {
   } | null>(null);
 
   // Refs for simulation management
-  const simulationRef = useRef<d3.Simulation<any, undefined> | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const pendingNodePositionRef = useRef<XYPosition | null>(null);
-  const draggedNodeIdRef = useRef<string | null>(null);
-  const shouldRunSimulationRef = useRef<boolean>(false);
+  const simulationRef = useRef<d3.Simulation<any, undefined> | null>(null); // Holds the D3 simulation instance for managing node layout with forces
+  const containerRef = useRef<HTMLDivElement>(null); // A reference to the DOM element that contains the flowchart
+  const pendingNodePositionRef = useRef<XYPosition | null>(null); // Holds the pending position for a new node (before it’s added)
+  const draggedNodeIdRef = useRef<string | null>(null); // Tracks the ID of the node currently being dragged
+  const shouldRunSimulationRef = useRef<boolean>(false); //A flag indicating whether the D3 simulation should run to adjust node positions
 
   const popupNode = useMemo(
+    // Calculate and memoize the node that is associated with the activePopup
     () =>
       activePopup
         ? nodes.find((node) => node.id === activePopup.nodeId) ?? null
@@ -128,7 +130,7 @@ const Flow: React.FC = () => {
     if (!activePopup || !reactFlowInstance || !containerRef.current)
       return null;
 
-    const nodeInternals = reactFlowInstance.getNode(activePopup.nodeId);
+    const nodeInternals = reactFlowInstance.getNode(activePopup.nodeId); // Retrieve information about the node in the flowchart
     if (!nodeInternals) return null;
 
     const bounds = containerRef.current.getBoundingClientRect();
@@ -169,9 +171,10 @@ const Flow: React.FC = () => {
       containerWidth: bounds.width,
       containerHeight: bounds.height,
     };
-  }, [activePopup, nodes, reactFlowInstance, viewport]);
+  }, [activePopup, nodes, reactFlowInstance, viewport]); // Recompute when activePopup, nodes, reactFlowInstance, or viewport changes
 
   const popupSizing = useMemo(() => {
+    // Calculates the final size and position of the popup based on whether it is expanded or collapsed
     if (!activePopup || !popupLayout) return null;
 
     const collapsedWidth = popupLayout.collapsedWidth;
@@ -201,11 +204,11 @@ const Flow: React.FC = () => {
   useEffect(() => {
     if (!popupSizing) return;
 
-    setPopupPosition((prev) =>
-      prev ?? { x: popupSizing.left, y: popupSizing.top }
+    setPopupPosition(
+      (prev) => prev ?? { x: popupSizing.left, y: popupSizing.top }
     );
-    setPopupSize((prev) =>
-      prev ?? { width: popupSizing.width, height: popupSizing.height }
+    setPopupSize(
+      (prev) => prev ?? { width: popupSizing.width, height: popupSizing.height }
     );
   }, [popupSizing]);
 
@@ -222,15 +225,15 @@ const Flow: React.FC = () => {
 
   // Sync nodes with database entries while preserving positions
   useEffect(() => {
-    let pendingUsed = false;
-    const pendingSnapshot = pendingNodePositionRef.current;
+    let pendingUsed = false; // Flag to track if the pending position has been used
+    const pendingSnapshot = pendingNodePositionRef.current; // Snapshot of the pending position for a new node
 
     setNodes((prevNodes) => {
       const containerBounds = containerRef.current;
       const width = containerBounds?.clientWidth ?? 800;
       const height = containerBounds?.clientHeight ?? 600;
-      const existingMap = new Map(prevNodes.map((node) => [node.id, node]));
-      const colorCache = new Map<string, string>();
+      const existingMap = new Map(prevNodes.map((node) => [node.id, node])); // Map of existing nodes for quick lookup
+      const colorCache = new Map<string, string>(); // Cache to store assigned colors for nodes
 
       prevNodes.forEach((node) => {
         if (node.data?.color) colorCache.set(node.id, node.data.color);
@@ -242,20 +245,23 @@ const Flow: React.FC = () => {
 
         if (!nodeColor) {
           if (dbNode.node_type === "topic") {
+            // Ensure distinct colors for topic nodes
             const usedColors = new Set(colorCache.values());
             nodeColor = generateDistinctTopicColor(usedColors);
           } else if (dbNode.parent_node_id) {
+            // Inherit color from parent concept if available
             nodeColor = colorCache.get(dbNode.parent_node_id);
           }
         }
 
         if (!nodeColor) {
+          // Fallback to module color if no other color assigned
           nodeColor =
             dbNode.node_type === "topic" ? getTopicColor(baseColor) : baseColor;
         }
 
         const existing = existingMap.get(dbNode.node_id);
-        let position = existing?.position;
+        let position = existing?.position; // Checks if an existing node already has a position
 
         // Only set new position if node doesn't exist
         if (!position) {
@@ -844,17 +850,11 @@ const Flow: React.FC = () => {
 
         const newX = Math.max(
           0,
-          Math.min(
-            bounds.width - currentWidth,
-            dragStart.popupX + deltaX
-          )
+          Math.min(bounds.width - currentWidth, dragStart.popupX + deltaX)
         );
         const newY = Math.max(
           0,
-          Math.min(
-            bounds.height - currentHeight,
-            dragStart.popupY + deltaY
-          )
+          Math.min(bounds.height - currentHeight, dragStart.popupY + deltaY)
         );
 
         setPopupPosition({ x: newX, y: newY });
@@ -871,17 +871,11 @@ const Flow: React.FC = () => {
 
         const newWidth = Math.max(
           300,
-          Math.min(
-            bounds.width - originX,
-            resizeStart.width + deltaX
-          )
+          Math.min(bounds.width - originX, resizeStart.width + deltaX)
         );
         const newHeight = Math.max(
           200,
-          Math.min(
-            bounds.height - originY,
-            resizeStart.height + deltaY
-          )
+          Math.min(bounds.height - originY, resizeStart.height + deltaY)
         );
 
         setPopupSize({ width: newWidth, height: newHeight });
@@ -950,6 +944,7 @@ const Flow: React.FC = () => {
       {/* Control Panel */}
       <div
         style={{
+          fontFamily: "GlacialIndifference, sans-serif",
           position: "absolute",
           top: "20px",
           left: "20px",
@@ -962,7 +957,11 @@ const Flow: React.FC = () => {
         }}
       >
         <h3
-          style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "bold" }}
+          style={{
+            margin: "0 0 12px 0",
+            fontSize: "16px",
+            fontWeight: "bold",
+          }}
         >
           Mindmap Controls
         </h3>
@@ -1000,7 +999,6 @@ const Flow: React.FC = () => {
               cursor: "pointer",
               width: "100%",
               justifyContent: "center",
-              marginBottom: "8px",
             }}
           >
             <Trash2 size={14} style={{ marginRight: "4px" }} />
@@ -1034,7 +1032,10 @@ const Flow: React.FC = () => {
       {/* React Flow Container */}
       <div
         ref={containerRef}
-        style={{ width: "100%", height: "100%" }}
+        style={{
+          width: "100%",
+          height: "100%",
+        }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >

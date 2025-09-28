@@ -198,6 +198,28 @@ const Flow: React.FC = () => {
     return { width, height, top, left };
   }, [activePopup, popupLayout]);
 
+  useEffect(() => {
+    if (!popupSizing) return;
+
+    setPopupPosition((prev) =>
+      prev ?? { x: popupSizing.left, y: popupSizing.top }
+    );
+    setPopupSize((prev) =>
+      prev ?? { width: popupSizing.width, height: popupSizing.height }
+    );
+  }, [popupSizing]);
+
+  useEffect(() => {
+    if (!activePopup) {
+      setPopupPosition(null);
+      setPopupSize(null);
+      return;
+    }
+
+    setPopupPosition(null);
+    setPopupSize(null);
+  }, [activePopup?.nodeId, activePopup?.expanded]);
+
   // Sync nodes with database entries while preserving positions
   useEffect(() => {
     let pendingUsed = false;
@@ -412,6 +434,7 @@ const Flow: React.FC = () => {
           return nodeData.node_type === "topic" ? 95 : 60;
         })
         .strength(0.9)
+        .iterations(2)
     );
 
     simulation.force(
@@ -701,9 +724,10 @@ const Flow: React.FC = () => {
     (_event, node) => {
       setSelectedNode(node.id);
       draggedNodeIdRef.current = node.id;
+      shouldRunSimulationRef.current = true;
 
       if (simulationRef.current) {
-        simulationRef.current.alphaTarget(0.3).restart();
+        simulationRef.current.alphaTarget(0.4).restart();
       }
     },
     []
@@ -728,6 +752,7 @@ const Flow: React.FC = () => {
           simNode.x = node.position.x;
           simNode.y = node.position.y;
         }
+        simulationRef.current.alphaTarget(0.4).restart();
       }
     },
     [setNodes]
@@ -736,6 +761,7 @@ const Flow: React.FC = () => {
   const handleNodeDragStop: OnNodeDrag<FlowNode> = useCallback(
     (_event, node) => {
       draggedNodeIdRef.current = null;
+      shouldRunSimulationRef.current = true;
 
       if (simulationRef.current) {
         const nodesInSim = simulationRef.current.nodes() as any[];
@@ -745,7 +771,7 @@ const Flow: React.FC = () => {
           simNode.fy = null;
         }
         simulationRef.current.alphaTarget(0);
-        simulationRef.current.alpha(0.4).restart();
+        simulationRef.current.alpha(0.5).restart();
       }
     },
     []
@@ -786,6 +812,11 @@ const Flow: React.FC = () => {
     (event: React.MouseEvent) => {
       if (!popupSizing) return;
 
+      const target = event.target as HTMLElement;
+      if (target.closest("button")) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
 
@@ -793,11 +824,11 @@ const Flow: React.FC = () => {
       setDragStart({
         x: event.clientX,
         y: event.clientY,
-        popupX: popupSizing.left,
-        popupY: popupSizing.top,
+        popupX: popupPosition?.x ?? popupSizing.left,
+        popupY: popupPosition?.y ?? popupSizing.top,
       });
     },
-    [popupSizing]
+    [popupSizing, popupPosition]
   );
 
   const handlePopupMouseMove = useCallback(
@@ -808,18 +839,20 @@ const Flow: React.FC = () => {
         const deltaX = event.clientX - dragStart.x;
         const deltaY = event.clientY - dragStart.y;
         const bounds = containerRef.current.getBoundingClientRect();
+        const currentWidth = popupSize?.width ?? popupSizing?.width ?? 420;
+        const currentHeight = popupSize?.height ?? popupSizing?.height ?? 320;
 
         const newX = Math.max(
           0,
           Math.min(
-            bounds.width - (popupSizing?.width || 420),
+            bounds.width - currentWidth,
             dragStart.popupX + deltaX
           )
         );
         const newY = Math.max(
           0,
           Math.min(
-            bounds.height - (popupSizing?.height || 320),
+            bounds.height - currentHeight,
             dragStart.popupY + deltaY
           )
         );
@@ -833,18 +866,20 @@ const Flow: React.FC = () => {
         const deltaX = event.clientX - resizeStart.x;
         const deltaY = event.clientY - resizeStart.y;
         const bounds = containerRef.current.getBoundingClientRect();
+        const originX = popupPosition?.x ?? popupSizing?.left ?? 0;
+        const originY = popupPosition?.y ?? popupSizing?.top ?? 0;
 
         const newWidth = Math.max(
           300,
           Math.min(
-            bounds.width - (popupPosition?.x || 0),
+            bounds.width - originX,
             resizeStart.width + deltaX
           )
         );
         const newHeight = Math.max(
           200,
           Math.min(
-            bounds.height - (popupPosition?.y || 0),
+            bounds.height - originY,
             resizeStart.height + deltaY
           )
         );
@@ -859,6 +894,7 @@ const Flow: React.FC = () => {
       resizeStart,
       popupSizing,
       popupPosition,
+      popupSize,
     ]
   );
 
@@ -880,11 +916,11 @@ const Flow: React.FC = () => {
       setResizeStart({
         x: event.clientX,
         y: event.clientY,
-        width: popupSizing.width,
-        height: popupSizing.height,
+        width: popupSize?.width ?? popupSizing.width,
+        height: popupSize?.height ?? popupSizing.height,
       });
     },
-    [popupSizing]
+    [popupSizing, popupSize]
   );
 
   // Add global mouse event listeners for popup drag/resize
@@ -1042,10 +1078,10 @@ const Flow: React.FC = () => {
           <div
             style={{
               position: "absolute",
-              top: popupSizing.top,
-              left: popupSizing.left,
-              width: popupSizing.width,
-              height: popupSizing.height,
+              top: popupPosition?.y ?? popupSizing.top,
+              left: popupPosition?.x ?? popupSizing.left,
+              width: popupSize?.width ?? popupSizing.width,
+              height: popupSize?.height ?? popupSizing.height,
               background: "#ffffff",
               borderRadius: "12px",
               boxShadow: "0 18px 45px rgba(15, 23, 42, 0.25)",
@@ -1066,7 +1102,9 @@ const Flow: React.FC = () => {
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: "12px",
+                cursor: isDraggingPopup ? "grabbing" : "grab",
               }}
+              onMouseDown={handlePopupMouseDown}
             >
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <span style={{ fontWeight: 600, fontSize: "14px" }}>
@@ -1149,6 +1187,20 @@ const Flow: React.FC = () => {
                 Page content placeholder
               </div>
             </div>
+            <div
+              onMouseDown={handleResizeMouseDown}
+              style={{
+                position: "absolute",
+                bottom: 0,
+                right: 0,
+                width: 18,
+                height: 18,
+                cursor: "nwse-resize",
+                background:
+                  "linear-gradient(135deg, rgba(148,163,184,0.1) 0%, rgba(148,163,184,0.6) 100%)",
+                clipPath: "polygon(100% 0, 0 100%, 100% 100%)",
+              }}
+            />
           </div>
         )}
       </div>

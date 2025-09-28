@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Handle, Position } from "@xyflow/react";
 
 import type { DatabaseNode } from "./types";
-import { nodeModules } from "./mockData";
+//import { nodeModules } from "./mockData";
 
 type ConceptNodeData = DatabaseNode & {
   color?: string;

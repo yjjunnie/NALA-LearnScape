@@ -1,4 +1,4 @@
-import { nodeModules } from "./mockData";
+//import { nodeModules } from "./mockData";
 
 export const getColorForModule = (moduleId: number): string => {
   const module = nodeModules.find((m) => m.module_id === moduleId);

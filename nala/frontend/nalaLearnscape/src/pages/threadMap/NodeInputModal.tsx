@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import type { DatabaseNode } from "./types";
-import { nodeModules } from "./mockData";
+//import { nodeModules } from "./mockData";
 
 type NodeType = "concept" | "topic";
 

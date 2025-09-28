@@ -63,7 +63,7 @@ const Home: React.FC = () => {
 
         {/* Right column container */}
         <div className="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-end-3 flex flex-col gap-4 md:gap-6">
-          <LearningStyleOverview studentId={1} />
+          <LearningStyleOverview/>
           <div className="flex-1 bg-gradient-to-br from-purple-100 to-blue-100 border border-purple-200/40 rounded-3xl p-6 flex items-center justify-center">
             {/* Placeholder content */}
           </div>

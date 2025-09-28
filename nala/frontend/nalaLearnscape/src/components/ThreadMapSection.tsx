@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
-import ThreadMap from "./ThreadMap";
+import ThreadMap from "./pages/index";
 
 type ThreadMapOption = {
   id: string;
@@ -130,7 +130,9 @@ const THREAD_MAP_OPTIONS: ThreadMapOption[] = [
 ];
 
 const ThreadMapSection: React.FC = () => {
-  const [selectedId, setSelectedId] = useState<string>(THREAD_MAP_OPTIONS[0].id);
+  const [selectedId, setSelectedId] = useState<string>(
+    THREAD_MAP_OPTIONS[0].id
+  );
   const [filterAnchor, setFilterAnchor] = useState<null | HTMLElement>(null);
 
   const selectedOption = useMemo(
@@ -222,7 +224,10 @@ const ThreadMapSection: React.FC = () => {
                   variant="subtitle1"
                   sx={{
                     fontWeight: 600,
-                    color: option.id === selectedId ? "primary.main" : "text.primary",
+                    color:
+                      option.id === selectedId
+                        ? "primary.main"
+                        : "text.primary",
                     fontFamily: '"Fredoka", sans-serif',
                   }}
                 >

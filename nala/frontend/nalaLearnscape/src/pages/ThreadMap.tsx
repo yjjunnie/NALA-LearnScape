@@ -12,7 +12,6 @@ import {
   MiniMap,
   useNodesState,
   useEdgesState,
-  addEdge,
   ConnectionMode,
 } from "@xyflow/react";
 import type {
@@ -52,7 +51,7 @@ import NodeInputModal from "./threadMap/NodeInputModal";
 import HoverLabelEdge from "./threadMap/HoverLabelEdge";
 import AddNodeHover from "./threadMap/AddNodeHover";
 
-const Flow: React.FC = () => {
+const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   const nodeTypes = useMemo(
     () => ({ conceptNode: ConceptNode, topicNode: ConceptNode }),
     []
@@ -68,6 +67,22 @@ const Flow: React.FC = () => {
 
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
+
+  // Filter nodes and relationships based on moduleId
+  const filteredNodes = dbNodes.filter(
+    (node) => node.node_module_id === module_id
+  );
+  const filteredRelationships = dbRelationships.filter(
+    (rel) =>
+      filteredNodes.some((node) => node.node_id === rel.node_id_1) &&
+      filteredNodes.some((node) => node.node_id === rel.node_id_2)
+  );
+
+  useEffect(() => {
+    setNodes(filteredNodes);
+    setEdges(filteredRelationships);
+  }, [filteredNodes, filteredRelationships]);
+
   const [activePopup, setActivePopup] = useState<{
     nodeId: string;
     expanded: boolean;
@@ -1220,4 +1235,4 @@ const Flow: React.FC = () => {
   );
 };
 
-export default Flow;
+export default ThreadMap;

@@ -25,14 +25,7 @@ export const Modules: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        // Fixed: Changed from /api/students/1/ to /api/student/1/
         const response = await axios.get(`/api/student/1/`);
-        
-        // Debug: Log the entire response to see what we're getting
-        console.log("Full API Response:", response.data);
-        console.log("enrolled_modules_info:", response.data.enrolled_modules_info);
-        console.log("enrolled_modules:", response.data.enrolled_modules);
-        
         setStudentModules(response.data.enrolled_modules_info || []);
       } catch (error) {
         console.error("Failed to fetch modules", error);

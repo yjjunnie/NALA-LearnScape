@@ -48,6 +48,15 @@ def getStudent(request, pk):
     serializedData = StudentSerializer(student).data
     return Response(serializedData)
 
+@api_view(["GET"]) 
+def getModule(request, pk):
+    try:
+        module = Module.objects.get(pk=pk)
+    except Module.DoesNotExist:
+        return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+    serializedData = ModuleSerializer(module).data
+    return Response(serializedData)
+
 @api_view(["GET"])
 def getTopicAndConcepts(request, module_id=None):
     if module_id:

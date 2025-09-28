@@ -1,0 +1,9 @@
+[ 2025-09-29 05:24:34,116 ] 45 root - INFO - Random Forest,Train model score :0.9984245864431536, Test model score: 0.9857617503747541
+[ 2025-09-29 05:24:34,136 ] 45 root - INFO - Decision Tree,Train model score :0.9999925242087849, Test model score: 0.9773070457910157
+[ 2025-09-29 05:24:44,573 ] 45 root - INFO - Gradient Boosting,Train model score :0.998597777500081, Test model score: 0.9903709379923191
+[ 2025-09-29 05:24:44,577 ] 45 root - INFO - Linear Regression,Train model score :0.9902672228583173, Test model score: 0.9805947018434868
+[ 2025-09-29 05:24:55,273 ] 45 root - INFO - XGBRegressor,Train model score :0.9994795138983132, Test model score: 0.9856334698698658
+[ 2025-09-29 05:24:57,382 ] 45 root - INFO - CatBoosting Regressor,Train model score :0.9971561205380266, Test model score: 0.9900927683892792
+[ 2025-09-29 05:25:01,284 ] 45 root - INFO - AdaBoost Regressor,Train model score :0.9907182456245673, Test model score: 0.9795789310613154
+
+Model used: CatBoosting Regressor since it has the highest Test model score.

@@ -20,7 +20,7 @@ export const Modules: React.FC = () => {
   const toggleDrawer = () => setIsDrawerOpen(!isDrawerOpen);
   const handleCloseDrawer = () => setIsDrawerOpen(false);
 
-        useEffect(() => {
+  useEffect(() => {
     const fetchModules = async () => {
       try {
         setLoading(true);

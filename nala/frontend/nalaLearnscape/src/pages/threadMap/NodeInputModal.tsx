@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 
 import type { DatabaseNode } from "./types";
-import { nodeModules } from "./mockData";
 
 type NodeType = "concept" | "topic";
 
@@ -12,8 +11,8 @@ interface NodeInputModalProps {
     nodeName: string,
     nodeType: NodeType,
     nodeDescription: string,
-    moduleId: number,
-    parentNodeId?: number
+    moduleId: string,
+    parentNodeId?: string
   ) => void;
   availableNodes: DatabaseNode[];
 }
@@ -27,8 +26,8 @@ const NodeInputModal: React.FC<NodeInputModalProps> = ({
   const [nodeName, setNodeName] = useState<string>("");
   const [nodeType, setNodeType] = useState<NodeType>("concept");
   const [nodeDescription, setNodeDescription] = useState<string>("");
-  const [moduleId, setModuleId] = useState();
-  const [parentNodeId, setParentNodeId] = useState();
+  const [moduleId, setModuleId] = useState<string>("");
+  const [parentNodeId, setParentNodeId] = useState<string>("");
 
   const handleSave = () => {
     if (nodeName.trim()) {

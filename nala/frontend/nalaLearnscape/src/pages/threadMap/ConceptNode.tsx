@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Handle, Position } from "@xyflow/react";
 
 import type { DatabaseNode } from "./types";
-import { nodeModules } from "./mockData";
 
 type ConceptNodeData = DatabaseNode & {
   color?: string;
@@ -20,9 +19,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
   const size = data.type === "topic" ? 120 : 80;
   const fontSize = data.type === "topic" ? "16px" : "14px";
 
-  const moduleInfo = nodeModules.find(
-    (m) => m.module_id === data.module_id
-  );
+  const moduleInfo = nodeModules.find((m) => m.module_id === data.module_id);
   const moduleNumber = moduleInfo?.module_id;
 
   // State to track which handle is hovered

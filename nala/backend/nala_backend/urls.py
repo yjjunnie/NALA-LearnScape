@@ -23,7 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.homepage_view, name="homepage"),
     path('api/student/<int:pk>/', views.getStudent, name='get_student'),
-    path('api/nodes/<int:module_id>', views.getNodes, name='get_nodes'),
+    path('api/nodes/<int:module_id>', views.getTopicAndConcepts, name='get_nodes'),
     path('api/relationships/<int:module_id>', views.getRelationships, name='get_relationships'),
     path('api/classify-chat-history/', views.classify_chathistory, name="classify-chathistory"),
     path('api/display-chat-history/', views.display_chathistory, name="display-chathistory"),

@@ -1,6 +1,4 @@
-import { nodeModules } from "./mockData";
-
-export const getColorForModule = (moduleId: number): string => {
+export const getColorForModule = (moduleId: string): string => {
   const module = nodeModules.find((m) => m.module_id === moduleId);
   if (module) return module.color;
 
@@ -14,12 +12,10 @@ export const getColorForModule = (moduleId: number): string => {
     "#ff9800",
     "#e91e63",
   ];
-  let hash = moduleId;
-  let result = 0;
-  while (hash > 0) {
-    result = (result << 5) - result + (hash % 10); // Add each digit of the number
-    hash = Math.floor(hash / 10); // Remove the last digit
-  }
+  const hash = moduleId.split("").reduce((a, b) => {
+    a = (a << 5) - a + b.charCodeAt(0);
+    return a & a;
+  }, 0);
   return colors[Math.abs(hash) % colors.length];
 };
 

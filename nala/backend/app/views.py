@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 from django.db.models import Q
-=======
 from sys import api_version
->>>>>>> c910f49a (7. bloom classifier first by topic then bloom categories)
 from django.shortcuts import redirect, get_object_or_404
 from django.utils import timezone
 from rest_framework import status

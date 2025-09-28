@@ -1,7 +1,7 @@
 from django.db import models
 
 class Module(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.CharField(primary_key=True, max_length=255)
     index = models.CharField(max_length=255, blank=True, null=True)
     name = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -11,7 +11,7 @@ class Module(models.Model):
     
 # ThreadMap
 class Node(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.CharField(primary_key=True, max_length=255)
     name = models.CharField(max_length=255, unique=True)
     summary = models.TextField()
     module = models.ForeignKey(Module, on_delete=models.CASCADE, blank=True, null=True)
@@ -20,7 +20,7 @@ class Node(models.Model):
         return f'Node: {self.name}'
     
 class Relationship(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.CharField(primary_key=True, max_length=255)
     first_node = models.ForeignKey(Node, on_delete=models.CASCADE, related_name='first_node_of_rs')
     second_node = models.ForeignKey(Node, on_delete=models.CASCADE, related_name='second_node_of_rs')
 
@@ -45,7 +45,7 @@ class Student(models.Model):
         ('DUAL_CODING', 'Dual Coding'),
     ]
     
-    id = models.IntegerField(primary_key=True)
+    id = models.CharField(primary_key=True, max_length=255)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     enrolled_modules = models.ManyToManyField(Module, related_name='students', blank=True)

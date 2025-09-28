@@ -170,7 +170,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           {
             top: 0,
             left: "50%",
-            transform: "translate(-50%, -50%) translateX(-10px)",
+            transform: "translate(-50%, -50%)",
           },
           "+"
         )}
@@ -181,7 +181,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           {
             bottom: 0,
             left: "50%",
-            transform: "translate(-50%, 50%) translateX(-10px)",
+            transform: "translate(-50%, 50%)",
           },
           "+"
         )}
@@ -192,7 +192,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           {
             left: 0,
             top: "50%",
-            transform: "translate(-50%, -50%) translateX(-10px)",
+            transform: "translate(-50%, -50%)",
           },
           "+"
         )}
@@ -203,7 +203,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           {
             right: 0,
             top: "50%",
-            transform: "translate(50%, -50%) translateX(10px)",
+            transform: "translate(50%, -50%)",
           },
           "+"
         )}
@@ -214,7 +214,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           {
             top: 0,
             left: "50%",
-            transform: "translate(-50%, -50%) translateX(10px)",
+            transform: "translate(-50%, -50%)",
           },
           "+"
         )}
@@ -225,7 +225,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           {
             bottom: 0,
             left: "50%",
-            transform: "translate(-50%, 50%) translateX(10px)",
+            transform: "translate(-50%, 50%)",
           },
           "+"
         )}
@@ -236,7 +236,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           {
             left: 0,
             top: "50%",
-            transform: "translate(-50%, -50%) translateX(-10px)",
+            transform: "translate(-50%, -50%)",
           },
           "+"
         )}
@@ -247,7 +247,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           {
             right: 0,
             top: "50%",
-            transform: "translate(50%, -50%) translateX(10px)",
+            transform: "translate(50%, -50%)",
           },
           "+"
         )}

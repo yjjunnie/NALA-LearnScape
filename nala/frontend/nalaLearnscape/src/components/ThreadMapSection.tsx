@@ -23,11 +23,12 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
   studentId,
   onModuleSelect,
   selectedModuleId,
-  modules: passedModules
+  modules: passedModules,
 }) => {
   const [modules, setModules] = useState<Module[]>(passedModules || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [filterAnchor, setFilterAnchor] = useState<null | HTMLElement>(null);
 
   // Fetch student modules from backend
@@ -42,25 +43,25 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
     const fetchModules = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Replace with your actual API endpoint
         const response = await fetch(`/api/students/${studentId}/modules`);
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch modules');
+          throw new Error("Failed to fetch modules");
         }
-        
+
         const data = await response.json();
         setModules(data);
-        
+
         // Auto-select first module if none selected
         if (data.length > 0 && !selectedModuleId) {
           onModuleSelect(data[0].id);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        console.error('Error fetching modules:', err);
+        setError(err instanceof Error ? err.message : "An error occurred");
+        console.error("Error fetching modules:", err);
       } finally {
         setLoading(false);
       }
@@ -69,7 +70,9 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
     fetchModules();
   }, [studentId, passedModules, selectedModuleId, onModuleSelect]);
 
-  const selectedModule = modules.find(module => module.id === selectedModuleId);
+  const selectedModule = modules.find(
+    (module) => module.id === selectedModuleId
+  );
 
   const handleModuleSelect = (moduleId: string) => {
     onModuleSelect(moduleId);
@@ -78,8 +81,10 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-4 rounded-[20px] px-6 py-6 md:px-8 md:py-8 bg-white"
-           style={{ border: "2px solid rgba(76,115,255,0.12)" }}>
+      <div
+        className="flex flex-col gap-4 rounded-[20px] px-6 py-6 md:px-8 md:py-8 bg-white"
+        style={{ border: "2px solid rgba(76,115,255,0.12)" }}
+      >
         <div className="flex items-center justify-center min-h-[200px]">
           <div className="text-gray-500">Loading modules...</div>
         </div>
@@ -89,8 +94,10 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
 
   if (error) {
     return (
-      <div className="flex flex-col gap-4 rounded-[20px] px-6 py-6 md:px-8 md:py-8 bg-white"
-           style={{ border: "2px solid rgba(76,115,255,0.12)" }}>
+      <div
+        className="flex flex-col gap-4 rounded-[20px] px-6 py-6 md:px-8 md:py-8 bg-white"
+        style={{ border: "2px solid rgba(76,115,255,0.12)" }}
+      >
         <div className="flex items-center justify-center min-h-[200px]">
           <div className="text-red-500">Error: {error}</div>
         </div>
@@ -100,8 +107,10 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
 
   if (modules.length === 0) {
     return (
-      <div className="flex flex-col gap-4 rounded-[20px] px-6 py-6 md:px-8 md:py-8 bg-white"
-           style={{ border: "2px solid rgba(76,115,255,0.12)" }}>
+      <div
+        className="flex flex-col gap-4 rounded-[20px] px-6 py-6 md:px-8 md:py-8 bg-white"
+        style={{ border: "2px solid rgba(76,115,255,0.12)" }}
+      >
         <div className="flex items-center justify-center min-h-[200px]">
           <div className="text-gray-500">No modules found</div>
         </div>
@@ -110,23 +119,27 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
   }
 
   return (
-    <div 
+    <div
       className="flex flex-col gap-4 rounded-[20px] px-6 py-6 md:px-8 md:py-8 bg-white"
       style={{ border: "2px solid rgba(76,115,255,0.12)" }}
     >
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 w-full">
         <div>
-          <h2 
+          <h2
             className="text-2xl mb-1 text-[#4C73FF]"
             style={{ fontFamily: '"Fredoka", sans-serif' }}
           >
-            {selectedModule ? `${selectedModule.code} ${selectedModule.name}` : 'Select a Module'}
+            {selectedModule
+              ? `${selectedModule.code} ${selectedModule.name}`
+              : "Select a Module"}
           </h2>
           {selectedModule?.description && (
-            <p className="text-sm text-gray-600">{selectedModule.description}</p>
+            <p className="text-sm text-gray-600">
+              {selectedModule.description}
+            </p>
           )}
         </div>
-        
+
         <div className="flex items-center">
           <button
             className="flex items-center gap-2 px-6 py-2 text-white rounded-full font-medium hover:opacity-90 transition-opacity"
@@ -138,7 +151,7 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
             <FilterListRoundedIcon className="w-5 h-5" />
             Select Module
           </button>
-          
+
           <Menu
             anchorEl={filterAnchor}
             open={Boolean(filterAnchor)}
@@ -169,7 +182,8 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
                 <div
                   className="font-semibold"
                   style={{
-                    color: module.id === selectedModuleId ? "#4C73FF" : "#1a2c5e",
+                    color:
+                      module.id === selectedModuleId ? "#4C73FF" : "#1a2c5e",
                     fontFamily: '"Fredoka", sans-serif',
                   }}
                 >
@@ -185,11 +199,12 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
           </Menu>
         </div>
       </div>
-      
-      <div 
+
+      <div
         className="min-h-[300px] rounded-[28px] p-3 flex items-center justify-center"
         style={{
-          background: "linear-gradient(180deg,rgba(232,241,255,0.8) 0%,rgba(244,248,255,0.95) 100%)",
+          background:
+            "linear-gradient(180deg,rgba(232,241,255,0.8) 0%,rgba(244,248,255,0.95) 100%)",
         }}
       >
         {selectedModuleId ? (
@@ -198,7 +213,9 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
             <p className="text-sm mt-2">Module ID: {selectedModuleId}</p>
           </div>
         ) : (
-          <div className="text-gray-500">Please select a module to view its thread map</div>
+          <div className="text-gray-500">
+            Please select a module to view its thread map
+          </div>
         )}
       </div>
     </div>

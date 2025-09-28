@@ -1,8 +1,22 @@
 {
   "dependencies": {
+    "@lexical/react": "^0.36.1",
+    "@lexical/rich-text": "^0.36.1",
+    "@lexical/selection": "^0.36.1",
+    "@lexical/utils": "^0.36.1",
+    "@mui/x-charts": "^8.12.0",
     "@tailwindcss/vite": "^4.1.13",
+    "@xyflow/react": "^12.8.6",
+    "d3": "^7.9.0",
+    "lucide-react": "^0.544.0",
+    "mui": "^0.0.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1"
+  },
+  "devDependencies": {
+    "@types/parse-json": "^4.0.2",
+    "@types/prop-types": "^15.7.15",
+    "@types/react-transition-group": "^4.4.12"
   }
 }

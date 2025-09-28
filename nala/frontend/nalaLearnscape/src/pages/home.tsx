@@ -1,154 +1,74 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import {
-  Box,
-  Container,
-  Drawer,
   IconButton,
-  List,
-  ListItemButton,
-  ListItemText,
-  Paper,
-  Stack,
-  Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid";
-import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
-import { useLocation, useNavigate } from "react-router-dom";
-import Welcome from "../components/welcome";
+import { MenuRounded as MenuRoundedIcon } from "@mui/icons-material";
+import Welcome from "../components/Welcome";
 import ThreadMapSection from "../components/ThreadMapSection";
+import SideNav from "../components/SideNav";
+import LearningStyleOverview from "../components/LearningStyleOverview";
+
 const Home: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
+  };
 
-  const navigationItems = useMemo(
-    () => [
-      { label: "Home", path: "/" },
-      { label: "Course", path: "/threadmap" },
-    ],
-    []
-  );
-
-  const handleNavigate = (path: string): void => {
-    navigate(path);
+  const handleCloseDrawer = () => {
     setIsDrawerOpen(false);
   };
 
   return (
-    <Box
-      component="main"
-      sx={{ py: { xs: 4, md: 6 } }}
-      className="bg-[#e8f1ff] font-['GlacialIndifference',sans-serif]"
-    >
-      <Container maxWidth="lg" disableGutters sx={{ px: { xs: 3, md: 5 } }}>
-        <Stack spacing={{ xs: 4, md: 5 }}>
-          <IconButton
-            onClick={() => setIsDrawerOpen(true)}
-            aria-label="Open navigation menu"
-            sx={{
-              alignSelf: "flex-start",
-              borderRadius: 3,
-              border: "1px solid rgba(36, 71, 181, 0.25)",
-              backgroundColor: "rgba(255, 255, 255, 0.9)",
-              color: "#1A2C5E",
-              p: 1,
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.95)",
-              },
-            }}
-          >
-            <MenuRoundedIcon />
-          </IconButton>
-          <Welcome />
-          <Grid container spacing={3} className="w-full">
-            <Grid item xs={12} md={8}>
-              <ThreadMapSection />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Paper
-                elevation={0}
-                className="rounded-[32px]"
-                sx={{
-                  minHeight: { xs: 200, md: 300 },
-                  borderRadius: "32px",
-                  px: { xs: 3, md: 4 },
-                  py: { xs: 3, md: 4 },
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background:
-                    "linear-gradient(180deg, rgba(216,229,255,0.85) 0%, rgba(241,245,255,0.9) 100%)",
-                  boxShadow: "inset 0 0 0 1px rgba(76,115,255,0.1)",
-                  border: "1px solid rgba(76,115,255,0.12)",
-                }}
-              >
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  sx={{
-                    textAlign: "center",
-                    fontFamily: '"GlacialIndifference", sans-serif',
-                  }}
-                >
-                  Personal insights and streak milestones will appear here soon.
-                </Typography>
-              </Paper>
-            </Grid>
-          </Grid>
-        </Stack>
-      </Container>
-      <Drawer
-        anchor="left"
-        open={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        PaperProps={{
-          sx: {
-            width: 260,
-            backgroundColor: "#f4f7ff",
-            paddingY: 3,
-            borderTopRightRadius: 24,
-            borderBottomRightRadius: 24,
-            boxShadow: "none",
-          },
-        }}
-      >
-        <Typography variant="h6" sx={{ px: 3, pb: 2, color: "#1A2C5E" }}>
-          Quick Links
-        </Typography>
-        <List>
-          {navigationItems.map((item) => (
-            <ListItemButton
-              key={item.path}
-              onClick={() => handleNavigate(item.path)}
-              selected={location.pathname === item.path}
-              sx={{
-                mx: 2,
-                mb: 1,
-                borderRadius: 3,
-                backgroundColor:
-                  location.pathname === item.path
-                    ? "rgba(76,115,255,0.15)"
-                    : "transparent",
-              }}
-            >
-              <ListItemText
-                primary={item.label}
-                primaryTypographyProps={{
-                  fontFamily: '"Fredoka", sans-serif',
-                  fontWeight: 600,
-                  sx: {
-                    color:
-                      location.pathname === item.path
-                        ? "primary.main"
-                        : "text.primary",
-                  },
-                }}
-              />
-            </ListItemButton>
-          ))}
-        </List>
-      </Drawer>
-    </Box>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8">
+      {/* Navigation Button */}
+      <div className="mb-6">
+        <IconButton
+          onClick={toggleDrawer}
+          sx={{
+            borderRadius: 3,
+            border: "1px solid rgba(76, 115, 255, 0.15)",
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            color: "#2447b5",
+            p: { xs: 1, sm: 1.5 },
+            transition: "all 0.2s ease-in-out",
+            "&:hover": {
+              backgroundColor: "rgba(76, 115, 255, 0.05)",
+              borderColor: "rgba(76, 115, 255, 0.25)",
+              transform: "translateY(-1px)",
+            },
+            "&:active": {
+              transform: "translateY(0)",
+            },
+          }}
+        >
+          <MenuRoundedIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
+        </IconButton>
+      </div>
+
+    {/* Bento Grid Container */}
+<div className="grid grid-cols-12 gap-4 md:gap-6 max-w-8xl mx-auto" style={{ gridTemplateRows: 'auto auto' }}>
+  {/* Welcome Component */}
+  <div className="col-span-12 lg:col-span-7 lg:row-start-1">
+    <Welcome />
+  </div>
+
+  {/* Right column container */}
+  <div className="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-end-3 flex flex-col gap-4 md:gap-6">
+    <LearningStyleOverview />
+    <div className="flex-1 bg-gradient-to-br from-purple-100 to-blue-100 border border-purple-200/40 rounded-3xl p-6 flex items-center justify-center">
+      {/* Placeholder content */}
+    </div>
+  </div>
+
+  {/* Thread Map Section */}
+  <div className="col-span-12 lg:col-span-7 lg:col-start-1 lg:row-start-2">
+    <ThreadMapSection />
+  </div>
+</div>
+
+      {/* Side Navigation */}
+      <SideNav isOpen={isDrawerOpen} onClose={handleCloseDrawer} />
+    </div>
   );
 };
 

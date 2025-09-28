@@ -2,74 +2,47 @@ import { useEffect, useState } from "react";
 import { PieChart } from '@mui/x-charts/PieChart';
 import { Tooltip } from '@mui/material';
 import '../theme.ts';
-
-const fetchLearningStyle = async () => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({
-        currentStyle: "Elaboration",
-        slices: [
-          {
-            id: "elaboration",
-            label: "Elaboration",
-            value: 45,
-            color: "#4C73FF",
-            description: "Connecting new ideas to existing knowledge to deepen understanding.",
-          },
-          {
-            id: "concrete",
-            label: "Concrete Examples",
-            value: 10,
-            color: "#7EA8FF",
-            description: "Grounding concepts with tangible, real-world examples.",
-          },
-          {
-            id: "spaced",
-            label: "Spaced Practice",
-            value: 10,
-            color: "#A0C1FF",
-            description: "Breaking study time into multiple sessions to support long-term retention.",
-          },
-          {
-            id: "dual",
-            label: "Dual Coding",
-            value: 15,
-            color: "#2D4BB4",
-            description: "Pairing visual elements with text to reinforce learning pathways.",
-          },
-          {
-            id: "retrieval",
-            label: "Retrieval Practice",
-            value: 20,
-            color: "#13338C",
-            description: "Testing yourself to strengthen recall and expose knowledge gaps.",
-          },
-        ],
-      });
-    }, 400);
-  });
-};
+import axios from "axios";
 
 const LearningStyleOverview = () => {
-  const [data, setData] = useState([]);
-  const [currentStyle, setCurrentStyle] = useState("-");
+  const [rawData, setRawData] = useState({});
 
   useEffect(() => {
-    fetchLearningStyle().then((response) => {
-      setData(response.slices);
-      setCurrentStyle(response.currentStyle);
-    });
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`/api/student/1/`);
+        setRawData(response.data.learningStyleBreakdown || {});
+      } catch (error) {
+        console.error("Failed to fetch learning style", error);
+      }
+    };
+    fetchData();
   }, []);
 
-  const total = data.reduce((sum, slice) => sum + slice.value, 0) || 1;
+  // Colors for each style
+  const colors = {
+    "Elaboration": "#4C73FF",
+    "Concrete Examples": "#7EA8FF", 
+    "Interleaving": "#A0C1FF",
+    "Dual Coding": "#2D4BB4",
+    "Retrieval Practice": "#13338C"
+  };
 
-  // Transform data for MUI PieChart
-  const pieData = data.map((slice) => ({
-    id: slice.id,
-    value: slice.value,
-    label: slice.label,
-    color: slice.color,
-  }));
+  // Convert object to array (exclude total_user_messages)
+  const data = Object.entries(rawData)
+    .filter(([key]) => key !== 'total_user_messages')
+    .map(([name, value]) => ({
+      label: name,
+      value: value,
+      color: colors[name] || "#4C73FF"
+    }));
+
+  // Find highest value style
+  const currentStyle = data.length > 0 
+    ? data.reduce((max, item) => item.value > max.value ? item : max).label
+    : "-";
+
+  const total = data.reduce((sum, item) => sum + item.value, 0) || 1;
 
   return (
     <div
@@ -91,72 +64,47 @@ const LearningStyleOverview = () => {
       <div className="flex flex-col md:flex-row gap-6 items-center md:items-center">
         <div className="flex-shrink-0">
           <PieChart
-            series={[
-              {
-                data: pieData,
-                innerRadius: 40,
-                outerRadius: 85,
-                paddingAngle: 2,
-                highlightScope: { fade: 'global', highlight: 'item' },
-                faded: { innerRadius: 37, additionalRadius: -15 },
-                valueFormatter: (item) => `${item.value}%`,
-              },
-            ]}
+            series={[{
+              data: data,
+              innerRadius: 40,
+              outerRadius: 85,
+              paddingAngle: 2,
+              valueFormatter: (item) => `${item.value}%`,
+            }]}
             width={170}
             height={170}
             slotProps={{
-            legend: { hidden: true },
-            tooltip: {
-              sx: {
-                '& *': {
-                  fontFamily: '"GlacialIndifference", sans-serif !important',
+              legend: { hidden: true },
+              tooltip: {
+                sx: {
+                  '& *': {
+                    fontFamily: '"GlacialIndifference", sans-serif !important',
+                  }
                 }
-              }
               }
             }}
           />
         </div>
         
         <div className="flex-1 space-y-2 w-full min-w-0">
-          {data.map((slice) => (
+          {data.map((item, index) => (
             <div
-              key={slice.id}
+              key={index}
               className="flex items-center gap-3 rounded-2xl px-3 py-2 bg-[rgba(232,241,255,0.6)]"
             >
               <div
                 className="w-4 h-4 rounded-full flex-shrink-0"
-                style={{ backgroundColor: slice.color }}
+                style={{ backgroundColor: item.color }}
               />
               <div className="flex-1 min-w-0">
                 <div className="font-['GlacialIndifference',sans-serif] font-semibold text-base truncate">
-                  {slice.label}
+                  {item.label}
                 </div>
                 <div className="text-sm text-gray-600">
-                  {Math.round((slice.value / total) * 100)}%
+                  {Math.round((item.value / total) * 100)}%
                 </div>
               </div>
-              <Tooltip 
-                title={slice.description}
-                arrow
-                placement="top"
-                componentsProps={{
-                  tooltip: {
-                    sx: {
-                      backgroundColor: 'rgba(40,72,209,0.95)',
-                      fontSize: '12px',
-                      fontFamily: '"GlacialIndifference", sans-serif',
-                      maxWidth: '250px',
-                      '& .MuiTooltip-arrow': {
-                        color: 'rgba(40,72,209,0.95)',
-                      },
-                      padding: '8px 12px',
-                      textAlign: 'center',
-                      borderRadius: '8px',
-                      marginRight: '8px',
-                    }
-                  }
-                }}
-              >
+              <Tooltip title={item.label}>
                 <div className="flex-shrink-0 w-6 h-6 bg-[#e1e9ff] text-[#1b46d1] rounded-full flex items-center justify-center text-sm font-['Fredoka',sans-serif] font-bold cursor-help">
                   ?
                 </div>

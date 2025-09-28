@@ -93,11 +93,13 @@ class StudentSerializer(serializers.ModelSerializer):
     enrolled_modules_info = serializers.SerializerMethodField()
     learning_style_description = serializers.SerializerMethodField()
     learning_style_display = serializers.CharField(source='get_learningStyle_display', read_only=True)
+    learningStyleBreakdown = serializers.JSONField(read_only=True) 
     
     class Meta:
         model = Student
         fields = ['id', 'name', 'email', 'enrolled_modules', 'learningStyle',
-                 'enrolled_modules_info', 'learning_style_description', 'learning_style_display']
+                 'enrolled_modules_info', 'learning_style_description', 
+                 'learning_style_display', 'learningStyleBreakdown'] 
     
     def get_enrolled_modules_info(self, obj):
         return [

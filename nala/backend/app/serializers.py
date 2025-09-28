@@ -2,9 +2,15 @@ from rest_framework import serializers
 from .models import (Module, Node, Relationship, Student, Topic, Concept)
 
 class ModuleSerializer(serializers.ModelSerializer):
+    topics = serializers.SerializerMethodField() 
+
     class Meta:
         model = Module
-        fields = ['id', 'index', 'name', 'created_at']
+        fields = ['id', 'index', 'name', 'created_at', 'topics']
+
+    def get_topics(self, obj):
+        topics = Topic.objects.filter(module=obj)
+        return TopicSerializer(topics, many=True).data
 
 class NodeSerializer(serializers.ModelSerializer):
     module_info = serializers.SerializerMethodField()
@@ -117,11 +123,13 @@ class StudentSerializer(serializers.ModelSerializer):
     enrolled_modules_info = serializers.SerializerMethodField()
     learning_style_description = serializers.SerializerMethodField()
     learning_style_display = serializers.CharField(source='get_learningStyle_display', read_only=True)
+    learningStyleBreakdown = serializers.JSONField(read_only=True) 
     
     class Meta:
         model = Student
         fields = ['id', 'name', 'email', 'enrolled_modules', 'learningStyle',
-                 'enrolled_modules_info', 'learning_style_description', 'learning_style_display']
+                 'enrolled_modules_info', 'learning_style_description', 
+                 'learning_style_display', 'learningStyleBreakdown'] 
     
     def get_enrolled_modules_info(self, obj):
         return [

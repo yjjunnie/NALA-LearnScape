@@ -3,6 +3,7 @@ import Home from "./pages/Home";
 import ThreadMap from "./pages/ThreadMap";
 import "./App.css";
 import { Modules } from "./pages/Modules";
+import ModuleInfo from "./pages/ModuleInfo";
 
 function App() {
   return (
@@ -10,7 +11,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/Modules" element={<Modules />} />
-        <Route path="/threadmap" element={<ThreadMap />} />
+        <Route path="/Modules/:moduleId" element={<ModuleInfo />} />
+        <Route path="/threadmap" element={<ThreadMap_try />} />
       </Routes>
     </Router>
   );

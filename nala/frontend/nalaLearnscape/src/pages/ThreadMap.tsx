@@ -78,11 +78,6 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       filteredNodes.some((node) => node.node_id === rel.node_id_2)
   );
 
-  useEffect(() => {
-    setNodes(filteredNodes);
-    setEdges(filteredRelationships);
-  }, [filteredNodes, filteredRelationships]);
-
   const [activePopup, setActivePopup] = useState<{
     nodeId: string;
     expanded: boolean;
@@ -254,28 +249,30 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         if (node.data?.color) colorCache.set(node.id, node.data.color);
       });
 
-      const updatedNodes = dbNodes.map((dbNode) => {
-        const baseColor = getColorForModule(dbNode.node_module_id);
-        let nodeColor = colorCache.get(dbNode.node_id);
+      const updatedNodes = filteredNodes.map((filtered_node) => {
+        const baseColor = getColorForModule(filtered_node.node_module_id);
+        let nodeColor = colorCache.get(filtered_node.node_id);
 
         if (!nodeColor) {
-          if (dbNode.node_type === "topic") {
+          if (filtered_node.node_type === "topic") {
             // Ensure distinct colors for topic nodes
             const usedColors = new Set(colorCache.values());
             nodeColor = generateDistinctTopicColor(usedColors);
-          } else if (dbNode.parent_node_id) {
+          } else if (filtered_node.parent_node_id) {
             // Inherit color from parent concept if available
-            nodeColor = colorCache.get(dbNode.parent_node_id);
+            nodeColor = colorCache.get(filtered_node.parent_node_id);
           }
         }
 
         if (!nodeColor) {
           // Fallback to module color if no other color assigned
           nodeColor =
-            dbNode.node_type === "topic" ? getTopicColor(baseColor) : baseColor;
+            filtered_node.node_type === "topic"
+              ? getTopicColor(baseColor)
+              : baseColor;
         }
 
-        const existing = existingMap.get(dbNode.node_id);
+        const existing = existingMap.get(filtered_node.node_id);
         let position = existing?.position; // Checks if an existing node already has a position
 
         // Only set new position if node doesn't exist
@@ -285,7 +282,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
             pendingUsed = true;
           } else {
             const parentNode = prevNodes.find(
-              (node) => node.id === dbNode.parent_node_id
+              (node) => node.id === filtered_node.parent_node_id
             );
             if (parentNode) {
               position = {
@@ -308,31 +305,37 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         }
 
         const data: NodeData = {
-          node_id: dbNode.node_id,
-          node_name: dbNode.node_name,
-          node_description: dbNode.node_description,
-          node_type: dbNode.node_type,
-          parent_node_id: dbNode.parent_node_id,
-          node_module_id: dbNode.node_module_id,
+          node_id: filtered_node.node_id,
+          node_name: filtered_node.node_name,
+          node_description: filtered_node.node_description,
+          node_type: filtered_node.node_type,
+          parent_node_id: filtered_node.parent_node_id,
+          node_module_id: filtered_node.node_module_id,
           color: nodeColor,
         };
 
-        colorCache.set(dbNode.node_id, nodeColor);
+        colorCache.set(filtered_node.node_id, nodeColor);
 
         return existing
           ? {
               ...existing,
-              type: dbNode.node_type === "topic" ? "topicNode" : "conceptNode",
+              type:
+                filtered_node.node_type === "topic"
+                  ? "topicNode"
+                  : "conceptNode",
               position: position ?? existing.position,
               data,
-              selected: selectedNode === dbNode.node_id,
+              selected: selectedNode === filtered_node.node_id,
             }
           : {
-              id: dbNode.node_id,
-              type: dbNode.node_type === "topic" ? "topicNode" : "conceptNode",
+              id: filtered_node.node_id,
+              type:
+                filtered_node.node_type === "topic"
+                  ? "topicNode"
+                  : "conceptNode",
               position: position ?? { x: 0, y: 0 },
               data,
-              selected: selectedNode === dbNode.node_id,
+              selected: selectedNode === filtered_node.node_id,
             };
       });
 
@@ -347,7 +350,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   // Sync edges with database relationships
   useEffect(() => {
     const hadEdges = edges.length > 0;
-    const newEdges = dbRelationships.map((rel) => ({
+    const newEdges = filteredRelationships.map((rel) => ({
       id: `e${rel.node_id_1}-${rel.node_id_2}`,
       source: rel.node_id_1,
       target: rel.node_id_2,

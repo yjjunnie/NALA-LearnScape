@@ -60,6 +60,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
       />
       <div
         style={{
+          fontFamily: "GlacialIndifference, sans-serif",
           position: "absolute",
           display: "flex",
           alignItems: "center",
@@ -87,6 +88,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
     marginTop: "10px",
     textAlign: "center",
     color: "#1f2937",
+    fontFamily: '"Fredoka", sans-serif',
     fontWeight: data.node_type === "topic" ? 700 : 600,
     fontSize: data.node_type === "topic" ? "16px" : "13px",
     lineHeight: 1.25,

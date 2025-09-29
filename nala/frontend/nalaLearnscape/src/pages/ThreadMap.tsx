@@ -823,8 +823,13 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     (params) => {
       if (!params.source || !params.target) return;
 
+      const maxRelationshipId = dbRelationships.reduce((max, relationship) => {
+        const numericId = Number(relationship.id);
+        return Number.isFinite(numericId) ? Math.max(max, numericId) : max;
+      }, 0);
+
       const newRelationship: DatabaseRelationship = {
-        id: Math.max(...dbRelationships.map((r) => r.id), 0) + 1,
+        id: String(maxRelationshipId + 1),
         first_node: params.source,
         second_node: params.target,
         rs_type: "",

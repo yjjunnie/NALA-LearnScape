@@ -16,6 +16,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
   const fontSize = data.node_type === "topic" ? "16px" : "12px";
 
   const moduleNumber = data.node_module_index ?? data.node_module_id;
+  const showModuleBadge = data.node_type === "topic";
 
   // State to track which handle is hovered
   const [hoveredHandle, setHoveredHandle] = useState<string | null>(null);
@@ -134,38 +135,27 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
             : ""
         }\nModule: ${data.node_module_name || data.node_module_id}`}
       >
-        <div
-          style={{
-            padding: "12px 10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "100%",
-            height: "100%",
-          }}
-        >
+        {showModuleBadge && (
           <div
             style={{
-              fontSize: data.node_type === "topic" ? "24px" : "16px",
-              fontWeight: 700,
+              padding: "12px 10px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              height: "100%",
             }}
           >
-            {moduleNumber || "?"}
+            <div
+              style={{
+                fontSize: "24px",
+                fontWeight: 700,
+              }}
+            >
+              {moduleNumber || "?"}
+            </div>
           </div>
-
-          <div
-            style={{
-              fontSize: data.node_type === "topic" ? "11px" : "9px",
-              lineHeight: "1.2",
-              maxWidth: "90%",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-            }}
-          ></div>
-        </div>
+        )}
         {renderHandle(
           "target-top",
           "target",

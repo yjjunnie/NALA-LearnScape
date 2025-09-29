@@ -43,9 +43,11 @@ const CONTROL_MAP: Record<ControlMode, ControlPanelState> = {
 export const getControlMode = (
   selectedNode: string | null,
   selectedEdge: string | null,
-  isAddingEdge: boolean
+  isAddingEdge: boolean,
+  isEditMode: boolean
 ): ControlMode => {
   if (isAddingEdge) return "edge";
+  if (!isEditMode) return "info";
   if (selectedNode) return "delete-node";
   if (selectedEdge) return "delete-edge";
   return "info";

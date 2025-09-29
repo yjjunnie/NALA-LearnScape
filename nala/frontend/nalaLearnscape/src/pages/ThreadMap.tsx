@@ -13,6 +13,7 @@ import {
   useNodesState,
   useEdgesState,
   ConnectionMode,
+  applyNodeChanges,
 } from "@xyflow/react";
 import type {
   OnConnect,
@@ -24,6 +25,7 @@ import type {
   EdgeMouseHandler,
   OnConnectStart,
   OnConnectEnd,
+  NodeChange,
 } from "@xyflow/react";
 import * as d3 from "d3";
 import { Maximize2, Minimize2, Pointer, Pencil } from "lucide-react";
@@ -79,6 +81,168 @@ interface ThreadMapProps {
   module_id?: string;
 }
 
+const TOPIC_BASE_RADIUS = 120;
+const CONCEPT_BASE_RADIUS = 72;
+
+const getNodeRadius = (node: FlowNode): number => {
+  const type = node.data?.node_type;
+  return type === "topic" ? TOPIC_BASE_RADIUS : CONCEPT_BASE_RADIUS;
+};
+
+const resolveNodeCollisions = (
+  nodes: FlowNode[],
+  lockedNodeId?: string
+): FlowNode[] => {
+  const resolvedNodes = nodes.map((node) => ({
+    ...node,
+    position: {
+      x: node.position?.x ?? 0,
+      y: node.position?.y ?? 0,
+    },
+  }));
+
+  const maxIterations = 4;
+
+  for (let iteration = 0; iteration < maxIterations; iteration += 1) {
+    let moved = false;
+
+    for (let i = 0; i < resolvedNodes.length; i += 1) {
+      for (let j = i + 1; j < resolvedNodes.length; j += 1) {
+        const nodeA = resolvedNodes[i];
+        const nodeB = resolvedNodes[j];
+
+        const ax = nodeA.position?.x ?? 0;
+        const ay = nodeA.position?.y ?? 0;
+        const bx = nodeB.position?.x ?? 0;
+        const by = nodeB.position?.y ?? 0;
+
+        const dx = bx - ax;
+        const dy = by - ay;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const minDistance =
+          getNodeRadius(nodeA) + getNodeRadius(nodeB) + 48; // spacing for labels
+
+        if (distance === 0) {
+          const jitter = 0.5;
+          resolvedNodes[i] = {
+            ...nodeA,
+            position: { x: ax - jitter, y: ay - jitter },
+          };
+          resolvedNodes[j] = {
+            ...nodeB,
+            position: { x: bx + jitter, y: by + jitter },
+          };
+          moved = true;
+          continue;
+        }
+
+        if (distance >= minDistance) {
+          continue;
+        }
+
+        const overlap = (minDistance - distance) / 2;
+        const normX = dx / distance;
+        const normY = dy / distance;
+
+        if (lockedNodeId) {
+          if (nodeA.id === lockedNodeId && nodeB.id !== lockedNodeId) {
+            resolvedNodes[j] = {
+              ...nodeB,
+              position: {
+                x: bx + normX * overlap * 2,
+                y: by + normY * overlap * 2,
+              },
+            };
+            moved = true;
+            continue;
+          }
+          if (nodeB.id === lockedNodeId && nodeA.id !== lockedNodeId) {
+            resolvedNodes[i] = {
+              ...nodeA,
+              position: {
+                x: ax - normX * overlap * 2,
+                y: ay - normY * overlap * 2,
+              },
+            };
+            moved = true;
+            continue;
+          }
+        }
+
+        resolvedNodes[i] = {
+          ...nodeA,
+          position: {
+            x: ax - normX * overlap,
+            y: ay - normY * overlap,
+          },
+        };
+        resolvedNodes[j] = {
+          ...nodeB,
+          position: {
+            x: bx + normX * overlap,
+            y: by + normY * overlap,
+          },
+        };
+        moved = true;
+      }
+    }
+
+    if (!moved) {
+      break;
+    }
+  }
+
+  return resolvedNodes;
+};
+
+const keepConceptsNearParent = (nodes: FlowNode[]): FlowNode[] => {
+  const nodeLookup = new Map(nodes.map((node) => [node.id, node]));
+
+  return nodes.map((node) => {
+    if (node.data?.node_type !== "concept" || !node.data.parent_node_id) {
+      return node;
+    }
+
+    const parent = nodeLookup.get(String(node.data.parent_node_id));
+    if (!parent) {
+      return node;
+    }
+
+    const parentPosition = parent.position ?? { x: 0, y: 0 };
+    const nodePosition = node.position ?? { x: 0, y: 0 };
+
+    const dx = nodePosition.x - parentPosition.x;
+    const dy = nodePosition.y - parentPosition.y;
+    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+
+    const minDistance = getNodeRadius(parent) + 70;
+    const maxDistance = getNodeRadius(parent) + 260;
+
+    if (distance >= minDistance && distance <= maxDistance) {
+      return node;
+    }
+
+    const clampedDistance = Math.min(Math.max(distance, minDistance), maxDistance);
+    const scale = clampedDistance / distance;
+
+    return {
+      ...node,
+      position: {
+        x: parentPosition.x + dx * scale,
+        y: parentPosition.y + dy * scale,
+      },
+    };
+  });
+};
+
+const adjustNodePositions = (
+  nodes: FlowNode[],
+  options: { lockedNodeId?: string } = {}
+): FlowNode[] => {
+  const withoutCollisions = resolveNodeCollisions(nodes, options.lockedNodeId);
+  return keepConceptsNearParent(withoutCollisions);
+};
+
 const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -99,7 +263,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   const edgeTypes = useMemo(() => ({ hoverLabel: HoverLabelEdge }), []);
 
   const [err, setErr] = useState<string | null>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
+  const [nodes, setNodes, _onNodesChange] = useNodesState<FlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
   const [dbNodes, setDbNodes] = useState<DatabaseNode[]>([]);
   const [dbRelationships, setDbRelationships] = useState<
@@ -399,9 +563,16 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     () => location.pathname.toLowerCase().includes("threadmap"),
     [location.pathname]
   );
+  const isEditMode = interactionMode === "pointer";
   const controlMode = useMemo(
-    () => getControlMode(selectedNode, selectedEdge, isAddingEdge),
-    [isAddingEdge, selectedEdge, selectedNode]
+    () =>
+      getControlMode(
+        selectedNode,
+        selectedEdge,
+        isAddingEdge,
+        isEditMode
+      ),
+    [isAddingEdge, isEditMode, selectedEdge, selectedNode]
   );
   const {
     Icon: ControlIcon,
@@ -473,6 +644,33 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     originY: number;
   } | null>(null);
   const controlDraggedRef = useRef<boolean>(false);
+  const dragContextRef = useRef<
+    | {
+        nodeId: string;
+        offsets: Map<string, { dx: number; dy: number }>;
+      }
+    | null
+  >(null);
+
+  const adjacencyMap = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    edges.forEach((edge) => {
+      const { source, target } = edge;
+      if (!map.has(source)) {
+        map.set(source, new Set());
+      }
+      if (!map.has(target)) {
+        map.set(target, new Set());
+      }
+      map.get(source)!.add(target);
+      map.get(target)!.add(source);
+    });
+    return map;
+  }, [edges]);
+
+  useEffect(() => {
+    dragContextRef.current = null;
+  }, [edges]);
 
   const popupNode = useMemo(
     // Calculate and memoize the node that is associated with the activePopup
@@ -714,18 +912,26 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         const count = sortedChildren.length;
         if (count === 0) return;
 
-        const angleStep = (2 * Math.PI) / count;
-        const radius = Math.max(160, 90 + count * 26);
+        const directionAngle = Math.PI / 8; // Bias cluster toward the upper-right quadrant
+        const angleSpread = Math.min(
+          Math.PI * 0.9,
+          Math.PI / 3 + count * 0.18
+        );
+        const radius = Math.max(180, 120 + count * 28);
 
         sortedChildren.forEach((child, index) => {
-          const angle = angleStep * index;
+          const ratio = count > 1 ? index / (count - 1) : 0.5;
+          const baseAngle = directionAngle - angleSpread / 2;
+          const jitter = ((index % 2 === 0 ? 1 : -1) * angleSpread) /
+            Math.max(count * 8, 16);
+          const angle = baseAngle + ratio * angleSpread + jitter;
           const x = parentPosition.x + Math.cos(angle) * radius;
           const y = parentPosition.y + Math.sin(angle) * radius;
           child.position = { x, y };
         });
       });
 
-      return updatedNodes;
+      return adjustNodePositions(updatedNodes);
     });
 
     if (pendingUsed) {
@@ -906,11 +1112,19 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         String(a.id).localeCompare(String(b.id))
       );
       const count = sortedChildren.length;
-      const angleStep = (2 * Math.PI) / count;
-      const radius = Math.max(160, 90 + count * 26);
+      const directionAngle = Math.PI / 8;
+      const angleSpread = Math.min(
+        Math.PI * 0.9,
+        Math.PI / 3 + count * 0.18
+      );
+      const radius = Math.max(180, 120 + count * 28);
 
       sortedChildren.forEach((child, index) => {
-        const angle = angleStep * index;
+        const ratio = count > 1 ? index / (count - 1) : 0.5;
+        const baseAngle = directionAngle - angleSpread / 2;
+        const jitter = ((index % 2 === 0 ? 1 : -1) * angleSpread) /
+          Math.max(count * 8, 16);
+        const angle = baseAngle + ratio * angleSpread + jitter;
         conceptLayoutTargets.set(String(child.id), { angle, radius });
       });
     });
@@ -955,10 +1169,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         .forceCollide()
         .radius((d: any) => {
           const nodeData = d.data as NodeData;
-          return nodeData.node_type === "topic" ? 110 : 48;
+          return nodeData.node_type === "topic" ? 130 : 68;
         })
-        .strength(0.9)
-        .iterations(2)
+        .strength(0.95)
+        .iterations(3)
     );
 
     simulation.force(
@@ -1149,6 +1363,104 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     setIsAddingEdge(false);
   }, []);
 
+  const handleNodesChange = useCallback(
+    (changes: NodeChange<FlowNode>[]) => {
+      let triggerSimulation = false;
+      let lockedNodeId: string | undefined;
+
+      setNodes((prevNodes) => {
+        const baseNodes = applyNodeChanges(changes, prevNodes);
+        let nextNodes = baseNodes;
+
+        changes.forEach((change) => {
+          if (change.type !== "position") {
+            return;
+          }
+
+          const nodeId = change.id;
+
+          if (change.dragging) {
+            lockedNodeId = nodeId;
+            const draggedPrev = prevNodes.find((node) => node.id === nodeId);
+            const draggedCurr = baseNodes.find((node) => node.id === nodeId);
+            if (!draggedPrev || !draggedCurr) {
+              return;
+            }
+
+            const draggedPrevPos = draggedPrev.position ?? { x: 0, y: 0 };
+
+            if (
+              !dragContextRef.current ||
+              dragContextRef.current.nodeId !== nodeId
+            ) {
+              const neighborOffsets = new Map<
+                string,
+                { dx: number; dy: number }
+              >();
+              const neighbors = adjacencyMap.get(nodeId);
+              if (neighbors) {
+                neighbors.forEach((neighborId) => {
+                  const neighborPrev = prevNodes.find(
+                    (node) => node.id === neighborId
+                  );
+                  if (neighborPrev) {
+                    const neighborPrevPos = neighborPrev.position ?? {
+                      x: 0,
+                      y: 0,
+                    };
+                    neighborOffsets.set(neighborId, {
+                      dx: neighborPrevPos.x - draggedPrevPos.x,
+                      dy: neighborPrevPos.y - draggedPrevPos.y,
+                    });
+                  }
+                });
+              }
+
+              dragContextRef.current = {
+                nodeId,
+                offsets: neighborOffsets,
+              };
+            }
+
+            const context = dragContextRef.current;
+            if (context?.nodeId === nodeId) {
+              const draggedCurrPos = draggedCurr.position ?? { x: 0, y: 0 };
+              nextNodes = nextNodes.map((node) => {
+                if (node.id === nodeId) {
+                  return node;
+                }
+                const offset = context.offsets.get(node.id);
+                if (!offset) {
+                  return node;
+                }
+                return {
+                  ...node,
+                  position: {
+                    x: draggedCurrPos.x + offset.dx,
+                    y: draggedCurrPos.y + offset.dy,
+                  },
+                };
+              });
+            }
+          } else {
+            if (dragContextRef.current?.nodeId === nodeId) {
+              dragContextRef.current = null;
+            }
+            triggerSimulation = true;
+          }
+        });
+
+        const adjusted = adjustNodePositions(nextNodes, { lockedNodeId });
+        return adjusted;
+      });
+
+      if (triggerSimulation) {
+        shouldRunSimulationRef.current = true;
+      }
+    },
+    [adjacencyMap, setNodes]
+  );
+
   // Handle connection
   const onConnect: OnConnect = useCallback(
     (params) => {
@@ -1176,6 +1488,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   // Handle node click - only select, don't trigger layout
   const handleNodeClick: NodeMouseHandler<FlowNode> = useCallback(
     (event, node) => {
+      if (interactionMode !== "pointer") {
+        return;
+      }
+
       event.stopPropagation();
       setSelectedNode((prev) => (prev === node.id ? null : node.id));
       setSelectedEdge(null); // Deselect edge when selecting node
@@ -1184,17 +1500,21 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         return { nodeId: node.id, expanded: false };
       });
     },
-    []
+    [interactionMode]
   );
 
   // Handle edge click - select edge for deletion
   const handleEdgeClick: EdgeMouseHandler<FlowEdge> = useCallback(
     (event, edge) => {
+      if (interactionMode !== "pointer") {
+        return;
+      }
+
       event.stopPropagation();
       setSelectedEdge((prev) => (prev === edge.id ? null : edge.id));
       setSelectedNode(null); // Deselect node when selecting edge
     },
-    []
+    [interactionMode]
   );
 
   const handleMove = useCallback<OnMove>((_, nextViewport) => {
@@ -1375,7 +1695,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, []);
 
   const deleteSelectedNode = useCallback(() => {
-    if (!selectedNode) return;
+    if (!selectedNode || interactionMode !== "pointer") return;
 
     setDbNodes((prev) => prev.filter((node) => node.id !== selectedNode));
     setDbRelationships((prev) =>
@@ -1387,15 +1707,15 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     setSelectedNode(null);
     setActivePopup((prev) => (prev?.nodeId === selectedNode ? null : prev));
     shouldRunSimulationRef.current = true;
-  }, [selectedNode]);
+  }, [interactionMode, selectedNode]);
 
   const deleteSelectedEdge = useCallback(() => {
-    if (!selectedEdge) return;
+    if (!selectedEdge || interactionMode !== "pointer") return;
 
     setDbRelationships((prev) => prev.filter((rel) => rel.id !== selectedEdge));
     setSelectedEdge(null);
     shouldRunSimulationRef.current = true;
-  }, [selectedEdge]);
+  }, [interactionMode, selectedEdge]);
 
   const handleControlClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -1420,9 +1740,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       if (controlMode === "delete-edge") {
         setSelectedEdge(null);
         setShowInfoTooltip(false);
-      }
-      if (controlMode === "info") {
-        setShowInfoTooltip(false);
+        return;
       }
     },
     [controlMode]
@@ -1478,6 +1796,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       setShowInfoTooltip(false);
     }
   }, [controlMode]);
+
+  useEffect(() => {
+    if (interactionMode !== "pointer") {
+      setSelectedNode(null);
+      setSelectedEdge(null);
+      setActivePopup(null);
+    }
+  }, [interactionMode]);
 
   useEffect(() => {
     if (interactionMode !== "add-node") {
@@ -2038,7 +2364,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           //edges={showEdges ? edges : []}
           edges={edges}
           edgeTypes={edgeTypes}
-          onNodesChange={onNodesChange}
+          onNodesChange={handleNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onConnectStart={handleConnectStart}

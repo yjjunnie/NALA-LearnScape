@@ -11,7 +11,7 @@ Student Features:
     3. Motivation Level (1-10)
         Highly motivated students spend more time engaging with challenging topics.
 
-Learning Style:
+Learning Style: # CHANGE TO LEARNING PREFERENCES
     1. Retrieval Practice Count
         Frequent use of retrieval practice will reduce study time for topics, as it is an efficient learning technique.
 

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Tooltip } from '@mui/material';
+import '../theme.ts';
 
 // Dummy data 
 const dummyData = {
@@ -83,6 +85,15 @@ const TopicTaxonomyProgression = () => {
 
   const bloomOrder = ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"];
 
+  const descriptions = {
+        "Remember": "How well you can recall those essential facts and definitions!",
+        "Understand": "At this level, you're able to explain them in your own words, and make everything click.",
+        "Apply": "This is how well you take what you've learned and use it in the real world!",
+        "Analyze": "Your level of skill to break down complex ideas into simple parts, making them easier to grasp.",
+        "Evaluate": "With your critical thinking, this is how well you assess ideas, form strong judgments, and support them with solid reasoning.",
+        "Create": "You managed to take ideas and combine them into something totally new and innovative!"      
+  };
+
   // Show loading state
   if (loading) {
     return <div className="text-sm text-gray-500">Loading...</div>;
@@ -163,9 +174,35 @@ const TopicTaxonomyProgression = () => {
                     return (
                       <div key={level} className="space-y-0.5">
                         <div className="flex items-center justify-between">
-                          <span className="font-['GlacialIndifference',sans-serif] font-medium text-xs text-gray-700">
-                            {level}
-                          </span>
+                          <div className="flex items-center gap-1 font-['GlacialIndifference',sans-serif] font-medium text-xs text-gray-700">
+                          <span>{level}</span>
+                          <Tooltip
+                            title={descriptions[level] || level}
+                            arrow
+                            placement="right"
+                            componentsProps={{
+                              tooltip: {
+                                sx: {
+                                  backgroundColor: 'rgba(40,72,209,0.95)',
+                                  fontSize: '12px',
+                                  fontFamily: '"GlacialIndifference", sans-serif',
+                                  maxWidth: '250px',
+                                  '& .MuiTooltip-arrow': {
+                                    color: 'rgba(40,72,209,0.95)',
+                                  },
+                                  padding: '8px 12px',
+                                  textAlign: 'center',
+                                  borderRadius: '8px',
+                                  marginRight: '8px',
+                                },
+                              },
+                            }}
+                          >
+                            <div className="flex-shrink-0 w-4 h-4 bg-[#e1e9ff] text-[#1b46d1] rounded-full flex items-center justify-center text-xs font-['Fredoka',sans-serif] font-bold cursor-help">
+                              ?
+                            </div>
+                          </Tooltip>
+                        </div>
                           <span className="font-['GlacialIndifference',sans-serif] text-xs text-gray-600">
                             {count}
                           </span>

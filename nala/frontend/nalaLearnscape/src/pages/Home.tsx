@@ -5,6 +5,7 @@ import Welcome from "../components/Welcome";
 import ThreadMapSection from "../components/ThreadMapSection";
 import SideNav from "../components/SideNav";
 import LearningStyleOverview from "../components/LearningStyleOverview";
+import TopicTaxonomyProgression from "../components/TopicTaxonomyProgression";
 
 const Home: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -65,7 +66,7 @@ const Home: React.FC = () => {
         <div className="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-end-3 flex flex-col gap-4 md:gap-6">
           <LearningStyleOverview/>
           <div className="flex-1 bg-gradient-to-br from-purple-100 to-blue-100 border border-purple-200/40 rounded-3xl p-6 flex items-center justify-center">
-            {/* Placeholder content */}
+            <TopicTaxonomyProgression />
           </div>
         </div>
 

@@ -578,6 +578,5 @@ def classify_chathistory_by_topic_and_taxonomy(filepath):
         summary.append(topic_summary_str)
  
     return {
-        "results": results,
         "summary": summary
     }

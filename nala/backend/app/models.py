@@ -33,7 +33,13 @@ class Relationship(models.Model):
         ('is_applied_in', 'Is_Applied_In')
     ])
     
-    week_no = max(first_node.week_no, second_node.week_no) if first_node.week_no and second_node.week_no else None
+    week_no = models.CharField(max_length=50, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        # Access the 'week_no' of related nodes (first_node and second_node)
+        if self.first_node and self.second_node:
+            self.week_no = max(self.first_node.week_no, self.second_node.week_no) if self.first_node.week_no and self.second_node.week_no else None
+        super(Relationship, self).save(*args, **kwargs)
     
     def __str__(self):
         return f'Relationship: {self.first_node.name} {self.rs_type} {self.second_node.name}'

@@ -26,7 +26,7 @@ import type {
   OnConnectEnd,
 } from "@xyflow/react";
 import * as d3 from "d3";
-import { Maximize2, Minimize2, MousePointer2, Pencil } from "lucide-react";
+import { Maximize2, Minimize2, Pointer, Pencil } from "lucide-react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import "@xyflow/react/dist/style.css";
 import "../App.css";
@@ -387,9 +387,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     useState<XYPosition | null>(null);
   const [reactFlowInstance, setReactFlowInstanceState] =
     useState<ReactFlowInstance<FlowNode, FlowEdge> | null>(null);
-  const reactFlowInstanceRef = useRef<ReactFlowInstance<FlowNode, FlowEdge> | null>(
-    null
-  );
+  const reactFlowInstanceRef = useRef<ReactFlowInstance<
+    FlowNode,
+    FlowEdge
+  > | null>(null);
   const fitViewRafRef = useRef<number | null>(null);
   const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
   const [isAddingEdge, setIsAddingEdge] = useState(false);
@@ -414,7 +415,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     ? "Switch to pointer mode"
     : "Switch to add-node mode";
   const interactionToggleIcon = isAddMode ? (
-    <MousePointer2 size={18} />
+    <Pointer size={18} />
   ) : (
     <Pencil size={18} />
   );
@@ -983,8 +984,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               sourceNode?.data?.node_type === "concept"
                 ? sourceNode
                 : targetNode?.data?.node_type === "concept"
-                  ? targetNode
-                  : null;
+                ? targetNode
+                : null;
             const layoutTarget = conceptNode
               ? conceptLayoutTargets.get(String(conceptNode.id))
               : null;
@@ -1029,7 +1030,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             const parentNode = simulationNodeMap.get(data.parent_node_id);
             const targetLayout = conceptLayoutTargets.get(String(d.id));
             if (parentNode && targetLayout) {
-              const parentX = parentNode.x ?? parentNode.position?.x ?? width / 2;
+              const parentX =
+                parentNode.x ?? parentNode.position?.x ?? width / 2;
               return (
                 parentX + Math.cos(targetLayout.angle) * targetLayout.radius
               );
@@ -1054,7 +1056,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             const parentNode = simulationNodeMap.get(data.parent_node_id);
             const targetLayout = conceptLayoutTargets.get(String(d.id));
             if (parentNode && targetLayout) {
-              const parentY = parentNode.y ?? parentNode.position?.y ?? height / 2;
+              const parentY =
+                parentNode.y ?? parentNode.position?.y ?? height / 2;
               return (
                 parentY + Math.sin(targetLayout.angle) * targetLayout.radius
               );
@@ -1309,7 +1312,13 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     }
 
     return { x, y };
-  }, [controlButtonSize, controlPosition.x, controlPosition.y, hoverNode, viewport]);
+  }, [
+    controlButtonSize,
+    controlPosition.x,
+    controlPosition.y,
+    hoverNode,
+    viewport,
+  ]);
 
   const handleControlMouseDown = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -1472,7 +1481,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
   useEffect(() => {
     if (interactionMode !== "add-node") {
-      setHoverNode((prev) => (prev.visible ? { ...prev, visible: false } : prev));
+      setHoverNode((prev) =>
+        prev.visible ? { ...prev, visible: false } : prev
+      );
     } else {
       setIsAddingEdge(false);
     }
@@ -1762,7 +1773,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             >
               <ControlIcon size={22} />
             </button>
-            {(controlMode === "delete-node" || controlMode === "delete-edge") && (
+            {(controlMode === "delete-node" ||
+              controlMode === "delete-edge") && (
               <button
                 type="button"
                 onClick={(event) => {

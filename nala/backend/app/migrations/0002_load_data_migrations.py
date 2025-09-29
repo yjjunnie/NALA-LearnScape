@@ -38,8 +38,8 @@ def load_data(apps, schema_editor):
                 name = row["node_name"]
                 summary = row["node_description"]
                 node_type = row["node_type"].lower()
-                module_id = row["node_module_id"] if row.get("node_module_id") else None
-                week_no = row.get("week_no", None)  # Fetch week_no from CSV if present
+                module_id = row["node_module_id"] 
+                week_no = row["week_no"]  # Fetch week_no from CSV if present
 
                 # Assign the module to each Node, Topic, or Concept
                 module = Module.objects.get(id=module_id) if module_id else None

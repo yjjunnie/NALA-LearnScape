@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import { Menu, MenuItem } from "@mui/material";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import { ThreadMap } from "../pages";
-import type { SlotProps } from "@mui/material";
 
 export type ThreadMapModule = {
   id: string;

@@ -47,7 +47,7 @@ class TopicSerializer(serializers.ModelSerializer):
     
 class ThreadMapTopicSerializer(serializers.ModelSerializer):
     module_id = serializers.SerializerMethodField()
-    type = 'topic'
+    type = serializers.SerializerMethodField()
     class Meta:
         model = Topic
         fields = ['id', 'type', 'name', 'summary', 'module_id']
@@ -55,6 +55,8 @@ class ThreadMapTopicSerializer(serializers.ModelSerializer):
         if obj.module is None:
             return None
         return str(obj.module_id)
+    def get_type(self, obj):
+        return 'topic'
 
 class ConceptSerializer(serializers.ModelSerializer):
     module_info = serializers.SerializerMethodField()
@@ -87,7 +89,9 @@ class ConceptSerializer(serializers.ModelSerializer):
 class ThreadMapConceptSerializer(serializers.ModelSerializer):
     module_id = serializers.SerializerMethodField()
     related_topic = serializers.SerializerMethodField()
-    type = 'concept'
+    type = serializers.SerializerMethodField()
+    def get_type(self, obj):
+        return 'concept'
     
     class Meta:
         model = Concept

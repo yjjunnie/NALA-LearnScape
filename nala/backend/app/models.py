@@ -36,9 +36,13 @@ class Relationship(models.Model):
     week_no = models.CharField(max_length=50, blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        # Access the 'week_no' of related nodes (first_node and second_node)
         if self.first_node and self.second_node:
-            self.week_no = max(self.first_node.week_no, self.second_node.week_no) if self.first_node.week_no and self.second_node.week_no else None
+            week_nos = []
+            if self.first_node.week_no:
+                week_nos.append(self.first_node.week_no)
+            if self.second_node.week_no:
+                week_nos.append(self.second_node.week_no)
+            self.week_no = max(week_nos) if week_nos else None
         super(Relationship, self).save(*args, **kwargs)
     
     def __str__(self):

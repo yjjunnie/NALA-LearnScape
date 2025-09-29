@@ -16,13 +16,14 @@ type ThreadMapSectionProps = {
   studentId?: string;
   onModuleSelect: (moduleId: string) => void;
   selectedModuleId?: string;
-  modules: Module[];
+  passedmodules: Module[];
 };
 
 const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
   studentId,
   onModuleSelect,
   selectedModuleId,
+  passedmodules = [],
 }) => {
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(false);

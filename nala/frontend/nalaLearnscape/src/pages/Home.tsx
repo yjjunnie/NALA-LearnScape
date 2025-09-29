@@ -123,7 +123,7 @@ const Home: React.FC = () => {
               studentId={DEMO_STUDENT_ID}
               selectedModuleId={selectedModuleId}
               onModuleSelect={handleModuleSelect}
-              modules={modules}
+              passedmodules={modules}
             />
           </div>
         </div>

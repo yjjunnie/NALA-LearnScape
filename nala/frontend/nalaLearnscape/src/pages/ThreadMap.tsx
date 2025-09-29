@@ -1224,7 +1224,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   ]);
 
   return (
-    <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
       {/* Control Panel */}
       <div
         style={{

@@ -31,13 +31,29 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
 
   const [filterAnchor, setFilterAnchor] = useState<null | HTMLElement>(null);
 
-  // Fetch student modules from backend
+  // Fetch student modules from backend or use provided modules
   useEffect(() => {
+    if (passedmodules.length > 0) {
+      setModules(passedmodules);
+      setError(null);
+      setLoading(false);
+
+      if (!selectedModuleId) {
+        onModuleSelect(passedmodules[0].id);
+      }
+      return;
+    }
+
+    if (!studentId) {
+      setModules([]);
+      setLoading(false);
+      return;
+    }
+
     const fetchModules = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Replace with your actual API endpoint
         const response = await fetch(`/api/student/${studentId}`);
         if (!response.ok) {
           throw new Error("Failed to fetch student.");
@@ -46,10 +62,9 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
         if (!student) {
           throw new Error("Student not found.");
         }
-        const data = student.enrolled_modules || []; // Data is an array of modules
+        const data = student.enrolled_modules || [];
         setModules(data);
 
-        // Auto-select first module if none selected
         if (data.length > 0 && !selectedModuleId) {
           onModuleSelect(data[0].id);
         }
@@ -62,7 +77,12 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
     };
 
     fetchModules();
-  }, [studentId, selectedModuleId, onModuleSelect]);
+  }, [
+    passedmodules,
+    studentId,
+    selectedModuleId,
+    onModuleSelect,
+  ]);
 
   const selectedModule = modules.find(
     (module) => module.id === selectedModuleId
@@ -195,16 +215,18 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
       </div>
 
       <div
-        className="min-h-[300px] rounded-[28px] p-3 flex items-center justify-center"
+        className="relative rounded-[28px] p-3 overflow-hidden"
         style={{
           background:
             "linear-gradient(180deg,rgba(232,241,255,0.8) 0%,rgba(244,248,255,0.95) 100%)",
         }}
       >
         {selectedModuleId ? (
-          <ThreadMap module_id={selectedModuleId} /> // Add this here to display the ThreadMap
+          <div className="relative h-[500px] w-full">
+            <ThreadMap module_id={selectedModuleId} />
+          </div>
         ) : (
-          <div className="text-gray-500">
+          <div className="flex h-[300px] items-center justify-center text-gray-500">
             Please select a module to view its thread map
           </div>
         )}

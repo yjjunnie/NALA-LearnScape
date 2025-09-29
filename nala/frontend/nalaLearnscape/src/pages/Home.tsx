@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Fade, Grow, IconButton } from "@mui/material";
 import { MenuRounded as MenuRoundedIcon } from "@mui/icons-material";
 import Welcome from "../components/Welcome";
@@ -17,9 +17,9 @@ const Home: React.FC = () => {
     undefined
   );
   // Handle module selection
-  const handleModuleSelect = (moduleId: string) => {
+  const handleModuleSelect = useCallback((moduleId: string) => {
     setSelectedModuleId(moduleId); // Update the selected module ID
-  };
+  }, []);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 

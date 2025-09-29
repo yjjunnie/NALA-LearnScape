@@ -605,7 +605,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         if (node.data?.color) colorCache.set(node.id, node.data.color);
       });
 
-      const updatedNodes = dbNodes.map((node) => {
+      let updatedNodes = dbNodes.map((node) => {
         const moduleInfo = moduleLookup[node.module_id];
         const baseColor = getColorForModule(node.module_id, moduleLookup);
         let nodeColor = colorCache.get(node.id);
@@ -690,6 +690,50 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             };
       });
 
+      const topicPositions = new Map<string, XYPosition>();
+      const conceptGroups = new Map<string, FlowNode[]>();
+
+      updatedNodes.forEach((node) => {
+        if (node.data?.node_type === "topic") {
+          topicPositions.set(String(node.id), {
+            x: node.position?.x ?? 0,
+            y: node.position?.y ?? 0,
+          });
+        } else if (
+          node.data?.node_type === "concept" &&
+          node.data.parent_node_id
+        ) {
+          const parentId = String(node.data.parent_node_id);
+          if (!conceptGroups.has(parentId)) {
+            conceptGroups.set(parentId, []);
+          }
+          conceptGroups.get(parentId)!.push(node);
+        }
+      });
+
+      conceptGroups.forEach((children, parentId) => {
+        const parentPosition = topicPositions.get(parentId);
+        if (!parentPosition) {
+          return;
+        }
+
+        const sortedChildren = [...children].sort((a, b) =>
+          String(a.id).localeCompare(String(b.id))
+        );
+        const count = sortedChildren.length;
+        if (count === 0) return;
+
+        const angleStep = (2 * Math.PI) / count;
+        const radius = Math.max(160, 90 + count * 26);
+
+        sortedChildren.forEach((child, index) => {
+          const angle = angleStep * index;
+          const x = parentPosition.x + Math.cos(angle) * radius;
+          const y = parentPosition.y + Math.sin(angle) * radius;
+          child.position = { x, y };
+        });
+      });
+
       return updatedNodes;
     });
 
@@ -701,26 +745,66 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   // Sync edges with database relationships
   useEffect(() => {
     const hadEdges = edges.length > 0;
-    const newEdges = dbRelationships.map((rel) => ({
-      id: rel.id,
-      source: rel.first_node,
-      target: rel.second_node,
-      type: "hoverLabel",
-      style: {
-        stroke: selectedEdge === rel.id ? "#ff6b6b" : "#b1b1b7",
-        strokeWidth: selectedEdge === rel.id ? 3 : 2,
-      },
-      animated: false,
-      data: { label: rel.rs_type },
-    }));
 
+    const getEdgeStyle = (edgeId: string) => ({
+      stroke: selectedEdge === edgeId ? "#ff6b6b" : "#b1b1b7",
+      strokeWidth: selectedEdge === edgeId ? 3 : 2,
+    });
+
+    const seenEdgeKeys = new Set<string>();
+    const relationshipEdges: FlowEdge[] = dbRelationships.map((rel) => {
+      const source = String(rel.first_node);
+      const target = String(rel.second_node);
+      seenEdgeKeys.add(`${source}->${target}`);
+      seenEdgeKeys.add(`${target}->${source}`);
+
+      return {
+        id: String(rel.id),
+        source,
+        target,
+        type: "hoverLabel",
+        style: getEdgeStyle(String(rel.id)),
+        animated: false,
+        data: { label: rel.rs_type ?? "" },
+      };
+    });
+
+    const defaultConceptEdges: FlowEdge[] = [];
+
+    dbNodes.forEach((node) => {
+      if (node.type !== "concept" || !node.related_topic) {
+        return;
+      }
+
+      const parentId = String(node.related_topic);
+      const conceptId = String(node.id);
+      const forwardKey = `${parentId}->${conceptId}`;
+      const reverseKey = `${conceptId}->${parentId}`;
+
+      if (seenEdgeKeys.has(forwardKey) || seenEdgeKeys.has(reverseKey)) {
+        return;
+      }
+
+      const edgeId = `topic-concept-${parentId}-${conceptId}`;
+      defaultConceptEdges.push({
+        id: edgeId,
+        source: parentId,
+        target: conceptId,
+        type: "hoverLabel",
+        style: getEdgeStyle(edgeId),
+        animated: false,
+        data: { label: "" },
+      });
+    });
+
+    const newEdges = [...relationshipEdges, ...defaultConceptEdges];
     setEdges(newEdges);
 
     // If new edges were added, run simulation for layout optimization
     if (!hadEdges && newEdges.length > 0) {
       shouldRunSimulationRef.current = true;
     }
-  }, [dbRelationships, selectedEdge, setEdges]);
+  }, [dbNodes, dbRelationships, selectedEdge, setEdges]);
 
   // Clean up active popup if node is deleted
   useEffect(() => {
@@ -804,6 +888,42 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       target: edge.target,
     }));
 
+    const conceptLayoutTargets = new Map<
+      string,
+      { angle: number; radius: number }
+    >();
+    type SimulationNode = (typeof simulationNodes)[number];
+    const conceptGroupsForLayout = new Map<string, SimulationNode[]>();
+
+    simulationNodes.forEach((node) => {
+      const data = node.data as NodeData;
+      if (data.node_type === "concept" && data.parent_node_id) {
+        const parentId = String(data.parent_node_id);
+        if (!conceptGroupsForLayout.has(parentId)) {
+          conceptGroupsForLayout.set(parentId, []);
+        }
+        conceptGroupsForLayout.get(parentId)!.push(node);
+      }
+    });
+
+    conceptGroupsForLayout.forEach((children, parentId) => {
+      if (!children || children.length === 0) {
+        return;
+      }
+
+      const sortedChildren = [...children].sort((a, b) =>
+        String(a.id).localeCompare(String(b.id))
+      );
+      const count = sortedChildren.length;
+      const angleStep = (2 * Math.PI) / count;
+      const radius = Math.max(160, 90 + count * 26);
+
+      sortedChildren.forEach((child, index) => {
+        const angle = angleStep * index;
+        conceptLayoutTargets.set(String(child.id), { angle, radius });
+      });
+    });
+
     const topicSimulationNodes = simulationNodes.filter(
       (node) => node.data.node_type === "topic"
     );
@@ -868,7 +988,18 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           const isParentChild =
             sourceNode?.data?.parent_node_id === targetNode?.id ||
             targetNode?.data?.parent_node_id === sourceNode?.id;
-          if (isParentChild) return 85;
+          if (isParentChild) {
+            const conceptNode =
+              sourceNode?.data?.node_type === "concept"
+                ? sourceNode
+                : targetNode?.data?.node_type === "concept"
+                  ? targetNode
+                  : null;
+            const layoutTarget = conceptNode
+              ? conceptLayoutTargets.get(String(conceptNode.id))
+              : null;
+            return layoutTarget?.radius ?? 170;
+          }
 
           const sourceRoot = findRootTopicId(sourceNode);
           const targetRoot = findRootTopicId(targetNode);
@@ -906,13 +1037,21 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           const data = d.data as NodeData;
           if (data.node_type === "concept" && data.parent_node_id) {
             const parentNode = simulationNodeMap.get(data.parent_node_id);
-            if (parentNode)
+            const targetLayout = conceptLayoutTargets.get(String(d.id));
+            if (parentNode && targetLayout) {
+              const parentX = parentNode.x ?? parentNode.position?.x ?? width / 2;
+              return (
+                parentX + Math.cos(targetLayout.angle) * targetLayout.radius
+              );
+            }
+            if (parentNode) {
               return parentNode.x ?? parentNode.position?.x ?? width / 2;
+            }
           }
           return d.x ?? width / 2;
         })
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "concept" ? 0.22 : 0.04
+          (d.data as NodeData).node_type === "concept" ? 0.32 : 0.04
         )
     );
 
@@ -923,13 +1062,21 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           const data = d.data as NodeData;
           if (data.node_type === "concept" && data.parent_node_id) {
             const parentNode = simulationNodeMap.get(data.parent_node_id);
-            if (parentNode)
+            const targetLayout = conceptLayoutTargets.get(String(d.id));
+            if (parentNode && targetLayout) {
+              const parentY = parentNode.y ?? parentNode.position?.y ?? height / 2;
+              return (
+                parentY + Math.sin(targetLayout.angle) * targetLayout.radius
+              );
+            }
+            if (parentNode) {
               return parentNode.y ?? parentNode.position?.y ?? height / 2;
+            }
           }
           return d.y ?? height / 2;
         })
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "concept" ? 0.22 : 0.04
+          (d.data as NodeData).node_type === "concept" ? 0.32 : 0.04
         )
     );
 
@@ -1215,6 +1362,28 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     document.body.style.userSelect = "";
   }, []);
 
+  const deleteSelectedNode = useCallback(() => {
+    if (!selectedNode) return;
+
+    setDbNodes((prev) => prev.filter((node) => node.id !== selectedNode));
+    setDbRelationships((prev) =>
+      prev.filter(
+        (rel) => rel.id !== selectedNode && rel.second_node !== selectedNode
+      )
+    );
+    setSelectedNode(null);
+    setActivePopup((prev) => (prev?.nodeId === selectedNode ? null : prev));
+    shouldRunSimulationRef.current = true;
+  }, [selectedNode]);
+
+  const deleteSelectedEdge = useCallback(() => {
+    if (!selectedEdge) return;
+
+    setDbRelationships((prev) => prev.filter((rel) => rel.id !== selectedEdge));
+    setSelectedEdge(null);
+    shouldRunSimulationRef.current = true;
+  }, [selectedEdge]);
+
   const handleControlClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.stopPropagation();
@@ -1356,30 +1525,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     },
     [pendingNodePosition, dbNodes]
   );
-
-  // Delete selected node
-  const deleteSelectedNode = useCallback(() => {
-    if (!selectedNode) return;
-
-    setDbNodes((prev) => prev.filter((node) => node.id !== selectedNode));
-    setDbRelationships((prev) =>
-      prev.filter(
-        (rel) => rel.id !== selectedNode && rel.second_node !== selectedNode
-      )
-    );
-    setSelectedNode(null);
-    setActivePopup((prev) => (prev?.nodeId === selectedNode ? null : prev));
-    shouldRunSimulationRef.current = true;
-  }, [selectedNode]);
-
-  // Delete selected edge
-  const deleteSelectedEdge = useCallback(() => {
-    if (!selectedEdge) return;
-
-    setDbRelationships((prev) => prev.filter((rel) => rel.id !== selectedEdge));
-    setSelectedEdge(null);
-    shouldRunSimulationRef.current = true;
-  }, [selectedEdge]);
 
   const getNodeCount = (): number => dbNodes.length;
   const getEdgeCount = (): number => dbRelationships.length;

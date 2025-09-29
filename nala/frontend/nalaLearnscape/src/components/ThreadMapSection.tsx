@@ -64,8 +64,8 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 w-full">
         <div>
           <h2
-            className="text-2xl mb-1 text-[#4C73FF]"
-            style={{ fontFamily: '"Fredoka", sans-serif' }}
+            className="text-3xl mb-1 text-[#4C73FF]"
+            style={{ fontFamily: '"Fredoka", sans-serif', fontWeight: 700 }}
           >
             {getModuleLabel(selectedModule)}
           </h2>
@@ -81,6 +81,7 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
             className="flex items-center gap-2 px-6 py-2 text-white rounded-full font-medium hover:opacity-90 transition-opacity"
             style={{
               background: "linear-gradient(135deg, #4C73FF 0%, #7EA8FF 100%)",
+              fontFamily: "Fredoka, sans-serif",
             }}
             onClick={(event) => setFilterAnchor(event.currentTarget)}
           >

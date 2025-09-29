@@ -1247,10 +1247,17 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
             fontWeight: "bold",
           }}
         >
-          Mindmap Controls
+          ThreadMap Controls
         </h3>
 
-        <div style={{ marginBottom: "12px", fontSize: "12px", color: "#666" }}>
+        <div
+          style={{
+            marginBottom: "12px",
+            fontSize: "12px",
+            color: "#666",
+            fontFamily: "GlacialIndifference, sans-serif",
+          }}
+        >
           Nodes: {getNodeCount()} | Edges: {getEdgeCount()}
         </div>
 

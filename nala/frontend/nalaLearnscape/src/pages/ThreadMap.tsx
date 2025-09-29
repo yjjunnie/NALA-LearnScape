@@ -26,7 +26,7 @@ import type {
   EdgeMouseHandler,
 } from "@xyflow/react";
 import * as d3 from "d3";
-import { SlidersHorizontal, Trash2 } from "lucide-react";
+import { Info, Trash2 } from "lucide-react";
 import "@xyflow/react/dist/style.css";
 import "../App.css";
 import type {
@@ -90,11 +90,12 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
 
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
-  const [showEdges, setShowEdges] = useState<boolean>(false);
+  //const [showEdges, setShowEdges] = useState<boolean>(false);
   const [isControlPanelOpen, setIsControlPanelOpen] = useState<boolean>(false);
-  const [controlPosition, setControlPosition] = useState<{ x: number; y: number }>(
-    { x: 24, y: 24 }
-  );
+  const [controlPosition, setControlPosition] = useState<{
+    x: number;
+    y: number;
+  }>({ x: 24, y: 24 });
   const [isDraggingControl, setIsDraggingControl] = useState(false);
 
   const availableModules = useMemo(() => {
@@ -383,15 +384,12 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   const pendingNodePositionRef = useRef<XYPosition | null>(null); // Holds the pending position for a new node (before it’s added)
   const draggedNodeIdRef = useRef<string | null>(null); // Tracks the ID of the node currently being dragged
   const shouldRunSimulationRef = useRef<boolean>(false); //A flag indicating whether the D3 simulation should run to adjust node positions
-  const controlDragStartRef = useRef<
-    | {
-        startX: number;
-        startY: number;
-        originX: number;
-        originY: number;
-      }
-    | null
-  >(null);
+  const controlDragStartRef = useRef<{
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+  } | null>(null);
   const controlDraggedRef = useRef<boolean>(false);
 
   const popupNode = useMemo(
@@ -699,7 +697,8 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
 
     if (topicSimulationNodes.length > 0) {
       const radius = Math.min(width, height) * 0.45;
-      const angleStep = (2 * Math.PI) / Math.max(topicSimulationNodes.length, 1);
+      const angleStep =
+        (2 * Math.PI) / Math.max(topicSimulationNodes.length, 1);
 
       topicSimulationNodes.forEach((node, index) => {
         const angle = index * angleStep;
@@ -1001,32 +1000,30 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     [controlPosition]
   );
 
-  const handleControlDragMove = useCallback(
-    (event: MouseEvent) => {
-      const dragState = controlDragStartRef.current;
-      if (!dragState) return;
+  const handleControlDragMove = useCallback((event: MouseEvent) => {
+    const dragState = controlDragStartRef.current;
+    if (!dragState) return;
 
-      const bounds = containerRef.current?.getBoundingClientRect();
-      const maxX = (bounds?.width ?? window.innerWidth) - controlButtonSize - 12;
-      const maxY = (bounds?.height ?? window.innerHeight) - controlButtonSize - 12;
+    const bounds = containerRef.current?.getBoundingClientRect();
+    const maxX = (bounds?.width ?? window.innerWidth) - controlButtonSize - 12;
+    const maxY =
+      (bounds?.height ?? window.innerHeight) - controlButtonSize - 12;
 
-      const deltaX = event.clientX - dragState.startX;
-      const deltaY = event.clientY - dragState.startY;
+    const deltaX = event.clientX - dragState.startX;
+    const deltaY = event.clientY - dragState.startY;
 
-      if (
-        !controlDraggedRef.current &&
-        Math.sqrt(deltaX * deltaX + deltaY * deltaY) > 4
-      ) {
-        controlDraggedRef.current = true;
-      }
+    if (
+      !controlDraggedRef.current &&
+      Math.sqrt(deltaX * deltaX + deltaY * deltaY) > 4
+    ) {
+      controlDraggedRef.current = true;
+    }
 
-      const nextX = Math.max(12, Math.min(maxX, dragState.originX + deltaX));
-      const nextY = Math.max(12, Math.min(maxY, dragState.originY + deltaY));
+    const nextX = Math.max(12, Math.min(maxX, dragState.originX + deltaX));
+    const nextY = Math.max(12, Math.min(maxY, dragState.originY + deltaY));
 
-      setControlPosition({ x: nextX, y: nextY });
-    },
-    []
-  );
+    setControlPosition({ x: nextX, y: nextY });
+  }, []);
 
   const handleControlDragEnd = useCallback(() => {
     setIsDraggingControl(false);
@@ -1426,7 +1423,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
             transform: isControlPanelOpen ? "scale(1.05)" : "scale(1)",
           }}
         >
-          <SlidersHorizontal size={22} />
+          <Info size={22} />
         </button>
 
         {isControlPanelOpen && (
@@ -1575,7 +1572,8 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         <ReactFlow<FlowNode, FlowEdge>
           nodes={nodes}
           nodeTypes={nodeTypes}
-          edges={showEdges ? edges : []}
+          //edges={showEdges ? edges : []}
+          edges={edges}
           edgeTypes={edgeTypes}
           onNodesChange={handleNodesChange}
           onEdgesChange={onEdgesChange}

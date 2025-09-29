@@ -16,17 +16,15 @@ type ThreadMapSectionProps = {
   studentId?: string;
   onModuleSelect: (moduleId: string) => void;
   selectedModuleId?: string;
-  // Optional: if you want to pass modules directly instead of fetching
-  modules?: Module[];
+  modules: Module[];
 };
 
 const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
   studentId,
   onModuleSelect,
   selectedModuleId,
-  modules: passedModules,
 }) => {
-  const [modules, setModules] = useState<Module[]>(passedModules || []);
+  const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,17 +32,9 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
 
   // Fetch student modules from backend
   useEffect(() => {
-    if (passedModules) {
-      setModules(passedModules);
-      return;
-    }
-
-    if (!studentId) return;
-
     const fetchModules = async () => {
       setLoading(true);
       setError(null);
-
       try {
         // Replace with your actual API endpoint
         const response = await fetch(`/api/student/${studentId}`);
@@ -71,7 +61,7 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
     };
 
     fetchModules();
-  }, [studentId, passedModules, selectedModuleId, onModuleSelect]);
+  }, [studentId, selectedModuleId, onModuleSelect]);
 
   const selectedModule = modules.find(
     (module) => module.id === selectedModuleId

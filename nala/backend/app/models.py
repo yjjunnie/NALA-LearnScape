@@ -117,4 +117,4 @@ class StudentNote(models.Model):
         ordering = ['-updated_at']
     
     def __str__(self):
-        return f"{self.student.username} - {self.topic.name}"
+        return f"{self.student.name} - {self.topic.name}"

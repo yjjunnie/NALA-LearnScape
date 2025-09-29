@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Menu, MenuItem } from "@mui/material";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import { ThreadMap } from "../pages";
+import type { SlotProps } from "@mui/material";
 
 export type ThreadMapModule = {
   id: string;
@@ -94,11 +95,13 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
             open={Boolean(filterAnchor)}
             onClose={() => setFilterAnchor(null)}
             MenuListProps={{ "aria-label": "Select module" }}
-            PaperProps={{
-              sx: {
-                borderRadius: 3,
-                minWidth: 280,
-                p: 1,
+            slotProps={{
+              paper: {
+                sx: {
+                  borderRadius: 3,
+                  minWidth: 280,
+                  p: 1,
+                },
               },
             }}
           >

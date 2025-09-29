@@ -152,10 +152,10 @@ const TopicTaxonomyProgression = () => {
   const bloomColors = {
     Remember: "#E8F1FF",
     Understand: "#B8D4FF",
-    Apply: "#7EA8FF",
-    Analyze: "#4C73FF",
-    Evaluate: "#2D4BB4",
-    Create: "#13338C",
+    Apply: "#B8D4FF",
+    Analyze: "#7EA8FF",
+    Evaluate: "#7EA8FF",
+    Create: "#4C73FF",
   };
 
   const bloomOrder = ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"];

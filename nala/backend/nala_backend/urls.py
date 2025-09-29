@@ -29,4 +29,5 @@ urlpatterns = [
     path('api/time-spent-per-topic/', views.time_spent_per_topic, name="time-spent-per-topic"),
     path('api/percentage-learning-style/', views.percentage_learning_style, name="percentage-learningstyle"),
     path('api/module/<int:pk>/', views.getModule, name='get_module'),
+    path('api/module/<int:module_id>/topic/<int:topic_id>/notes', views.getTopic, name='get_topic'),
 ]

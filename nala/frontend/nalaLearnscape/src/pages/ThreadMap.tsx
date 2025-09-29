@@ -126,8 +126,7 @@ const resolveNodeCollisions = (
         const dx = bx - ax;
         const dy = by - ay;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const minDistance =
-          getNodeRadius(nodeA) + getNodeRadius(nodeB) + 36; // spacing for labels
+        const minDistance = getNodeRadius(nodeA) + getNodeRadius(nodeB) + 36; // spacing for labels
 
         if (distance === 0) {
           const jitter = 0.5;
@@ -229,7 +228,10 @@ const keepConceptsNearParent = (nodes: FlowNode[]): FlowNode[] => {
       return node;
     }
 
-    const clampedDistance = Math.min(Math.max(distance, minDistance), maxDistance);
+    const clampedDistance = Math.min(
+      Math.max(distance, minDistance),
+      maxDistance
+    );
     const scale = clampedDistance / distance;
 
     return {
@@ -550,9 +552,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     visible: false,
   });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [interactionMode, setInteractionMode] = useState<
-    "cursor" | "add-node"
-  >("cursor");
+  const [interactionMode, setInteractionMode] = useState<"cursor" | "add-node">(
+    "cursor"
+  );
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [isInteractionToggleHovered, setIsInteractionToggleHovered] =
     useState(false);
@@ -575,13 +577,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     [location.pathname]
   );
   const controlMode = useMemo(
-    () =>
-      getControlMode(
-        selectedNode,
-        selectedEdge,
-        isAddingEdge,
-        isEditMode
-      ),
+    () => getControlMode(selectedNode, selectedEdge, isAddingEdge, isEditMode),
     [isAddingEdge, isEditMode, selectedEdge, selectedNode]
   );
   const {
@@ -661,13 +657,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     originY: number;
   } | null>(null);
   const controlDraggedRef = useRef<boolean>(false);
-  const dragContextRef = useRef<
-    | {
-        nodeId: string;
-        offsets: Map<string, { dx: number; dy: number }>;
-      }
-    | null
-  >(null);
+  const dragContextRef = useRef<{
+    nodeId: string;
+    offsets: Map<string, { dx: number; dy: number }>;
+  } | null>(null);
 
   const adjacencyMap = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -930,16 +923,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         if (count === 0) return;
 
         const directionAngle = Math.PI / 8; // Bias cluster toward the upper-right quadrant
-        const angleSpread = Math.min(
-          Math.PI * 0.9,
-          Math.PI / 3 + count * 0.15
-        );
+        const angleSpread = Math.min(Math.PI * 0.9, Math.PI / 3 + count * 0.15);
         const radius = Math.max(140, 110 + count * 24);
 
         sortedChildren.forEach((child, index) => {
           const ratio = count > 1 ? index / (count - 1) : 0.5;
           const baseAngle = directionAngle - angleSpread / 2;
-          const jitter = ((index % 2 === 0 ? 1 : -1) * angleSpread) /
+          const jitter =
+            ((index % 2 === 0 ? 1 : -1) * angleSpread) /
             Math.max(count * 8, 16);
           const angle = baseAngle + ratio * angleSpread + jitter;
           const x = parentPosition.x + Math.cos(angle) * radius;
@@ -1130,17 +1121,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       );
       const count = sortedChildren.length;
       const directionAngle = Math.PI / 8;
-      const angleSpread = Math.min(
-        Math.PI * 0.9,
-        Math.PI / 3 + count * 0.15
-      );
+      const angleSpread = Math.min(Math.PI * 0.9, Math.PI / 3 + count * 0.15);
       const radius = Math.max(140, 110 + count * 24);
 
       sortedChildren.forEach((child, index) => {
         const ratio = count > 1 ? index / (count - 1) : 0.5;
         const baseAngle = directionAngle - angleSpread / 2;
-        const jitter = ((index % 2 === 0 ? 1 : -1) * angleSpread) /
-          Math.max(count * 8, 16);
+        const jitter =
+          ((index % 2 === 0 ? 1 : -1) * angleSpread) / Math.max(count * 8, 16);
         const angle = baseAngle + ratio * angleSpread + jitter;
         conceptLayoutTargets.set(String(child.id), { angle, radius });
       });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Menu, MenuItem } from "@mui/material";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import { ThreadMap } from "../pages";
 
 // Types for backend integration
 type Module = {
@@ -46,13 +47,15 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
 
       try {
         // Replace with your actual API endpoint
-        const response = await fetch(`/api/students/${studentId}/modules`);
-
+        const response = await fetch(`/api/student/${studentId}`);
         if (!response.ok) {
-          throw new Error("Failed to fetch modules");
+          throw new Error("Failed to fetch student.");
         }
-
-        const data = await response.json();
+        const student = await response.json();
+        if (!student) {
+          throw new Error("Student not found.");
+        }
+        const data = student.enrolled_modules || []; // Data is an array of modules
         setModules(data);
 
         // Auto-select first module if none selected
@@ -208,10 +211,7 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
         }}
       >
         {selectedModuleId ? (
-          <div className="text-gray-600 text-center">
-            <p>Thread map for {selectedModule?.code} will be displayed here</p>
-            <p className="text-sm mt-2">Module ID: {selectedModuleId}</p>
-          </div>
+          <ThreadMap module_id={selectedModuleId} /> // Add this here to display the ThreadMap
         ) : (
           <div className="text-gray-500">
             Please select a module to view its thread map

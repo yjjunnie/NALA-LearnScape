@@ -128,8 +128,8 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     const fetchThreadMapData = async () => {
       try {
         const [nodesResponse, relationshipsResponse] = await Promise.all([
-          fetch(`/api/nodes/${module_id}`),
-          fetch(`/api/relationships/${module_id}`),
+          fetch(`/api/nodes/${module_id}/`),
+          fetch(`/api/relationships/${module_id}/`),
         ]);
 
         if (!nodesResponse.ok) {

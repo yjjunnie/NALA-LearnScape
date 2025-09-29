@@ -30,7 +30,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchModules = async () => {
       try {
-        const response = await fetch(`/api/student/${DEMO_STUDENT_ID}`);
+        const response = await fetch(`/api/student/${DEMO_STUDENT_ID}/`);
         if (!response.ok) {
           throw new Error("Failed to fetch student.");
         }

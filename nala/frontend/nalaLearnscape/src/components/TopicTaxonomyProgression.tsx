@@ -133,11 +133,11 @@ const TopicTaxonomyProgression = () => {
                 }}
               >
                 <div className="flex items-center justify-between">
-                  <h3 className="font-['GlacialIndifference',sans-serif] font-bold text-xs text-[#2D4BB4]">
+                  <h3 className="font-['GlacialIndifference',sans-serif] font-bold text-m text-[#2D4BB4]">
                     {topicData.topic}
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className="font-['GlacialIndifference',sans-serif] text-m text-gray-600">
+                    <span className="font-['GlacialIndifference',sans-serif] text-sm text-gray-600">
                       {totalQuestions} questions
                     </span>
                     <svg 

@@ -1,6 +1,17 @@
 
 *Data Features* && *Justification*
 -------------------------------------------------
+
+# Need justification, cannot the student say ahhh my motivation level is 10 right now, then... it should be from the student's actions, activity, shouldnt be from just ONE answer (algorithm!!!!!)
+# Have time what we can do is: ThreadMap (Active Learning because threadmap will help how much have done, how much more i need to do, what i can base it on)
+
+#ALSO, think about ways to tell the student ; give the student recommendations on which learning preference seems to be working for him
+# Tell the student how he should improve for Bloom's Taxonomy Progression; simple guided page on how to improve from one level to another level
+# Set up another chat; suggestion for what to do.
+
+# Teaching Pedagogy, get the algorithm.
+# Prove that our analytics work.
+
 Student Features:
     1. Previous Academic Performance (GPA/grades)
         Students with higher GPAs are likely to need less study time.
@@ -11,7 +22,7 @@ Student Features:
     3. Motivation Level (1-10)
         Highly motivated students spend more time engaging with challenging topics.
 
-Learning Style:
+Learning Style: # CHANGE TO LEARNING PREFERENCES
     1. Retrieval Practice Count
         Frequent use of retrieval practice will reduce study time for topics, as it is an efficient learning technique.
 

@@ -21,7 +21,7 @@ def load_data(apps, schema_editor):
             for row in reader:
                 # Create or update Module entries
                 Module.objects.update_or_create(
-                    id=int(row["module_id"]),
+                    id=(row["module_id"]),
                     defaults={
                         "name": row["module_name"],
                         "index": row.get("module_index", "")
@@ -33,11 +33,11 @@ def load_data(apps, schema_editor):
     with open(nodes_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            node_id = int(row["node_id"])
+            node_id = row["node_id"]
             name = row["node_name"]
             summary = row["node_description"]
             node_type = row["node_type"].lower()
-            module_id = int(row["node_module_id"]) if row.get("node_module_id") else None
+            module_id = row["node_module_id"] if row.get("node_module_id") else None
 
             # Assign the module to each Node, Topic, or Concept
             module = Module.objects.get(id=module_id) if module_id else None
@@ -48,7 +48,7 @@ def load_data(apps, schema_editor):
                     defaults={"name": name, "summary": summary, "module": module}
                 )
             elif node_type == "concept":
-                parent_id = int(row["parent_node_id"]) if row["parent_node_id"] else None
+                parent_id = row["parent_node_id"] if row["parent_node_id"] else None
                 if parent_id:
                     parent_topic = Topic.objects.get(id=parent_id)
                     Concept.objects.update_or_create(
@@ -72,9 +72,9 @@ def load_data(apps, schema_editor):
     with open(rels_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            rel_id = int(row["relationship_id"])
-            first_node = Node.objects.get(id=int(row["node_id_1"]))
-            second_node = Node.objects.get(id=int(row["node_id_2"]))
+            rel_id = row["relationship_id"]
+            first_node = Node.objects.get(id=row["node_id_1"])
+            second_node = Node.objects.get(id=row["node_id_2"])
             rs_type = row["relationship_type"]
 
             Relationship.objects.update_or_create(

@@ -26,8 +26,8 @@ import type {
   OnConnectEnd,
 } from "@xyflow/react";
 import * as d3 from "d3";
-import { Info, Trash2, Plus, Maximize2 } from "lucide-react";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { Maximize2, Minimize2, MousePointer2, Pencil } from "lucide-react";
+import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import "@xyflow/react/dist/style.css";
 import "../App.css";
 import type {
@@ -48,6 +48,10 @@ import ConceptNode from "./threadMap/ConceptNode";
 import NodeInputModal from "./threadMap/NodeInputModal";
 import HoverLabelEdge from "./threadMap/HoverLabelEdge";
 import AddNodeHover from "./threadMap/AddNodeHover";
+import {
+  getControlMode,
+  getControlPanelState,
+} from "./threadMap/controlPanelState";
 
 type RawDatabaseNode = {
   id: number | string;
@@ -78,6 +82,7 @@ interface ThreadMapProps {
 const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const activeModuleId = useMemo(() => {
     if (module_id && module_id.trim().length > 0) {
       return module_id.trim();
@@ -372,6 +377,12 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     visible: false,
   });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [interactionMode, setInteractionMode] = useState<
+    "pointer" | "add-node"
+  >("pointer");
+  const [isInteractionToggleHovered, setIsInteractionToggleHovered] =
+    useState(false);
+  const [isDeleteHovered, setIsDeleteHovered] = useState(false);
   const [pendingNodePosition, setPendingNodePosition] =
     useState<XYPosition | null>(null);
   const [reactFlowInstance, setReactFlowInstanceState] =
@@ -387,47 +398,26 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     () => location.pathname.toLowerCase().includes("threadmap"),
     [location.pathname]
   );
-  const controlMode = useMemo(() => {
-    if (isAddingEdge) return "edge" as const;
-    if (selectedNode) return "delete-node" as const;
-    if (selectedEdge) return "delete-edge" as const;
-    return "info" as const;
-  }, [isAddingEdge, selectedEdge, selectedNode]);
-  const controlIcon = useMemo(() => {
-    switch (controlMode) {
-      case "edge":
-        return <Plus size={22} />;
-      case "delete-node":
-      case "delete-edge":
-        return <Trash2 size={22} />;
-      default:
-        return <Info size={22} />;
-    }
-  }, [controlMode]);
-  const controlButtonColor = useMemo(() => {
-    if (controlMode === "edge") return "#2563eb";
-    if (controlMode === "delete-node" || controlMode === "delete-edge")
-      return "#ef4444";
-    return "#1f2937";
-  }, [controlMode]);
-  const controlButtonShadow = useMemo(() => {
-    if (controlMode === "edge") return "0 12px 26px rgba(37, 99, 235, 0.45)";
-    if (controlMode === "delete-node" || controlMode === "delete-edge")
-      return "0 12px 26px rgba(239, 68, 68, 0.45)";
-    return "0 12px 26px rgba(15, 23, 42, 0.35)";
-  }, [controlMode]);
-  const controlButtonLabel = useMemo(() => {
-    if (controlMode === "edge") {
-      return "Edge creation in progress (click to cancel)";
-    }
-    if (controlMode === "delete-node") {
-      return "Delete selected node";
-    }
-    if (controlMode === "delete-edge") {
-      return "Delete selected edge";
-    }
-    return "Threadmap information";
-  }, [controlMode]);
+  const controlMode = useMemo(
+    () => getControlMode(selectedNode, selectedEdge, isAddingEdge),
+    [isAddingEdge, selectedEdge, selectedNode]
+  );
+  const {
+    Icon: ControlIcon,
+    color: controlButtonColor,
+    shadow: controlButtonShadow,
+    label: controlButtonLabel,
+    deleteLabel: deleteSelectionLabel,
+  } = getControlPanelState(controlMode);
+  const isAddMode = interactionMode === "add-node";
+  const interactionToggleLabel = isAddMode
+    ? "Switch to pointer mode"
+    : "Switch to add-node mode";
+  const interactionToggleIcon = isAddMode ? (
+    <MousePointer2 size={18} />
+  ) : (
+    <Pencil size={18} />
+  );
 
   const handleInit = useCallback(
     (instance: ReactFlowInstance<FlowNode, FlowEdge>) => {
@@ -1221,18 +1211,27 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       return;
     }
 
-    if (typeof window === "undefined") {
+    if (isStandaloneView) {
       return;
     }
 
-    const threadmapUrl = new URL(`${window.location.origin}/threadmap`);
-    threadmapUrl.searchParams.set("module", activeModuleId);
-    window.open(threadmapUrl.toString(), "_blank", "noopener,noreferrer");
-  }, [activeModuleId]);
+    navigate({ pathname: "/threadmap", search: `?module=${activeModuleId}` });
+  }, [activeModuleId, isStandaloneView, navigate]);
+
+  const handleCloseThreadmap = useCallback(() => {
+    navigate("/");
+  }, [navigate]);
 
   // Handle mouse move for hover node
   const handleMouseMove = useCallback(
     (event: React.MouseEvent) => {
+      if (interactionMode !== "add-node") {
+        setHoverNode((prev) =>
+          prev.visible ? { ...prev, visible: false } : prev
+        );
+        return;
+      }
+
       const instance = reactFlowInstanceRef.current;
       if (!instance) return;
 
@@ -1266,7 +1265,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         visible: !isTooCloseToNode && canAddNode,
       });
     },
-    [activeModuleId, nodes]
+    [activeModuleId, interactionMode, nodes]
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -1362,13 +1361,18 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     document.body.style.userSelect = "";
   }, []);
 
+  const handleToggleInteractionMode = useCallback(() => {
+    setInteractionMode((prev) => (prev === "pointer" ? "add-node" : "pointer"));
+  }, []);
+
   const deleteSelectedNode = useCallback(() => {
     if (!selectedNode) return;
 
     setDbNodes((prev) => prev.filter((node) => node.id !== selectedNode));
     setDbRelationships((prev) =>
       prev.filter(
-        (rel) => rel.id !== selectedNode && rel.second_node !== selectedNode
+        (rel) =>
+          rel.first_node !== selectedNode && rel.second_node !== selectedNode
       )
     );
     setSelectedNode(null);
@@ -1399,21 +1403,42 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       }
 
       if (controlMode === "delete-node") {
-        deleteSelectedNode();
+        setSelectedNode(null);
         setShowInfoTooltip(false);
         return;
       }
 
       if (controlMode === "delete-edge") {
-        deleteSelectedEdge();
+        setSelectedEdge(null);
         setShowInfoTooltip(false);
-        return;
       }
-
-      setShowInfoTooltip((prev) => !prev);
+      if (controlMode === "info") {
+        setShowInfoTooltip(false);
+      }
     },
-    [controlMode, deleteSelectedEdge, deleteSelectedNode]
+    [controlMode]
   );
+
+  const handleControlMouseEnter = useCallback(() => {
+    if (controlMode === "info") {
+      setShowInfoTooltip(true);
+    }
+  }, [controlMode]);
+
+  const handleControlMouseLeave = useCallback(() => {
+    if (controlMode === "info") {
+      setShowInfoTooltip(false);
+    }
+  }, [controlMode]);
+
+  const handleDeleteSelection = useCallback(() => {
+    if (controlMode === "delete-node") {
+      deleteSelectedNode();
+    } else if (controlMode === "delete-edge") {
+      deleteSelectedEdge();
+    }
+    setIsDeleteHovered(false);
+  }, [controlMode, deleteSelectedEdge, deleteSelectedNode]);
 
   useEffect(() => {
     if (!isDraggingControl) return;
@@ -1442,6 +1467,20 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   useEffect(() => {
     if (controlMode !== "info") {
       setShowInfoTooltip(false);
+    }
+  }, [controlMode]);
+
+  useEffect(() => {
+    if (interactionMode !== "add-node") {
+      setHoverNode((prev) => (prev.visible ? { ...prev, visible: false } : prev));
+    } else {
+      setIsAddingEdge(false);
+    }
+  }, [interactionMode]);
+
+  useEffect(() => {
+    if (controlMode !== "delete-node" && controlMode !== "delete-edge") {
+      setIsDeleteHovered(false);
     }
   }, [controlMode]);
 
@@ -1681,30 +1720,114 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           pointerEvents: "none",
         }}
       >
-        <button
-          onMouseDown={handleControlMouseDown}
-          onClick={handleControlClick}
-          aria-label={controlButtonLabel}
-          title={controlButtonLabel}
+        <div
           style={{
             pointerEvents: "auto",
-            width: controlButtonSize,
-            height: controlButtonSize,
-            borderRadius: "50%",
-            border: "none",
-            background: controlButtonColor,
-            color: "#fff",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: controlButtonShadow,
-            cursor: isDraggingControl ? "grabbing" : "grab",
-            transition: "transform 0.2s ease, box-shadow 0.2s ease",
-            transform: isDraggingControl ? "scale(0.98)" : "scale(1)",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 12,
           }}
         >
-          {controlIcon}
-        </button>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <button
+              type="button"
+              onMouseDown={handleControlMouseDown}
+              onClick={handleControlClick}
+              onMouseEnter={handleControlMouseEnter}
+              onMouseLeave={handleControlMouseLeave}
+              aria-label={controlButtonLabel}
+              title={controlButtonLabel}
+              style={{
+                width: controlButtonSize,
+                height: controlButtonSize,
+                borderRadius: "50%",
+                border: "none",
+                background: controlButtonColor,
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: controlButtonShadow,
+                cursor: isDraggingControl ? "grabbing" : "grab",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                transform: isDraggingControl ? "scale(0.98)" : "scale(1)",
+              }}
+            >
+              <ControlIcon size={22} />
+            </button>
+            {(controlMode === "delete-node" || controlMode === "delete-edge") && (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleDeleteSelection();
+                }}
+                onMouseEnter={() => setIsDeleteHovered(true)}
+                onMouseLeave={() => setIsDeleteHovered(false)}
+                style={{
+                  border: "none",
+                  borderRadius: "9999px",
+                  padding: "10px 16px",
+                  fontFamily: '"GlacialIndifference", sans-serif',
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  background: isDeleteHovered ? "#b91c1c" : "#dc2626",
+                  color: "#fff",
+                  boxShadow: "0 12px 26px rgba(220, 38, 38, 0.4)",
+                  cursor: "pointer",
+                  transition: "background 0.2s ease",
+                }}
+              >
+                {deleteSelectionLabel ?? ""}
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleToggleInteractionMode();
+              setIsInteractionToggleHovered(false);
+            }}
+            onMouseEnter={() => setIsInteractionToggleHovered(true)}
+            onMouseLeave={() => setIsInteractionToggleHovered(false)}
+            aria-pressed={interactionMode === "add-node"}
+            aria-label={interactionToggleLabel}
+            title={interactionToggleLabel}
+            style={{
+              width: controlButtonSize - 6,
+              height: controlButtonSize - 6,
+              borderRadius: "50%",
+              border: "none",
+              background: isInteractionToggleHovered
+                ? interactionMode === "add-node"
+                  ? "#1e40af"
+                  : "#334155"
+                : interactionMode === "add-node"
+                ? "#1d4ed8"
+                : "#475569",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow:
+                interactionMode === "add-node"
+                  ? "0 12px 26px rgba(29, 78, 216, 0.45)"
+                  : "0 10px 22px rgba(71, 85, 105, 0.35)",
+              cursor: "pointer",
+              transition: "background 0.2s ease, box-shadow 0.2s ease",
+            }}
+          >
+            {interactionToggleIcon}
+          </button>
+        </div>
         {showInfoTooltip && (
           <div
             style={{
@@ -1719,6 +1842,16 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               padding: "16px",
               fontFamily: "GlacialIndifference, sans-serif",
               color: "#1e293b",
+            }}
+            onMouseEnter={() => {
+              if (controlMode === "info") {
+                setShowInfoTooltip(true);
+              }
+            }}
+            onMouseLeave={() => {
+              if (controlMode === "info") {
+                setShowInfoTooltip(false);
+              }
             }}
           >
             <div
@@ -1788,6 +1921,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         style={{
           width: "100%",
           height: "100%",
+          cursor: interactionMode === "add-node" ? "crosshair" : "default",
         }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -1810,33 +1944,62 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             Select a module to load its thread map.
           </div>
         )}
-        <button
-          onClick={handleExpandThreadmap}
-          disabled={!activeModuleId}
-          style={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            zIndex: 16,
-            border: "none",
-            borderRadius: "9999px",
-            padding: "8px 14px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            background: "#1d4ed8",
-            color: "#fff",
-            fontFamily: '"GlacialIndifference", sans-serif',
-            fontSize: "12.5px",
-            fontWeight: 600,
-            cursor: activeModuleId ? "pointer" : "not-allowed",
-            boxShadow: "0 18px 30px rgba(29, 78, 216, 0.35)",
-            opacity: activeModuleId ? 1 : 0.6,
-          }}
-        >
-          <Maximize2 size={16} />
-          <span>Open full view</span>
-        </button>
+        {!isStandaloneView && (
+          <button
+            onClick={handleExpandThreadmap}
+            disabled={!activeModuleId}
+            style={{
+              position: "absolute",
+              top: 16,
+              right: 16,
+              zIndex: 16,
+              border: "none",
+              borderRadius: "9999px",
+              padding: "8px 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              background: "#1d4ed8",
+              color: "#fff",
+              fontFamily: '"GlacialIndifference", sans-serif',
+              fontSize: "12.5px",
+              fontWeight: 600,
+              cursor: activeModuleId ? "pointer" : "not-allowed",
+              boxShadow: "0 18px 30px rgba(29, 78, 216, 0.35)",
+              opacity: activeModuleId ? 1 : 0.6,
+            }}
+          >
+            <Maximize2 size={16} />
+            <span>Open full view</span>
+          </button>
+        )}
+        {isStandaloneView && (
+          <button
+            onClick={handleCloseThreadmap}
+            style={{
+              position: "absolute",
+              top: 16,
+              right: 16,
+              zIndex: 16,
+              border: "none",
+              borderRadius: "9999px",
+              padding: "8px 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              background: "#334155",
+              color: "#fff",
+              fontFamily: '"GlacialIndifference", sans-serif',
+              fontSize: "12.5px",
+              fontWeight: 600,
+              cursor: "pointer",
+              boxShadow: "0 18px 30px rgba(51, 65, 85, 0.35)",
+            }}
+          >
+            <Minimize2 size={16} />
+            <span>Back to home</span>
+          </button>
+        )}
         {err && (
           <div
             style={{
@@ -1873,11 +2036,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           onInit={handleInit}
           onMove={handleMove}
           onPaneClick={handlePaneClick}
-          nodesDraggable={false}
-          panOnDrag
+          nodesDraggable={interactionMode === "pointer"}
+          nodeDragThreshold={interactionMode === "pointer" ? 14 : 999}
+          panOnDrag={interactionMode === "pointer"}
           panOnScroll
           zoomOnScroll={false}
           selectionOnDrag={false}
+          snapToGrid
+          snapGrid={[20, 20]}
           fitView
           attributionPosition="bottom-left"
           connectionMode={ConnectionMode.Loose}
@@ -1889,7 +2055,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             style={{ background: "white", border: "1px solid #ddd" }}
           />
 
-          {hoverNode.visible && (
+          {interactionMode === "add-node" && hoverNode.visible && (
             <AddNodeHover
               screenPosition={safeHoverScreenPosition}
               onClick={handleAddNodeFromHover}

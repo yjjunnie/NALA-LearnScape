@@ -1,11 +1,5 @@
 import React, { useMemo, useState } from "react";
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getBezierPath,
-  Position,
-  useReactFlow,
-} from "@xyflow/react";
+import { BaseEdge, EdgeLabelRenderer, useReactFlow } from "@xyflow/react";
 import type { EdgeProps, XYPosition } from "@xyflow/react";
 import type { FlowEdge, FlowNode } from "./types";
 
@@ -111,7 +105,7 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
           (edge.source === source && edge.target === target) ||
           (edge.source === target && edge.target === source)
       ),
-    [edges, source, target, sourceX, sourceY, targetX, targetY]
+    [edges, source, target]
   );
 
   const parallelIndex = parallelEdges.findIndex((edge) => edge.id === id);
@@ -128,33 +122,18 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
   const offsetX = (-dy / length) * offsetAmount;
   const offsetY = (dx / length) * offsetAmount;
 
-  const dominantAxisIsHorizontal = Math.abs(dx) >= Math.abs(dy);
-  const sourcePosition = dominantAxisIsHorizontal
-    ? dx >= 0
-      ? Position.Right
-      : Position.Left
-    : dy >= 0
-    ? Position.Bottom
-    : Position.Top;
-  const targetPosition = dominantAxisIsHorizontal
-    ? dx >= 0
-      ? Position.Left
-      : Position.Right
-    : dy >= 0
-    ? Position.Top
-    : Position.Bottom;
+  const startPoint = {
+    x: rawSourcePoint.x + offsetX,
+    y: rawSourcePoint.y + offsetY,
+  };
+  const endPoint = {
+    x: rawTargetPoint.x + offsetX,
+    y: rawTargetPoint.y + offsetY,
+  };
 
-  const curvature = Math.min(0.6, 0.35 + Math.abs(offsetAmount) / 160);
-
-  const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX: rawSourcePoint.x + offsetX,
-    sourceY: rawSourcePoint.y + offsetY,
-    sourcePosition,
-    targetX: rawTargetPoint.x + offsetX,
-    targetY: rawTargetPoint.y + offsetY,
-    targetPosition,
-    curvature,
-  });
+  const edgePath = `M ${startPoint.x},${startPoint.y} L ${endPoint.x},${endPoint.y}`;
+  const labelX = (startPoint.x + endPoint.x) / 2;
+  const labelY = (startPoint.y + endPoint.y) / 2;
 
   const [isHovered, setIsHovered] = useState(false);
 

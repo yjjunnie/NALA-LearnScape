@@ -28,7 +28,14 @@ import type {
   NodeChange,
 } from "@xyflow/react";
 import * as d3 from "d3";
-import { Maximize2, Minimize2, Pointer, Pencil } from "lucide-react";
+import {
+  Maximize2,
+  Minimize2,
+  Pointer,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import "@xyflow/react/dist/style.css";
 import "../App.css";
@@ -120,7 +127,7 @@ const resolveNodeCollisions = (
         const dy = by - ay;
         const distance = Math.sqrt(dx * dx + dy * dy);
         const minDistance =
-          getNodeRadius(nodeA) + getNodeRadius(nodeB) + 48; // spacing for labels
+          getNodeRadius(nodeA) + getNodeRadius(nodeB) + 36; // spacing for labels
 
         if (distance === 0) {
           const jitter = 0.5;
@@ -215,8 +222,8 @@ const keepConceptsNearParent = (nodes: FlowNode[]): FlowNode[] => {
     const dy = nodePosition.y - parentPosition.y;
     const distance = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    const minDistance = getNodeRadius(parent) + 70;
-    const maxDistance = getNodeRadius(parent) + 260;
+    const minDistance = getNodeRadius(parent) + 56;
+    const maxDistance = getNodeRadius(parent) + 220;
 
     if (distance >= minDistance && distance <= maxDistance) {
       return node;
@@ -529,6 +536,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     setSelectedNode(null);
     setSelectedEdge(null);
     setActivePopup(null);
+    setIsEditMode(false);
+    setInteractionMode("cursor");
   }, [activeModuleId]);
 
   const [activePopup, setActivePopup] = useState<{
@@ -542,10 +551,12 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [interactionMode, setInteractionMode] = useState<
-    "pointer" | "add-node"
-  >("pointer");
+    "cursor" | "add-node"
+  >("cursor");
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [isInteractionToggleHovered, setIsInteractionToggleHovered] =
     useState(false);
+  const [isEditToggleHovered, setIsEditToggleHovered] = useState(false);
   const [isDeleteHovered, setIsDeleteHovered] = useState(false);
   const [pendingNodePosition, setPendingNodePosition] =
     useState<XYPosition | null>(null);
@@ -563,7 +574,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     () => location.pathname.toLowerCase().includes("threadmap"),
     [location.pathname]
   );
-  const isEditMode = interactionMode === "pointer";
   const controlMode = useMemo(
     () =>
       getControlMode(
@@ -583,13 +593,20 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   } = getControlPanelState(controlMode);
   const isAddMode = interactionMode === "add-node";
   const interactionToggleLabel = isAddMode
-    ? "Switch to pointer mode"
+    ? "Switch to cursor mode"
     : "Switch to add-node mode";
   const interactionToggleIcon = isAddMode ? (
     <Pointer size={18} />
   ) : (
-    <Pencil size={18} />
+    <Plus size={18} />
   );
+  const editToggleLabel = isEditMode ? "Disable edit mode" : "Enable edit mode";
+  const editToggleIcon =
+    isEditMode && (selectedNode || selectedEdge) ? (
+      <Trash2 size={18} />
+    ) : (
+      <Pencil size={18} />
+    );
 
   const handleInit = useCallback(
     (instance: ReactFlowInstance<FlowNode, FlowEdge>) => {
@@ -915,9 +932,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         const directionAngle = Math.PI / 8; // Bias cluster toward the upper-right quadrant
         const angleSpread = Math.min(
           Math.PI * 0.9,
-          Math.PI / 3 + count * 0.18
+          Math.PI / 3 + count * 0.15
         );
-        const radius = Math.max(180, 120 + count * 28);
+        const radius = Math.max(140, 110 + count * 24);
 
         sortedChildren.forEach((child, index) => {
           const ratio = count > 1 ? index / (count - 1) : 0.5;
@@ -1115,9 +1132,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       const directionAngle = Math.PI / 8;
       const angleSpread = Math.min(
         Math.PI * 0.9,
-        Math.PI / 3 + count * 0.18
+        Math.PI / 3 + count * 0.15
       );
-      const radius = Math.max(180, 120 + count * 28);
+      const radius = Math.max(140, 110 + count * 24);
 
       sortedChildren.forEach((child, index) => {
         const ratio = count > 1 ? index / (count - 1) : 0.5;
@@ -1158,7 +1175,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       d3
         .forceManyBody()
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "topic" ? -460 : -240
+          (d.data as NodeData).node_type === "topic" ? -380 : -200
         )
         .distanceMax(520)
     );
@@ -1169,10 +1186,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         .forceCollide()
         .radius((d: any) => {
           const nodeData = d.data as NodeData;
-          return nodeData.node_type === "topic" ? 130 : 68;
+          return nodeData.node_type === "topic" ? 118 : 62;
         })
-        .strength(0.95)
-        .iterations(3)
+        .strength(0.9)
+        .iterations(2)
     );
 
     simulation.force(
@@ -1203,14 +1220,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             const layoutTarget = conceptNode
               ? conceptLayoutTargets.get(String(conceptNode.id))
               : null;
-            return layoutTarget?.radius ?? 170;
+            return layoutTarget?.radius ?? 140;
           }
 
           const sourceRoot = findRootTopicId(sourceNode);
           const targetRoot = findRootTopicId(targetNode);
-          if (sourceRoot && targetRoot && sourceRoot === targetRoot) return 140;
+          if (sourceRoot && targetRoot && sourceRoot === targetRoot) return 120;
 
-          return 300;
+          return 280;
         })
         .strength((link: any) => {
           const resolveNode = (value: any) =>
@@ -1317,6 +1334,12 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
     let tickCount = 0;
     simulation.on("tick", () => {
+      tickCount += 1;
+
+      if (tickCount % 2 !== 0 && simulation.alpha() > 0.1) {
+        return;
+      }
+
       setNodes((prevNodes) =>
         prevNodes.map((node) => {
           const simNode = simulationNodes.find((n) => n.id === node.id);
@@ -1331,7 +1354,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         })
       );
 
-      tickCount++;
       if (simulation.alpha() < 0.02 || tickCount > 120) {
         (simulation.nodes() as any[]).forEach((node) => {
           node.vx = 0;
@@ -1355,9 +1377,13 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, [nodes, edges, setNodes]);
 
   const handleConnectStart = useCallback<OnConnectStart>(() => {
+    if (!isEditMode) {
+      setIsAddingEdge(false);
+      return;
+    }
     setIsAddingEdge(true);
     setShowInfoTooltip(false);
-  }, []);
+  }, [isEditMode]);
 
   const handleConnectEnd = useCallback<OnConnectEnd>(() => {
     setIsAddingEdge(false);
@@ -1464,7 +1490,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   // Handle connection
   const onConnect: OnConnect = useCallback(
     (params) => {
-      if (!params.source || !params.target) return;
+      if (!params.source || !params.target || !isEditMode) return;
 
       const maxRelationshipId = dbRelationships.reduce((max, relationship) => {
         const numericId = Number(relationship.id);
@@ -1482,31 +1508,41 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       shouldRunSimulationRef.current = true; // Run simulation for new edge
       setIsAddingEdge(false);
     },
-    [dbRelationships]
+    [dbRelationships, isEditMode]
   );
 
   // Handle node click - only select, don't trigger layout
   const handleNodeClick: NodeMouseHandler<FlowNode> = useCallback(
     (event, node) => {
-      if (interactionMode !== "pointer") {
+      if (interactionMode === "add-node") {
         return;
       }
 
       event.stopPropagation();
-      setSelectedNode((prev) => (prev === node.id ? null : node.id));
-      setSelectedEdge(null); // Deselect edge when selecting node
+
       setActivePopup((prev) => {
-        if (prev?.nodeId === node.id) return null;
+        if (prev?.nodeId === node.id) {
+          return null;
+        }
         return { nodeId: node.id, expanded: false };
       });
+
+      if (!isEditMode) {
+        setSelectedNode(null);
+        setSelectedEdge(null);
+        return;
+      }
+
+      setSelectedNode((prev) => (prev === node.id ? null : node.id));
+      setSelectedEdge(null); // Deselect edge when selecting node
     },
-    [interactionMode]
+    [interactionMode, isEditMode]
   );
 
   // Handle edge click - select edge for deletion
   const handleEdgeClick: EdgeMouseHandler<FlowEdge> = useCallback(
     (event, edge) => {
-      if (interactionMode !== "pointer") {
+      if (!isEditMode || interactionMode === "add-node") {
         return;
       }
 
@@ -1514,7 +1550,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       setSelectedEdge((prev) => (prev === edge.id ? null : edge.id));
       setSelectedNode(null); // Deselect node when selecting edge
     },
-    [interactionMode]
+    [interactionMode, isEditMode]
   );
 
   const handleMove = useCallback<OnMove>((_, nextViewport) => {
@@ -1691,11 +1727,35 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, []);
 
   const handleToggleInteractionMode = useCallback(() => {
-    setInteractionMode((prev) => (prev === "pointer" ? "add-node" : "pointer"));
+    setInteractionMode((prev) => {
+      const nextMode = prev === "add-node" ? "cursor" : "add-node";
+      if (nextMode === "add-node") {
+        setIsEditMode(false);
+        setSelectedNode(null);
+        setSelectedEdge(null);
+        setActivePopup(null);
+        setIsAddingEdge(false);
+      }
+      return nextMode;
+    });
+  }, []);
+
+  const handleToggleEditMode = useCallback(() => {
+    setIsEditMode((prev) => {
+      const next = !prev;
+      if (!next) {
+        setSelectedNode(null);
+        setSelectedEdge(null);
+      } else {
+        setInteractionMode("cursor");
+      }
+      setIsAddingEdge(false);
+      return next;
+    });
   }, []);
 
   const deleteSelectedNode = useCallback(() => {
-    if (!selectedNode || interactionMode !== "pointer") return;
+    if (!selectedNode || !isEditMode) return;
 
     setDbNodes((prev) => prev.filter((node) => node.id !== selectedNode));
     setDbRelationships((prev) =>
@@ -1707,15 +1767,15 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     setSelectedNode(null);
     setActivePopup((prev) => (prev?.nodeId === selectedNode ? null : prev));
     shouldRunSimulationRef.current = true;
-  }, [interactionMode, selectedNode]);
+  }, [isEditMode, selectedNode]);
 
   const deleteSelectedEdge = useCallback(() => {
-    if (!selectedEdge || interactionMode !== "pointer") return;
+    if (!selectedEdge || !isEditMode) return;
 
     setDbRelationships((prev) => prev.filter((rel) => rel.id !== selectedEdge));
     setSelectedEdge(null);
     shouldRunSimulationRef.current = true;
-  }, [interactionMode, selectedEdge]);
+  }, [isEditMode, selectedEdge]);
 
   const handleControlClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -1798,7 +1858,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, [controlMode]);
 
   useEffect(() => {
-    if (interactionMode !== "pointer") {
+    if (interactionMode === "add-node") {
       setSelectedNode(null);
       setSelectedEdge(null);
       setActivePopup(null);
@@ -2073,98 +2133,155 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               gap: 12,
             }}
           >
-            <button
-              type="button"
-              onMouseDown={handleControlMouseDown}
-              onClick={handleControlClick}
-              onMouseEnter={handleControlMouseEnter}
-              onMouseLeave={handleControlMouseLeave}
-              aria-label={controlButtonLabel}
-              title={controlButtonLabel}
+            <div
               style={{
-                width: controlButtonSize,
-                height: controlButtonSize,
-                borderRadius: "50%",
-                border: "none",
-                background: controlButtonColor,
-                color: "#fff",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                boxShadow: controlButtonShadow,
-                cursor: isDraggingControl ? "grabbing" : "grab",
-                transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                transform: isDraggingControl ? "scale(0.98)" : "scale(1)",
+                gap: 10,
+                padding: "8px 12px",
+                background: "rgba(15, 23, 42, 0.72)",
+                borderRadius: "9999px",
+                boxShadow: "0 18px 35px rgba(15, 23, 42, 0.45)",
               }}
             >
-              <ControlIcon size={22} />
-            </button>
-            {(controlMode === "delete-node" ||
-              controlMode === "delete-edge") && (
+              <button
+                type="button"
+                onMouseDown={handleControlMouseDown}
+                onClick={handleControlClick}
+                onMouseEnter={handleControlMouseEnter}
+                onMouseLeave={handleControlMouseLeave}
+                aria-label={controlButtonLabel}
+                title={controlButtonLabel}
+                style={{
+                  width: controlButtonSize,
+                  height: controlButtonSize,
+                  borderRadius: "50%",
+                  border: "none",
+                  background: controlButtonColor,
+                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: controlButtonShadow,
+                  cursor: isDraggingControl ? "grabbing" : "grab",
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                  transform: isDraggingControl ? "scale(0.98)" : "scale(1)",
+                }}
+              >
+                <ControlIcon size={22} />
+              </button>
+              {(controlMode === "delete-node" ||
+                controlMode === "delete-edge") && (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleDeleteSelection();
+                  }}
+                  onMouseEnter={() => setIsDeleteHovered(true)}
+                  onMouseLeave={() => setIsDeleteHovered(false)}
+                  style={{
+                    border: "none",
+                    borderRadius: "9999px",
+                    padding: "10px 16px",
+                    fontFamily: '"GlacialIndifference", sans-serif',
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    background: isDeleteHovered ? "#b91c1c" : "#dc2626",
+                    color: "#fff",
+                    boxShadow: "0 12px 26px rgba(220, 38, 38, 0.4)",
+                    cursor: "pointer",
+                    transition: "background 0.2s ease",
+                  }}
+                >
+                  {deleteSelectionLabel ?? ""}
+                </button>
+              )}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
+            >
               <button
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
-                  handleDeleteSelection();
+                  handleToggleEditMode();
+                  setIsEditToggleHovered(false);
                 }}
-                onMouseEnter={() => setIsDeleteHovered(true)}
-                onMouseLeave={() => setIsDeleteHovered(false)}
+                onMouseEnter={() => setIsEditToggleHovered(true)}
+                onMouseLeave={() => setIsEditToggleHovered(false)}
+                aria-pressed={isEditMode}
+                aria-label={editToggleLabel}
+                title={editToggleLabel}
                 style={{
+                  width: controlButtonSize - 6,
+                  height: controlButtonSize - 6,
+                  borderRadius: "50%",
                   border: "none",
-                  borderRadius: "9999px",
-                  padding: "10px 16px",
-                  fontFamily: '"GlacialIndifference", sans-serif',
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  background: isDeleteHovered ? "#b91c1c" : "#dc2626",
+                  background: isEditMode
+                    ? isEditToggleHovered
+                      ? "#b91c1c"
+                      : "#dc2626"
+                    : isEditToggleHovered
+                    ? "#334155"
+                    : "#475569",
                   color: "#fff",
-                  boxShadow: "0 12px 26px rgba(220, 38, 38, 0.4)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: isEditMode
+                    ? "0 12px 26px rgba(220, 38, 38, 0.45)"
+                    : "0 10px 22px rgba(71, 85, 105, 0.35)",
                   cursor: "pointer",
-                  transition: "background 0.2s ease",
+                  transition: "background 0.2s ease, box-shadow 0.2s ease",
                 }}
               >
-                {deleteSelectionLabel ?? ""}
+                {editToggleIcon}
               </button>
-            )}
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleToggleInteractionMode();
+                  setIsInteractionToggleHovered(false);
+                }}
+                onMouseEnter={() => setIsInteractionToggleHovered(true)}
+                onMouseLeave={() => setIsInteractionToggleHovered(false)}
+                aria-pressed={interactionMode === "add-node"}
+                aria-label={interactionToggleLabel}
+                title={interactionToggleLabel}
+                style={{
+                  width: controlButtonSize - 6,
+                  height: controlButtonSize - 6,
+                  borderRadius: "50%",
+                  border: "none",
+                  background: isInteractionToggleHovered
+                    ? interactionMode === "add-node"
+                      ? "#1e40af"
+                      : "#334155"
+                    : interactionMode === "add-node"
+                    ? "#1d4ed8"
+                    : "#475569",
+                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow:
+                    interactionMode === "add-node"
+                      ? "0 12px 26px rgba(29, 78, 216, 0.45)"
+                      : "0 10px 22px rgba(71, 85, 105, 0.35)",
+                  cursor: "pointer",
+                  transition: "background 0.2s ease, box-shadow 0.2s ease",
+                }}
+              >
+                {interactionToggleIcon}
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              handleToggleInteractionMode();
-              setIsInteractionToggleHovered(false);
-            }}
-            onMouseEnter={() => setIsInteractionToggleHovered(true)}
-            onMouseLeave={() => setIsInteractionToggleHovered(false)}
-            aria-pressed={interactionMode === "add-node"}
-            aria-label={interactionToggleLabel}
-            title={interactionToggleLabel}
-            style={{
-              width: controlButtonSize - 6,
-              height: controlButtonSize - 6,
-              borderRadius: "50%",
-              border: "none",
-              background: isInteractionToggleHovered
-                ? interactionMode === "add-node"
-                  ? "#1e40af"
-                  : "#334155"
-                : interactionMode === "add-node"
-                ? "#1d4ed8"
-                : "#475569",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow:
-                interactionMode === "add-node"
-                  ? "0 12px 26px rgba(29, 78, 216, 0.45)"
-                  : "0 10px 22px rgba(71, 85, 105, 0.35)",
-              cursor: "pointer",
-              transition: "background 0.2s ease, box-shadow 0.2s ease",
-            }}
-          >
-            {interactionToggleIcon}
-          </button>
         </div>
         {showInfoTooltip && (
           <div
@@ -2374,9 +2491,11 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           onInit={handleInit}
           onMove={handleMove}
           onPaneClick={handlePaneClick}
-          nodesDraggable={interactionMode === "pointer"}
-          nodeDragThreshold={interactionMode === "pointer" ? 14 : 999}
-          panOnDrag={interactionMode === "pointer"}
+          nodesDraggable={isEditMode}
+          nodeDragThreshold={isEditMode ? 14 : 999}
+          nodesConnectable={isEditMode}
+          elementsSelectable={isEditMode}
+          panOnDrag={interactionMode === "cursor"}
           panOnScroll
           zoomOnScroll={false}
           selectionOnDrag={false}

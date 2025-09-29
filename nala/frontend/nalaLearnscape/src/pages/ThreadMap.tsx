@@ -1,9 +1,9 @@
 import React, {
   useCallback,
   useEffect,
-  useState,
-  useRef,
   useMemo,
+  useRef,
+  useState,
 } from "react";
 import {
   ReactFlow,
@@ -26,14 +26,18 @@ import type {
   OnConnectStart,
   OnConnectEnd,
   NodeChange,
+  OnNodeDragStart,
+  OnNodeDragStop,
 } from "@xyflow/react";
 import * as d3 from "d3";
 import {
+  ChevronDown,
+  ChevronUp,
+  Hand,
+  Info,
   Maximize2,
   Minimize2,
-  Pointer,
   Pencil,
-  Plus,
   Trash2,
 } from "lucide-react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
@@ -57,10 +61,7 @@ import ConceptNode from "./threadMap/ConceptNode";
 import NodeInputModal from "./threadMap/NodeInputModal";
 import HoverLabelEdge from "./threadMap/HoverLabelEdge";
 import AddNodeHover from "./threadMap/AddNodeHover";
-import {
-  getControlMode,
-  getControlPanelState,
-} from "./threadMap/controlPanelState";
+import TopicTaxonomyProgression from "../components/TopicTaxonomyProgression";
 
 type RawDatabaseNode = {
   id: number | string;
@@ -90,10 +91,87 @@ interface ThreadMapProps {
 
 const TOPIC_BASE_RADIUS = 120;
 const CONCEPT_BASE_RADIUS = 72;
+const LONG_PRESS_MS = 320;
 
 const getNodeRadius = (node: FlowNode): number => {
   const type = node.data?.node_type;
   return type === "topic" ? TOPIC_BASE_RADIUS : CONCEPT_BASE_RADIUS;
+};
+
+const estimateNodeLabelSize = (node: FlowNode) => {
+  const label = node.data?.node_name ?? "";
+  const sanitized = label.trim();
+  if (!sanitized) {
+    return { width: 96, height: 56 };
+  }
+
+  const words = sanitized.split(/\s+/);
+  const maxCharsPerLine = 14;
+  const lines: string[] = [];
+  let currentLine = "";
+
+  words.forEach((word) => {
+    if (!currentLine) {
+      currentLine = word;
+      return;
+    }
+
+    const candidate = `${currentLine} ${word}`;
+    if (candidate.length <= maxCharsPerLine) {
+      currentLine = candidate;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  });
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  const longestLine = lines.reduce(
+    (max, line) => Math.max(max, line.length),
+    0
+  );
+  const width = Math.min(240, Math.max(110, longestLine * 8.2 + 32));
+  const height = Math.min(220, Math.max(60, lines.length * 24 + 36));
+
+  return { width, height };
+};
+
+const centerNodesAroundCentroid = (nodes: FlowNode[]): FlowNode[] => {
+  if (nodes.length === 0) {
+    return nodes;
+  }
+
+  const sum = nodes.reduce(
+    (acc, node) => {
+      const x = node.position?.x ?? 0;
+      const y = node.position?.y ?? 0;
+      return { x: acc.x + x, y: acc.y + y };
+    },
+    { x: 0, y: 0 }
+  );
+
+  const centroid = {
+    x: sum.x / nodes.length,
+    y: sum.y / nodes.length,
+  };
+
+  if (Math.abs(centroid.x) < 1 && Math.abs(centroid.y) < 1) {
+    return nodes;
+  }
+
+  return nodes.map((node) => {
+    const position = node.position ?? { x: 0, y: 0 };
+    return {
+      ...node,
+      position: {
+        x: position.x - centroid.x,
+        y: position.y - centroid.y,
+      },
+    };
+  });
 };
 
 const resolveNodeCollisions = (
@@ -108,7 +186,7 @@ const resolveNodeCollisions = (
     },
   }));
 
-  const maxIterations = 4;
+  const maxIterations = 6;
 
   for (let iteration = 0; iteration < maxIterations; iteration += 1) {
     let moved = false;
@@ -126,8 +204,19 @@ const resolveNodeCollisions = (
         const dx = bx - ax;
         const dy = by - ay;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const minDistance =
-          getNodeRadius(nodeA) + getNodeRadius(nodeB) + 36; // spacing for labels
+        const labelSizeA = estimateNodeLabelSize(nodeA);
+        const labelSizeB = estimateNodeLabelSize(nodeB);
+        const effectiveRadiusA = Math.max(
+          getNodeRadius(nodeA),
+          labelSizeA.width / 2 + 18,
+          labelSizeA.height / 2 + 18
+        );
+        const effectiveRadiusB = Math.max(
+          getNodeRadius(nodeB),
+          labelSizeB.width / 2 + 18,
+          labelSizeB.height / 2 + 18
+        );
+        const minDistance = effectiveRadiusA + effectiveRadiusB;
 
         if (distance === 0) {
           const jitter = 0.5;
@@ -199,7 +288,7 @@ const resolveNodeCollisions = (
     }
   }
 
-  return resolvedNodes;
+  return centerNodesAroundCentroid(resolvedNodes);
 };
 
 const keepConceptsNearParent = (nodes: FlowNode[]): FlowNode[] => {
@@ -247,7 +336,8 @@ const adjustNodePositions = (
   options: { lockedNodeId?: string } = {}
 ): FlowNode[] => {
   const withoutCollisions = resolveNodeCollisions(nodes, options.lockedNodeId);
-  return keepConceptsNearParent(withoutCollisions);
+  const clustered = keepConceptsNearParent(withoutCollisions);
+  return centerNodesAroundCentroid(clustered);
 };
 
 const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
@@ -554,9 +644,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     "cursor" | "add-node"
   >("cursor");
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
-  const [isInteractionToggleHovered, setIsInteractionToggleHovered] =
-    useState(false);
-  const [isEditToggleHovered, setIsEditToggleHovered] = useState(false);
   const [isDeleteHovered, setIsDeleteHovered] = useState(false);
   const [pendingNodePosition, setPendingNodePosition] =
     useState<XYPosition | null>(null);
@@ -574,39 +661,44 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     () => location.pathname.toLowerCase().includes("threadmap"),
     [location.pathname]
   );
-  const controlMode = useMemo(
-    () =>
-      getControlMode(
-        selectedNode,
-        selectedEdge,
-        isAddingEdge,
-        isEditMode
-      ),
-    [isAddingEdge, isEditMode, selectedEdge, selectedNode]
-  );
-  const {
-    Icon: ControlIcon,
-    color: controlButtonColor,
-    shadow: controlButtonShadow,
-    label: controlButtonLabel,
-    deleteLabel: deleteSelectionLabel,
-  } = getControlPanelState(controlMode);
-  const isAddMode = interactionMode === "add-node";
-  const interactionToggleLabel = isAddMode
-    ? "Switch to cursor mode"
-    : "Switch to add-node mode";
-  const interactionToggleIcon = isAddMode ? (
-    <Pointer size={18} />
-  ) : (
-    <Plus size={18} />
-  );
-  const editToggleLabel = isEditMode ? "Disable edit mode" : "Enable edit mode";
-  const editToggleIcon =
-    isEditMode && (selectedNode || selectedEdge) ? (
-      <Trash2 size={18} />
-    ) : (
-      <Pencil size={18} />
-    );
+  const deleteSelectionLabel = selectedNode
+    ? "Delete Selected Node"
+    : selectedEdge
+    ? "Delete Selected Edge"
+    : "";
+  const editToggleLabel = isEditMode
+    ? "Switch to move mode"
+    : "Switch to edit mode";
+  const [edgeTypeFilter, setEdgeTypeFilter] = useState<string>("all");
+  const edgeTypeOptions = useMemo(() => {
+    const types = new Set<string>();
+    dbRelationships.forEach((relationship) => {
+      const type = relationship.rs_type?.trim();
+      if (type) {
+        types.add(type);
+      }
+    });
+    return Array.from(types).sort((a, b) => a.localeCompare(b));
+  }, [dbRelationships]);
+  const displayedEdges = useMemo(() => {
+    if (edgeTypeFilter === "all") {
+      return edges;
+    }
+
+    return edges.filter((edge) => {
+      const rsType =
+        typeof edge.data === "object" && edge.data !== null
+          ? (edge.data as Record<string, unknown>).rsType
+          : undefined;
+      if (typeof rsType !== "string" || rsType.trim().length === 0) {
+        return true;
+      }
+      return rsType.trim() === edgeTypeFilter;
+    });
+  }, [edgeTypeFilter, edges]);
+  const [isTaxonomyCollapsed, setIsTaxonomyCollapsed] = useState(true);
+  const [taxonomyPosition, setTaxonomyPosition] = useState({ x: 24, y: 120 });
+  const [isDraggingTaxonomy, setIsDraggingTaxonomy] = useState(false);
 
   const handleInit = useCallback(
     (instance: ReactFlowInstance<FlowNode, FlowEdge>) => {
@@ -668,6 +760,22 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       }
     | null
   >(null);
+  const taxonomyDragStartRef = useRef<
+    | {
+        startX: number;
+        startY: number;
+        originX: number;
+        originY: number;
+      }
+    | null
+  >(null);
+  const pointerPressRef = useRef<{ nodeId: string | null; time: number }>(
+    {
+      nodeId: null,
+      time: 0,
+    }
+  );
+  const allowNodeDragRef = useRef<boolean>(false);
 
   const adjacencyMap = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -688,6 +796,42 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   useEffect(() => {
     dragContextRef.current = null;
   }, [edges]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      const nodeElement = target?.closest(".react-flow__node");
+      if (nodeElement) {
+        const nodeId = nodeElement.getAttribute("data-id");
+        pointerPressRef.current = {
+          nodeId,
+          time: Date.now(),
+        };
+      } else {
+        pointerPressRef.current = { nodeId: null, time: 0 };
+      }
+    };
+
+    const handlePointerUp = () => {
+      pointerPressRef.current = { nodeId: null, time: 0 };
+      allowNodeDragRef.current = false;
+    };
+
+    container.addEventListener("pointerdown", handlePointerDown);
+    container.addEventListener("pointerup", handlePointerUp);
+    container.addEventListener("pointerleave", handlePointerUp);
+
+    return () => {
+      container.removeEventListener("pointerdown", handlePointerDown);
+      container.removeEventListener("pointerup", handlePointerUp);
+      container.removeEventListener("pointerleave", handlePointerUp);
+    };
+  }, []);
 
   const popupNode = useMemo(
     // Calculate and memoize the node that is associated with the activePopup
@@ -971,6 +1115,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       const target = String(rel.second_node);
       seenEdgeKeys.add(`${source}->${target}`);
       seenEdgeKeys.add(`${target}->${source}`);
+      const rsType = rel.rs_type?.trim() ?? "";
 
       return {
         id: String(rel.id),
@@ -979,7 +1124,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         type: "hoverLabel",
         style: getEdgeStyle(String(rel.id)),
         animated: false,
-        data: { label: rel.rs_type ?? "" },
+        data: { label: rsType, rsType },
       };
     });
 
@@ -1389,10 +1534,51 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     setIsAddingEdge(false);
   }, []);
 
+  const handleNodeDragStart = useCallback<
+    OnNodeDragStart<FlowNode, FlowEdge>
+  >(
+    (_, node) => {
+      if (isEditMode) {
+        allowNodeDragRef.current = true;
+        return;
+      }
+
+      if (interactionMode !== "cursor") {
+        allowNodeDragRef.current = false;
+        return;
+      }
+
+      const pressInfo = pointerPressRef.current;
+      const now = Date.now();
+      const allowed =
+        pressInfo.nodeId === node.id && now - pressInfo.time >= LONG_PRESS_MS;
+      allowNodeDragRef.current = Boolean(allowed);
+    },
+    [interactionMode, isEditMode]
+  );
+
+  const handleNodeDragStop = useCallback<OnNodeDragStop<FlowNode, FlowEdge>>(() => {
+    allowNodeDragRef.current = false;
+    pointerPressRef.current = { nodeId: null, time: 0 };
+  }, []);
+
   const handleNodesChange = useCallback(
     (changes: NodeChange<FlowNode>[]) => {
       let triggerSimulation = false;
       let lockedNodeId: string | undefined;
+
+      const preventDrag =
+        !isEditMode &&
+        interactionMode === "cursor" &&
+        changes.some(
+          (change) =>
+            change.type === "position" && change.dragging && !allowNodeDragRef.current
+        );
+
+      if (preventDrag) {
+        allowNodeDragRef.current = false;
+        return;
+      }
 
       setNodes((prevNodes) => {
         const baseNodes = applyNodeChanges(changes, prevNodes);
@@ -1483,8 +1669,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       if (triggerSimulation) {
         shouldRunSimulationRef.current = true;
       }
-    },
-    [adjacencyMap, setNodes]
+  },
+    [adjacencyMap, interactionMode, isEditMode, setNodes]
   );
 
   // Handle connection
@@ -1726,32 +1912,73 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     document.body.style.userSelect = "";
   }, []);
 
-  const handleToggleInteractionMode = useCallback(() => {
-    setInteractionMode((prev) => {
-      const nextMode = prev === "add-node" ? "cursor" : "add-node";
-      if (nextMode === "add-node") {
-        setIsEditMode(false);
-        setSelectedNode(null);
-        setSelectedEdge(null);
-        setActivePopup(null);
-        setIsAddingEdge(false);
-      }
-      return nextMode;
-    });
-  }, []);
-
   const handleToggleEditMode = useCallback(() => {
     setIsEditMode((prev) => {
       const next = !prev;
-      if (!next) {
-        setSelectedNode(null);
-        setSelectedEdge(null);
-      } else {
-        setInteractionMode("cursor");
-      }
+      setSelectedNode(null);
+      setSelectedEdge(null);
+      setActivePopup(null);
+      setInteractionMode(next ? "add-node" : "cursor");
       setIsAddingEdge(false);
       return next;
     });
+  }, []);
+
+  const handleTaxonomyMouseDown = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      taxonomyDragStartRef.current = {
+        startX: event.clientX,
+        startY: event.clientY,
+        originX: taxonomyPosition.x,
+        originY: taxonomyPosition.y,
+      };
+      setIsDraggingTaxonomy(true);
+    },
+    [taxonomyPosition.x, taxonomyPosition.y]
+  );
+
+  const handleTaxonomyDragMove = useCallback(
+    (event: MouseEvent) => {
+      const dragState = taxonomyDragStartRef.current;
+      if (!dragState) {
+        return;
+      }
+
+      const bounds = containerRef.current?.getBoundingClientRect();
+      const widgetWidth = isTaxonomyCollapsed ? 280 : 360;
+      const widgetHeight = isTaxonomyCollapsed ? 76 : 460;
+      const maxX = Math.max(
+        12,
+        (bounds?.width ?? window.innerWidth) - widgetWidth - 12
+      );
+      const maxY = Math.max(
+        12,
+        (bounds?.height ?? window.innerHeight) - widgetHeight - 12
+      );
+
+      const deltaX = event.clientX - dragState.startX;
+      const deltaY = event.clientY - dragState.startY;
+
+      const nextX = Math.max(12, Math.min(maxX, dragState.originX + deltaX));
+      const nextY = Math.max(12, Math.min(maxY, dragState.originY + deltaY));
+
+      setTaxonomyPosition({ x: nextX, y: nextY });
+    },
+    [isTaxonomyCollapsed]
+  );
+
+  const handleTaxonomyDragEnd = useCallback(() => {
+    setIsDraggingTaxonomy(false);
+    taxonomyDragStartRef.current = null;
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  }, []);
+
+  const toggleTaxonomyCollapsed = useCallback(() => {
+    setIsTaxonomyCollapsed((prev) => !prev);
   }, []);
 
   const deleteSelectedNode = useCallback(() => {
@@ -1777,55 +2004,30 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     shouldRunSimulationRef.current = true;
   }, [isEditMode, selectedEdge]);
 
-  const handleControlClick = useCallback(
+  const handleInfoToggle = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.stopPropagation();
-
       if (controlDraggedRef.current) {
         controlDraggedRef.current = false;
         return;
       }
-
-      if (controlMode === "edge") {
-        setIsAddingEdge(false);
-        return;
-      }
-
-      if (controlMode === "delete-node") {
-        setSelectedNode(null);
-        setShowInfoTooltip(false);
-        return;
-      }
-
-      if (controlMode === "delete-edge") {
-        setSelectedEdge(null);
-        setShowInfoTooltip(false);
-        return;
-      }
+      setShowInfoTooltip((prev) => !prev);
     },
-    [controlMode]
+    []
   );
 
-  const handleControlMouseEnter = useCallback(() => {
-    if (controlMode === "info") {
-      setShowInfoTooltip(true);
-    }
-  }, [controlMode]);
-
-  const handleControlMouseLeave = useCallback(() => {
-    if (controlMode === "info") {
-      setShowInfoTooltip(false);
-    }
-  }, [controlMode]);
-
   const handleDeleteSelection = useCallback(() => {
-    if (controlMode === "delete-node") {
+    if (!isEditMode) {
+      return;
+    }
+
+    if (selectedNode) {
       deleteSelectedNode();
-    } else if (controlMode === "delete-edge") {
+    } else if (selectedEdge) {
       deleteSelectedEdge();
     }
     setIsDeleteHovered(false);
-  }, [controlMode, deleteSelectedEdge, deleteSelectedNode]);
+  }, [deleteSelectedEdge, deleteSelectedNode, isEditMode, selectedEdge, selectedNode]);
 
   useEffect(() => {
     if (!isDraggingControl) return;
@@ -1852,10 +2054,75 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, [isDraggingControl, handleControlDragMove, handleControlDragEnd]);
 
   useEffect(() => {
-    if (controlMode !== "info") {
+    if (!isDraggingTaxonomy) {
+      return;
+    }
+
+    const handleMove = (event: MouseEvent) => {
+      handleTaxonomyDragMove(event);
+      document.body.style.cursor = "grabbing";
+      document.body.style.userSelect = "none";
+    };
+
+    const handleUp = () => {
+      handleTaxonomyDragEnd();
+    };
+
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [
+    handleTaxonomyDragEnd,
+    handleTaxonomyDragMove,
+    isDraggingTaxonomy,
+  ]);
+
+  useEffect(() => {
+    const bounds = containerRef.current?.getBoundingClientRect();
+    if (!bounds) {
+      return;
+    }
+
+    const widgetWidth = isTaxonomyCollapsed ? 280 : 360;
+    const widgetHeight = isTaxonomyCollapsed ? 76 : 460;
+    setTaxonomyPosition((prev) => {
+      const x = Math.max(12, Math.min(bounds.width - widgetWidth - 12, prev.x));
+      const y = Math.max(12, Math.min(bounds.height - widgetHeight - 12, prev.y));
+      if (x === prev.x && y === prev.y) {
+        return prev;
+      }
+      return { x, y };
+    });
+  }, [isTaxonomyCollapsed, viewport]);
+
+  useEffect(() => {
+    if (!isStandaloneView) {
+      setIsTaxonomyCollapsed(true);
+      setTaxonomyPosition({ x: 24, y: 120 });
+    }
+  }, [isStandaloneView]);
+
+  useEffect(() => {
+    if (isEditMode) {
       setShowInfoTooltip(false);
     }
-  }, [controlMode]);
+  }, [isEditMode]);
+
+  useEffect(() => {
+    if (!selectedEdge) {
+      return;
+    }
+
+    if (!displayedEdges.some((edge) => edge.id === selectedEdge)) {
+      setSelectedEdge(null);
+    }
+  }, [displayedEdges, selectedEdge]);
 
   useEffect(() => {
     if (interactionMode === "add-node") {
@@ -1876,10 +2143,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, [interactionMode]);
 
   useEffect(() => {
-    if (controlMode !== "delete-node" && controlMode !== "delete-edge") {
+    if (!isEditMode || (!selectedNode && !selectedEdge)) {
       setIsDeleteHovered(false);
     }
-  }, [controlMode]);
+  }, [isEditMode, selectedEdge, selectedNode]);
 
   const handleAddNodeFromHover = useCallback(() => {
     setPendingNodePosition(hoverNode.flowPosition);
@@ -2133,45 +2400,70 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               gap: 12,
             }}
           >
+            <button
+              type="button"
+              onMouseDown={handleControlMouseDown}
+              onClick={handleInfoToggle}
+              aria-label="Threadmap information"
+              title="Threadmap information"
+              style={{
+                width: controlButtonSize,
+                height: controlButtonSize,
+                borderRadius: "50%",
+                border: "none",
+                background: "#0f172a",
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 16px 30px rgba(15, 23, 42, 0.45)",
+                cursor: isDraggingControl ? "grabbing" : "grab",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                transform: isDraggingControl ? "scale(0.98)" : "scale(1)",
+              }}
+            >
+              <Info size={22} />
+            </button>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 10,
+                gap: 12,
                 padding: "8px 12px",
-                background: "rgba(15, 23, 42, 0.72)",
+                background: "rgba(15, 23, 42, 0.78)",
                 borderRadius: "9999px",
                 boxShadow: "0 18px 35px rgba(15, 23, 42, 0.45)",
               }}
             >
               <button
                 type="button"
-                onMouseDown={handleControlMouseDown}
-                onClick={handleControlClick}
-                onMouseEnter={handleControlMouseEnter}
-                onMouseLeave={handleControlMouseLeave}
-                aria-label={controlButtonLabel}
-                title={controlButtonLabel}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleToggleEditMode();
+                }}
+                aria-pressed={isEditMode}
+                aria-label={editToggleLabel}
+                title={editToggleLabel}
                 style={{
-                  width: controlButtonSize,
-                  height: controlButtonSize,
+                  width: controlButtonSize - 6,
+                  height: controlButtonSize - 6,
                   borderRadius: "50%",
                   border: "none",
-                  background: controlButtonColor,
+                  background: isEditMode ? "#dc2626" : "#1d4ed8",
                   color: "#fff",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  boxShadow: controlButtonShadow,
-                  cursor: isDraggingControl ? "grabbing" : "grab",
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  transform: isDraggingControl ? "scale(0.98)" : "scale(1)",
+                  boxShadow: isEditMode
+                    ? "0 12px 26px rgba(220, 38, 38, 0.45)"
+                    : "0 12px 26px rgba(29, 78, 216, 0.45)",
+                  cursor: "pointer",
+                  transition: "background 0.2s ease, box-shadow 0.2s ease",
                 }}
               >
-                <ControlIcon size={22} />
+                {isEditMode ? <Pencil size={18} /> : <Hand size={18} />}
               </button>
-              {(controlMode === "delete-node" ||
-                controlMode === "delete-edge") && (
+              {isEditMode && deleteSelectionLabel && (
                 <button
                   type="button"
                   onClick={(event) => {
@@ -2194,92 +2486,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                     transition: "background 0.2s ease",
                   }}
                 >
-                  {deleteSelectionLabel ?? ""}
+                  {deleteSelectionLabel}
                 </button>
               )}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 10,
-              }}
-            >
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleToggleEditMode();
-                  setIsEditToggleHovered(false);
-                }}
-                onMouseEnter={() => setIsEditToggleHovered(true)}
-                onMouseLeave={() => setIsEditToggleHovered(false)}
-                aria-pressed={isEditMode}
-                aria-label={editToggleLabel}
-                title={editToggleLabel}
-                style={{
-                  width: controlButtonSize - 6,
-                  height: controlButtonSize - 6,
-                  borderRadius: "50%",
-                  border: "none",
-                  background: isEditMode
-                    ? isEditToggleHovered
-                      ? "#b91c1c"
-                      : "#dc2626"
-                    : isEditToggleHovered
-                    ? "#334155"
-                    : "#475569",
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: isEditMode
-                    ? "0 12px 26px rgba(220, 38, 38, 0.45)"
-                    : "0 10px 22px rgba(71, 85, 105, 0.35)",
-                  cursor: "pointer",
-                  transition: "background 0.2s ease, box-shadow 0.2s ease",
-                }}
-              >
-                {editToggleIcon}
-              </button>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleToggleInteractionMode();
-                  setIsInteractionToggleHovered(false);
-                }}
-                onMouseEnter={() => setIsInteractionToggleHovered(true)}
-                onMouseLeave={() => setIsInteractionToggleHovered(false)}
-                aria-pressed={interactionMode === "add-node"}
-                aria-label={interactionToggleLabel}
-                title={interactionToggleLabel}
-                style={{
-                  width: controlButtonSize - 6,
-                  height: controlButtonSize - 6,
-                  borderRadius: "50%",
-                  border: "none",
-                  background: isInteractionToggleHovered
-                    ? interactionMode === "add-node"
-                      ? "#1e40af"
-                      : "#334155"
-                    : interactionMode === "add-node"
-                    ? "#1d4ed8"
-                    : "#475569",
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow:
-                    interactionMode === "add-node"
-                      ? "0 12px 26px rgba(29, 78, 216, 0.45)"
-                      : "0 10px 22px rgba(71, 85, 105, 0.35)",
-                  cursor: "pointer",
-                  transition: "background 0.2s ease, box-shadow 0.2s ease",
-                }}
-              >
-                {interactionToggleIcon}
-              </button>
             </div>
           </div>
         </div>
@@ -2297,16 +2506,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               padding: "16px",
               fontFamily: "GlacialIndifference, sans-serif",
               color: "#1e293b",
-            }}
-            onMouseEnter={() => {
-              if (controlMode === "info") {
-                setShowInfoTooltip(true);
-              }
-            }}
-            onMouseLeave={() => {
-              if (controlMode === "info") {
-                setShowInfoTooltip(false);
-              }
             }}
           >
             <div
@@ -2366,9 +2565,149 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               <span>Nodes: {getNodeCount()}</span>
               <span>Edges: {getEdgeCount()}</span>
             </div>
+            {edgeTypeOptions.length > 0 && (
+              <div
+                style={{
+                  marginTop: "12px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                }}
+              >
+                <label
+                  htmlFor="edge-type-filter"
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    color: "#0f172a",
+                  }}
+                >
+                  Relationship filter
+                </label>
+                <select
+                  id="edge-type-filter"
+                  value={edgeTypeFilter}
+                  onChange={(event) => setEdgeTypeFilter(event.target.value)}
+                  style={{
+                    borderRadius: "10px",
+                    border: "1px solid #cbd5f5",
+                    padding: "6px 8px",
+                    fontSize: "11.5px",
+                    color: "#0f172a",
+                    background: "#f8fafc",
+                    fontFamily: '"GlacialIndifference", sans-serif',
+                  }}
+                >
+                  <option value="all">All relationship types</option>
+                  {edgeTypeOptions.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {isStandaloneView && (
+        <div
+          style={{
+            position: "absolute",
+            top: taxonomyPosition.y,
+            left: taxonomyPosition.x,
+            zIndex: 28,
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              pointerEvents: "auto",
+              width: isTaxonomyCollapsed ? 280 : 360,
+              maxHeight: isTaxonomyCollapsed ? 110 : 460,
+              background: "#ffffff",
+              borderRadius: "16px",
+              boxShadow: "0 22px 42px rgba(15, 23, 42, 0.28)",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div
+              onMouseDown={handleTaxonomyMouseDown}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 16px",
+                background: "#0f172a",
+                color: "#fff",
+                cursor: isDraggingTaxonomy ? "grabbing" : "grab",
+                userSelect: "none",
+                gap: "12px",
+              }}
+            >
+              <span style={{ fontWeight: 600, fontSize: "13px" }}>
+                Topic taxonomy
+              </span>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleTaxonomyCollapsed();
+                }}
+                aria-label={
+                  isTaxonomyCollapsed
+                    ? "Expand topic taxonomy"
+                    : "Collapse topic taxonomy"
+                }
+                style={{
+                  border: "none",
+                  borderRadius: "8px",
+                  background: "rgba(255,255,255,0.16)",
+                  color: "#fff",
+                  width: 28,
+                  height: 28,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                {isTaxonomyCollapsed ? (
+                  <ChevronDown size={16} />
+                ) : (
+                  <ChevronUp size={16} />
+                )}
+              </button>
+            </div>
+            {isTaxonomyCollapsed ? (
+              <div
+                style={{
+                  padding: "10px 16px",
+                  fontSize: "11.5px",
+                  color: "#475569",
+                  background: "#f8fafc",
+                }}
+              >
+                View taxonomy progression
+              </div>
+            ) : (
+              <div
+                style={{
+                  padding: "12px 16px",
+                  background: "#f8fafc",
+                  overflowY: "auto",
+                  maxHeight: 360,
+                }}
+              >
+                <TopicTaxonomyProgression />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* React Flow Container */}
       <div
@@ -2479,7 +2818,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           nodes={nodes}
           nodeTypes={nodeTypes}
           //edges={showEdges ? edges : []}
-          edges={edges}
+          edges={displayedEdges}
           edgeTypes={edgeTypes}
           onNodesChange={handleNodesChange}
           onEdgesChange={onEdgesChange}
@@ -2491,8 +2830,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           onInit={handleInit}
           onMove={handleMove}
           onPaneClick={handlePaneClick}
-          nodesDraggable={isEditMode}
-          nodeDragThreshold={isEditMode ? 14 : 999}
+          nodesDraggable
+          nodeDragThreshold={12}
           nodesConnectable={isEditMode}
           elementsSelectable={isEditMode}
           panOnDrag={interactionMode === "cursor"}
@@ -2504,6 +2843,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           fitView
           attributionPosition="bottom-left"
           connectionMode={ConnectionMode.Loose}
+          onNodeDragStart={handleNodeDragStart}
+          onNodeDragStop={handleNodeDragStop}
         >
           <Background color="#f0f0f0" gap={20} />
           <Controls />

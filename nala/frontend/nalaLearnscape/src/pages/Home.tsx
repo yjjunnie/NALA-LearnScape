@@ -1,25 +1,21 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Fade, Grow, IconButton } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Fade, IconButton } from "@mui/material";
 import { MenuRounded as MenuRoundedIcon } from "@mui/icons-material";
 import Welcome from "../components/Welcome";
-import ThreadMapSection from "../components/ThreadMapSection";
+import ThreadMapSection, {
+  type ThreadMapModule,
+} from "../components/ThreadMapSection";
 import SideNav from "../components/SideNav";
 import LearningStyleOverview from "../components/LearningStyleOverview";
 import TopicTaxonomyProgression from "../components/TopicTaxonomyProgression";
 
 const Home: React.FC = () => {
-  // State to manage selected module ID
-  const [modules, setModules] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const DEMO_STUDENT_ID = "1"; // For demo purposes
-  const [selectedModuleId, setSelectedModuleId] = useState<string | undefined>(
-    undefined
-  );
-  // Handle module selection
-  const handleModuleSelect = useCallback((moduleId: string) => {
-    setSelectedModuleId(moduleId); // Update the selected module ID
-  }, []);
+  const [modules, setModules] = useState<ThreadMapModule[]>([]);
+  const [selectedModuleId, setSelectedModuleId] = useState<string>();
+  const handleModuleSelect = (moduleId: string) => {
+    setSelectedModuleId(moduleId);
+  };
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -34,36 +30,40 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchModules = async () => {
       try {
-        // Replace with your actual API endpoint
         const response = await fetch(`/api/student/${DEMO_STUDENT_ID}`);
         if (!response.ok) {
-          console.log("Response not ok");
           throw new Error("Failed to fetch student.");
-          setError("Failed to fetch student.");
         }
-        const student = await response.json();
-        if (!student) {
-          console.log("Student not found in response");
-          throw new Error("Student not found.");
-          setError("Student not found.");
-        }
-        const data = student.enrolled_modules || []; // Data is an array of modules
-        setModules(data);
 
-        // Auto-select first module if none selected
-        if (data.length > 0 && !selectedModuleId) {
-          handleModuleSelect(data[0].id);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-        console.error("Error fetching modules:", err);
-      } finally {
-        setLoading(false);
+        const student = await response.json();
+        const moduleList = Array.isArray(student?.enrolled_modules_info)
+          ? student.enrolled_modules_info
+          : [];
+
+        const normalizedModules: ThreadMapModule[] = moduleList
+          .map((module) => ({
+            id: module?.id ? String(module.id) : "",
+            code: module?.code ?? null,
+            name: module?.name ?? null,
+            description: module?.description ?? null,
+          }))
+          .filter((module) => module.id);
+
+        setModules(normalizedModules);
+      } catch (error) {
+        console.error("Error fetching modules:", error);
+        setModules([]);
       }
     };
 
     fetchModules();
-  }, [DEMO_STUDENT_ID, selectedModuleId, handleModuleSelect]);
+  }, [DEMO_STUDENT_ID]);
+
+  useEffect(() => {
+    if (!selectedModuleId && modules.length > 0) {
+      setSelectedModuleId(modules[0].id);
+    }
+  }, [modules, selectedModuleId]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8">
@@ -120,10 +120,9 @@ const Home: React.FC = () => {
           {/* Thread Map Section */}
           <div className="col-span-12 lg:col-span-7 lg:col-start-1 lg:row-start-2">
             <ThreadMapSection
-              studentId={DEMO_STUDENT_ID}
+              modules={modules}
               selectedModuleId={selectedModuleId}
               onModuleSelect={handleModuleSelect}
-              passedmodules={modules}
             />
           </div>
         </div>

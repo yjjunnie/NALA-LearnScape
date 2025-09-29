@@ -19,14 +19,15 @@ import type {
   NodeMouseHandler,
   ReactFlowInstance,
   XYPosition,
-  NodeChange,
-  OnNodeDrag,
   OnMove,
   Viewport,
   EdgeMouseHandler,
+  OnConnectStart,
+  OnConnectEnd,
 } from "@xyflow/react";
 import * as d3 from "d3";
-import { Info, Trash2 } from "lucide-react";
+import { Info, Trash2, Plus, Maximize2 } from "lucide-react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import "@xyflow/react/dist/style.css";
 import "../App.css";
 import type {
@@ -70,7 +71,22 @@ type RawModuleResponse = {
   name?: string | null;
 };
 
-const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
+interface ThreadMapProps {
+  module_id?: string;
+}
+
+const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const activeModuleId = useMemo(() => {
+    if (module_id && module_id.trim().length > 0) {
+      return module_id.trim();
+    }
+
+    const urlModuleId =
+      searchParams.get("module_id") ?? searchParams.get("module") ?? "";
+    return urlModuleId;
+  }, [module_id, searchParams]);
   const nodeTypes = useMemo(
     () => ({ conceptNode: ConceptNode, topicNode: ConceptNode }),
     []
@@ -91,7 +107,6 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
   //const [showEdges, setShowEdges] = useState<boolean>(false);
-  const [isControlPanelOpen, setIsControlPanelOpen] = useState<boolean>(false);
   const [controlPosition, setControlPosition] = useState<{
     x: number;
     y: number;
@@ -100,8 +115,8 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
 
   const availableModules = useMemo(() => {
     const moduleIds = new Set<string>();
-    if (module_id) {
-      moduleIds.add(module_id);
+    if (activeModuleId) {
+      moduleIds.add(activeModuleId);
     }
     dbNodes.forEach((node) => moduleIds.add(node.module_id));
 
@@ -119,14 +134,15 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     });
 
     return modules;
-  }, [dbNodes, moduleLookup, module_id]);
+  }, [activeModuleId, dbNodes, moduleLookup]);
 
   useEffect(() => {
     let isMounted = true;
 
-    if (!module_id) {
+    if (!activeModuleId) {
       setDbNodes([]);
       setDbRelationships([]);
+      setErr(null);
       return () => {
         isMounted = false;
       };
@@ -135,17 +151,17 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     const fetchThreadMapData = async () => {
       try {
         const [nodesResponse, relationshipsResponse] = await Promise.all([
-          fetch(`/api/nodes/${module_id}/`),
-          fetch(`/api/relationships/${module_id}/`),
+          fetch(`/api/nodes/${activeModuleId}/`),
+          fetch(`/api/relationships/${activeModuleId}/`),
         ]);
 
         if (!nodesResponse.ok) {
-          throw new Error(`Failed to fetch nodes for module ${module_id}`);
+          throw new Error(`Failed to fetch nodes for module ${activeModuleId}`);
         }
 
         if (!relationshipsResponse.ok) {
           throw new Error(
-            `Failed to fetch relationships for module ${module_id}`
+            `Failed to fetch relationships for module ${activeModuleId}`
           );
         }
 
@@ -167,7 +183,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
                 node.related_topic !== null && node.related_topic !== undefined
                   ? String(node.related_topic)
                   : undefined,
-              module_id: String(node.module_id ?? module_id),
+              module_id: String(node.module_id ?? activeModuleId),
             }))
           : [];
 
@@ -207,10 +223,10 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     return () => {
       isMounted = false;
     };
-  }, [module_id]);
+  }, [activeModuleId]);
 
   useEffect(() => {
-    if (!module_id || moduleLookup[module_id]) {
+    if (!activeModuleId || moduleLookup[activeModuleId]) {
       return;
     }
 
@@ -218,9 +234,9 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
 
     const fetchModule = async () => {
       try {
-        const response = await fetch(`/api/module/${module_id}/`);
+        const response = await fetch(`/api/module/${activeModuleId}/`);
         if (!response.ok) {
-          throw new Error(`Failed to fetch module ${module_id}`);
+          throw new Error(`Failed to fetch module ${activeModuleId}`);
         }
 
         const rawModule = (await response.json()) as RawModuleResponse;
@@ -230,7 +246,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         }
 
         setModuleLookup((prev) => {
-          const moduleKey = String(rawModule.id ?? module_id);
+          const moduleKey = String(rawModule.id ?? activeModuleId);
           const baseColor =
             prev[moduleKey]?.color ?? getColorForModule(moduleKey, prev);
           return {
@@ -253,14 +269,14 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
 
         console.error("Error fetching module metadata:", error);
         setModuleLookup((prev) => {
-          if (prev[module_id]) {
+          if (prev[activeModuleId]) {
             return prev;
           }
-          const fallbackColor = getColorForModule(module_id, prev);
+          const fallbackColor = getColorForModule(activeModuleId, prev);
           return {
             ...prev,
-            [module_id]: {
-              module_id,
+            [activeModuleId]: {
+              module_id: activeModuleId,
               color: fallbackColor,
             },
           };
@@ -273,7 +289,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     return () => {
       isMounted = false;
     };
-  }, [module_id, moduleLookup]);
+  }, [activeModuleId, moduleLookup]);
 
   useEffect(() => {
     const moduleIds = Array.from(
@@ -336,6 +352,16 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     };
   }, [dbNodes, moduleLookup]);
 
+  useEffect(() => {
+    shouldRunSimulationRef.current = true;
+  }, [activeModuleId]);
+
+  useEffect(() => {
+    setSelectedNode(null);
+    setSelectedEdge(null);
+    setActivePopup(null);
+  }, [activeModuleId]);
+
   const [activePopup, setActivePopup] = useState<{
     nodeId: string;
     expanded: boolean;
@@ -348,11 +374,77 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [pendingNodePosition, setPendingNodePosition] =
     useState<XYPosition | null>(null);
-  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance<
-    FlowNode,
-    FlowEdge
-  > | null>(null);
+  const [reactFlowInstance, setReactFlowInstanceState] =
+    useState<ReactFlowInstance<FlowNode, FlowEdge> | null>(null);
+  const reactFlowInstanceRef = useRef<ReactFlowInstance<FlowNode, FlowEdge> | null>(
+    null
+  );
+  const fitViewRafRef = useRef<number | null>(null);
   const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
+  const [isAddingEdge, setIsAddingEdge] = useState(false);
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
+  const isStandaloneView = useMemo(
+    () => location.pathname.toLowerCase().includes("threadmap"),
+    [location.pathname]
+  );
+  const controlMode = useMemo(() => {
+    if (isAddingEdge) return "edge" as const;
+    if (selectedNode) return "delete-node" as const;
+    if (selectedEdge) return "delete-edge" as const;
+    return "info" as const;
+  }, [isAddingEdge, selectedEdge, selectedNode]);
+  const controlIcon = useMemo(() => {
+    switch (controlMode) {
+      case "edge":
+        return <Plus size={22} />;
+      case "delete-node":
+      case "delete-edge":
+        return <Trash2 size={22} />;
+      default:
+        return <Info size={22} />;
+    }
+  }, [controlMode]);
+  const controlButtonColor = useMemo(() => {
+    if (controlMode === "edge") return "#2563eb";
+    if (controlMode === "delete-node" || controlMode === "delete-edge")
+      return "#ef4444";
+    return "#1f2937";
+  }, [controlMode]);
+  const controlButtonShadow = useMemo(() => {
+    if (controlMode === "edge") return "0 12px 26px rgba(37, 99, 235, 0.45)";
+    if (controlMode === "delete-node" || controlMode === "delete-edge")
+      return "0 12px 26px rgba(239, 68, 68, 0.45)";
+    return "0 12px 26px rgba(15, 23, 42, 0.35)";
+  }, [controlMode]);
+  const controlButtonLabel = useMemo(() => {
+    if (controlMode === "edge") {
+      return "Edge creation in progress (click to cancel)";
+    }
+    if (controlMode === "delete-node") {
+      return "Delete selected node";
+    }
+    if (controlMode === "delete-edge") {
+      return "Delete selected edge";
+    }
+    return "Threadmap information";
+  }, [controlMode]);
+
+  const handleInit = useCallback(
+    (instance: ReactFlowInstance<FlowNode, FlowEdge>) => {
+      reactFlowInstanceRef.current = instance;
+      setReactFlowInstanceState(instance);
+
+      if (fitViewRafRef.current) {
+        cancelAnimationFrame(fitViewRafRef.current);
+      }
+
+      fitViewRafRef.current = requestAnimationFrame(() => {
+        instance.fitView({ padding: 0.35, duration: 400 });
+        fitViewRafRef.current = null;
+      });
+    },
+    []
+  );
 
   // Popup state for drag and resize
   const [popupPosition, setPopupPosition] = useState<{
@@ -382,7 +474,6 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   const simulationRef = useRef<d3.Simulation<any, undefined> | null>(null); // Holds the D3 simulation instance for managing node layout with forces
   const containerRef = useRef<HTMLDivElement>(null); // A reference to the DOM element that contains the flowchart
   const pendingNodePositionRef = useRef<XYPosition | null>(null); // Holds the pending position for a new node (before it’s added)
-  const draggedNodeIdRef = useRef<string | null>(null); // Tracks the ID of the node currently being dragged
   const shouldRunSimulationRef = useRef<boolean>(false); //A flag indicating whether the D3 simulation should run to adjust node positions
   const controlDragStartRef = useRef<{
     startX: number;
@@ -647,6 +738,30 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (fitViewRafRef.current) {
+        cancelAnimationFrame(fitViewRafRef.current);
+        fitViewRafRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!reactFlowInstance || nodes.length === 0) {
+      return;
+    }
+
+    if (fitViewRafRef.current) {
+      cancelAnimationFrame(fitViewRafRef.current);
+    }
+
+    fitViewRafRef.current = requestAnimationFrame(() => {
+      reactFlowInstance.fitView({ padding: 0.35, duration: 350 });
+      fitViewRafRef.current = null;
+    });
+  }, [activeModuleId, edges.length, nodes.length, reactFlowInstance]);
+
   // D3 Force Layout - Only run when needed
   useEffect(() => {
     if (nodes.length === 0 || !shouldRunSimulationRef.current) return;
@@ -673,13 +788,12 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       return findRootTopicId(nodeMap.get(node.data.parent_node_id), visited);
     };
 
-    const activeDraggedId = draggedNodeIdRef.current;
     const simulationNodes = nodes.map((node) => ({
       ...node,
       x: node.position.x,
       y: node.position.y,
-      fx: node.id === activeDraggedId ? node.position.x : null,
-      fy: node.id === activeDraggedId ? node.position.y : null,
+      fx: null,
+      fy: null,
     }));
 
     const simulationNodeMap = new Map(
@@ -878,10 +992,22 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         node.vx = 0;
         node.vy = 0;
       });
+      if (reactFlowInstanceRef.current) {
+        reactFlowInstanceRef.current.fitView({ padding: 0.35, duration: 350 });
+      }
     });
 
     simulation.alpha(0.9).restart();
   }, [nodes, edges, setNodes]);
+
+  const handleConnectStart = useCallback<OnConnectStart>(() => {
+    setIsAddingEdge(true);
+    setShowInfoTooltip(false);
+  }, []);
+
+  const handleConnectEnd = useCallback<OnConnectEnd>(() => {
+    setIsAddingEdge(false);
+  }, []);
 
   // Handle connection
   const onConnect: OnConnect = useCallback(
@@ -902,6 +1028,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
 
       setDbRelationships((prev) => [...prev, newRelationship]);
       shouldRunSimulationRef.current = true; // Run simulation for new edge
+      setIsAddingEdge(false);
     },
     [dbRelationships]
   );
@@ -938,17 +1065,34 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     setSelectedNode(null);
     setSelectedEdge(null);
     setActivePopup(null);
+    setIsAddingEdge(false);
   }, []);
+
+  const handleExpandThreadmap = useCallback(() => {
+    if (!activeModuleId) {
+      setShowInfoTooltip(true);
+      return;
+    }
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const threadmapUrl = new URL(`${window.location.origin}/threadmap`);
+    threadmapUrl.searchParams.set("module", activeModuleId);
+    window.open(threadmapUrl.toString(), "_blank", "noopener,noreferrer");
+  }, [activeModuleId]);
 
   // Handle mouse move for hover node
   const handleMouseMove = useCallback(
     (event: React.MouseEvent) => {
-      if (!reactFlowInstance) return;
+      const instance = reactFlowInstanceRef.current;
+      if (!instance) return;
 
       const bounds = containerRef.current?.getBoundingClientRect();
       if (!bounds) return;
 
-      const flowPosition = reactFlowInstance.screenToFlowPosition({
+      const flowPosition = instance.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
@@ -967,13 +1111,15 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         return distance < nodeSize;
       });
 
+      const canAddNode = Boolean(activeModuleId);
+
       setHoverNode({
         flowPosition,
         screenPosition,
-        visible: !isTooCloseToNode,
+        visible: !isTooCloseToNode && canAddNode,
       });
     },
-    [reactFlowInstance, nodes]
+    [activeModuleId, nodes]
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -981,6 +1127,43 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   }, []);
 
   const controlButtonSize = 44;
+
+  const safeHoverScreenPosition = useMemo(() => {
+    if (!hoverNode.visible) {
+      return hoverNode.screenPosition;
+    }
+
+    const bounds = containerRef.current?.getBoundingClientRect();
+    if (!bounds) {
+      return hoverNode.screenPosition;
+    }
+
+    const margin = 36;
+    const controlSafeWidth = 140;
+    const controlSafeHeight = 180;
+    let x = Math.min(
+      Math.max(hoverNode.screenPosition.x, margin),
+      Math.max(margin, bounds.width - controlSafeWidth)
+    );
+    let y = Math.min(
+      Math.max(hoverNode.screenPosition.y, margin),
+      Math.max(margin, bounds.height - controlSafeHeight)
+    );
+
+    const controlCenterX = controlPosition.x + controlButtonSize / 2;
+    const controlCenterY = controlPosition.y + controlButtonSize / 2;
+    const controlBuffer = controlButtonSize + 48;
+
+    if (
+      Math.abs(x - controlCenterX) < controlBuffer &&
+      Math.abs(y - controlCenterY) < controlBuffer
+    ) {
+      x = Math.max(margin, controlCenterX + controlBuffer);
+      y = Math.max(margin, controlCenterY - controlBuffer);
+    }
+
+    return { x, y };
+  }, [controlButtonSize, controlPosition.x, controlPosition.y, hoverNode, viewport]);
 
   const handleControlMouseDown = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -1041,9 +1224,26 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         return;
       }
 
-      setIsControlPanelOpen((prev) => !prev);
+      if (controlMode === "edge") {
+        setIsAddingEdge(false);
+        return;
+      }
+
+      if (controlMode === "delete-node") {
+        deleteSelectedNode();
+        setShowInfoTooltip(false);
+        return;
+      }
+
+      if (controlMode === "delete-edge") {
+        deleteSelectedEdge();
+        setShowInfoTooltip(false);
+        return;
+      }
+
+      setShowInfoTooltip((prev) => !prev);
     },
-    []
+    [controlMode, deleteSelectedEdge, deleteSelectedNode]
   );
 
   useEffect(() => {
@@ -1069,6 +1269,12 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       document.body.style.userSelect = "";
     };
   }, [isDraggingControl, handleControlDragMove, handleControlDragEnd]);
+
+  useEffect(() => {
+    if (controlMode !== "info") {
+      setShowInfoTooltip(false);
+    }
+  }, [controlMode]);
 
   const handleAddNodeFromHover = useCallback(() => {
     setPendingNodePosition(hoverNode.flowPosition);
@@ -1151,78 +1357,6 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     [pendingNodePosition, dbNodes]
   );
 
-  const handleNodesChange = useCallback(
-    (changes: NodeChange<FlowNode>[]) => {
-      // Only allow position and dimension changes during drag, prevent other movements
-      const filteredChanges = changes.filter((change) => {
-        if (change.type === "position" && !draggedNodeIdRef.current) {
-          return false; // Block position changes when not dragging
-        }
-        return true;
-      });
-
-      onNodesChange(filteredChanges);
-    },
-    [onNodesChange]
-  );
-
-  const handleNodeDragStart: OnNodeDrag<FlowNode> = useCallback(
-    (_event, node) => {
-      setSelectedNode(node.id);
-      draggedNodeIdRef.current = node.id;
-      shouldRunSimulationRef.current = true;
-
-      if (simulationRef.current) {
-        simulationRef.current.alphaTarget(0.4).restart();
-      }
-    },
-    []
-  );
-
-  const handleNodeDrag: OnNodeDrag<FlowNode> = useCallback(
-    (_event, node) => {
-      setNodes((prev) =>
-        prev.map((existing) =>
-          existing.id === node.id
-            ? { ...existing, position: { ...node.position } }
-            : existing
-        )
-      );
-
-      if (simulationRef.current) {
-        const nodesInSim = simulationRef.current.nodes() as any[];
-        const simNode = nodesInSim.find((n) => n.id === node.id);
-        if (simNode) {
-          simNode.fx = node.position.x;
-          simNode.fy = node.position.y;
-          simNode.x = node.position.x;
-          simNode.y = node.position.y;
-        }
-        simulationRef.current.alphaTarget(0.4).restart();
-      }
-    },
-    [setNodes]
-  );
-
-  const handleNodeDragStop: OnNodeDrag<FlowNode> = useCallback(
-    (_event, node) => {
-      draggedNodeIdRef.current = null;
-      shouldRunSimulationRef.current = true;
-
-      if (simulationRef.current) {
-        const nodesInSim = simulationRef.current.nodes() as any[];
-        const simNode = nodesInSim.find((n) => n.id === node.id);
-        if (simNode) {
-          simNode.fx = null;
-          simNode.fy = null;
-        }
-        simulationRef.current.alphaTarget(0);
-        simulationRef.current.alpha(0.5).restart();
-      }
-    },
-    []
-  );
-
   // Delete selected node
   const deleteSelectedNode = useCallback(() => {
     if (!selectedNode) return;
@@ -1235,6 +1369,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     );
     setSelectedNode(null);
     setActivePopup((prev) => (prev?.nodeId === selectedNode ? null : prev));
+    shouldRunSimulationRef.current = true;
   }, [selectedNode]);
 
   // Delete selected edge
@@ -1243,6 +1378,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
 
     setDbRelationships((prev) => prev.filter((rel) => rel.id !== selectedEdge));
     setSelectedEdge(null);
+    shouldRunSimulationRef.current = true;
   }, [selectedEdge]);
 
   const getNodeCount = (): number => dbNodes.length;
@@ -1374,21 +1510,19 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     handlePopupMouseUp,
   ]);
 
-  const controlPanelWidth = 240;
-  const controlPanelHeight = 220;
   const containerBounds = containerRef.current?.getBoundingClientRect();
-  const panelOffsetX =
+  const infoPanelWidth = 260;
+  const infoPanelHeight = 172;
+  const infoOffsetX =
     !containerBounds ||
-    controlPosition.x + controlButtonSize + 16 + controlPanelWidth <=
+    controlPosition.x + controlButtonSize + 16 + infoPanelWidth <=
       containerBounds.width
       ? controlButtonSize + 16
-      : -controlPanelWidth - 16;
-  const panelOffsetY =
-    !containerBounds ||
-    controlPosition.y + controlButtonSize + 16 + controlPanelHeight <=
-      containerBounds.height
-      ? controlButtonSize + 12
-      : -controlPanelHeight - 16;
+      : -infoPanelWidth - 16;
+  const infoOffsetY =
+    !containerBounds || controlPosition.y - infoPanelHeight - 12 >= 0
+      ? -(infoPanelHeight + 12)
+      : controlButtonSize + 12;
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
@@ -1405,38 +1539,38 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         <button
           onMouseDown={handleControlMouseDown}
           onClick={handleControlClick}
-          aria-label="Toggle threadmap controls"
+          aria-label={controlButtonLabel}
+          title={controlButtonLabel}
           style={{
             pointerEvents: "auto",
             width: controlButtonSize,
             height: controlButtonSize,
             borderRadius: "50%",
             border: "none",
-            background: "#1f2937",
+            background: controlButtonColor,
             color: "#fff",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 12px 26px rgba(15, 23, 42, 0.35)",
+            boxShadow: controlButtonShadow,
             cursor: isDraggingControl ? "grabbing" : "grab",
             transition: "transform 0.2s ease, box-shadow 0.2s ease",
-            transform: isControlPanelOpen ? "scale(1.05)" : "scale(1)",
+            transform: isDraggingControl ? "scale(0.98)" : "scale(1)",
           }}
         >
-          <Info size={22} />
+          {controlIcon}
         </button>
-
-        {isControlPanelOpen && (
+        {showInfoTooltip && (
           <div
             style={{
               pointerEvents: "auto",
               position: "absolute",
-              top: panelOffsetY,
-              left: panelOffsetX,
-              width: controlPanelWidth,
+              top: infoOffsetY,
+              left: infoOffsetX,
+              width: infoPanelWidth,
               background: "#ffffff",
               borderRadius: "16px",
-              boxShadow: "0 20px 45px rgba(15, 23, 42, 0.35)",
+              boxShadow: "0 18px 35px rgba(15, 23, 42, 0.28)",
               padding: "16px",
               fontFamily: "GlacialIndifference, sans-serif",
               color: "#1e293b",
@@ -1447,114 +1581,58 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                gap: "12px",
                 marginBottom: "12px",
+                gap: "12px",
               }}
             >
-              <div>
-                <div
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: 700,
-                    letterSpacing: "0.01em",
-                  }}
-                >
-                  ThreadMap Controls
-                </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: "#64748b",
-                    marginTop: "4px",
-                  }}
-                >
-                  Nodes: {getNodeCount()} | Edges: {getEdgeCount()}
-                </div>
+              <div style={{ fontWeight: 700, fontSize: "15px" }}>
+                ThreadMap quick tips
               </div>
               <button
-                onClick={() => setIsControlPanelOpen(false)}
-                aria-label="Close controls"
+                onClick={() => setShowInfoTooltip(false)}
+                aria-label="Close threadmap tips"
                 style={{
                   border: "none",
                   background: "#e2e8f0",
                   color: "#0f172a",
-                  width: "28px",
-                  height: "28px",
+                  width: 26,
+                  height: 26,
                   borderRadius: "8px",
-                  cursor: "pointer",
                   fontWeight: 700,
-                  fontSize: "16px",
+                  cursor: "pointer",
                   lineHeight: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
                 }}
               >
                 ×
               </button>
             </div>
-
             <div
               style={{
-                fontSize: "11px",
+                fontSize: "11.5px",
                 color: "#475569",
                 lineHeight: 1.5,
                 marginBottom: "12px",
               }}
             >
-              • Hover over empty space to add nodes
-              <br />• Drag from node handles to create edges
-              <br />• Click nodes/edges to select or delete
+              • Hover over open space to add a new node.
+              <br />• Use node handles to connect concepts.
+              <br />• Click nodes or edges to focus them.
             </div>
-
-            {selectedNode && (
-              <button
-                onClick={deleteSelectedNode}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "6px",
-                  width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "10px",
-                  border: "none",
-                  background: "#ef4444",
-                  color: "#fff",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  marginBottom: selectedEdge ? "8px" : 0,
-                  boxShadow: "0 10px 20px rgba(239, 68, 68, 0.35)",
-                }}
-              >
-                <Trash2 size={14} /> Delete Selected Node
-              </button>
-            )}
-
-            {selectedEdge && (
-              <button
-                onClick={deleteSelectedEdge}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "6px",
-                  width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "10px",
-                  border: "none",
-                  background: "#ef4444",
-                  color: "#fff",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  boxShadow: "0 10px 20px rgba(239, 68, 68, 0.35)",
-                }}
-              >
-                <Trash2 size={14} /> Delete Selected Edge
-              </button>
-            )}
+            <div
+              style={{
+                fontSize: "11px",
+                color: "#0f172a",
+                background: "#f1f5f9",
+                borderRadius: "10px",
+                padding: "8px 10px",
+                display: "flex",
+                justifyContent: "space-between",
+                gap: "12px",
+              }}
+            >
+              <span>Nodes: {getNodeCount()}</span>
+              <span>Edges: {getEdgeCount()}</span>
+            </div>
           </div>
         )}
       </div>
@@ -1569,23 +1647,92 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
+        {!activeModuleId && (
+          <div
+            style={{
+              position: "absolute",
+              top: 16,
+              left: 16,
+              zIndex: 15,
+              background: "rgba(15, 23, 42, 0.8)",
+              color: "#fff",
+              padding: "10px 16px",
+              borderRadius: "12px",
+              fontSize: "13px",
+              fontFamily: "GlacialIndifference, sans-serif",
+            }}
+          >
+            Select a module to load its thread map.
+          </div>
+        )}
+        <button
+          onClick={handleExpandThreadmap}
+          disabled={!activeModuleId}
+          style={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 16,
+            border: "none",
+            borderRadius: "9999px",
+            padding: "8px 14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            background: "#1d4ed8",
+            color: "#fff",
+            fontFamily: '"GlacialIndifference", sans-serif',
+            fontSize: "12.5px",
+            fontWeight: 600,
+            cursor: activeModuleId ? "pointer" : "not-allowed",
+            boxShadow: "0 18px 30px rgba(29, 78, 216, 0.35)",
+            opacity: activeModuleId ? 1 : 0.6,
+          }}
+        >
+          <Maximize2 size={16} />
+          <span>Open full view</span>
+        </button>
+        {err && (
+          <div
+            style={{
+              position: "absolute",
+              top: 64,
+              right: 16,
+              zIndex: 15,
+              background: "#fee2e2",
+              color: "#b91c1c",
+              padding: "10px 16px",
+              borderRadius: "12px",
+              fontSize: "12.5px",
+              fontFamily: "GlacialIndifference, sans-serif",
+              maxWidth: "280px",
+              boxShadow: "0 18px 30px rgba(185, 28, 28, 0.25)",
+            }}
+          >
+            {err}
+          </div>
+        )}
         <ReactFlow<FlowNode, FlowEdge>
           nodes={nodes}
           nodeTypes={nodeTypes}
           //edges={showEdges ? edges : []}
           edges={edges}
           edgeTypes={edgeTypes}
-          onNodesChange={handleNodesChange}
+          onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onConnectStart={handleConnectStart}
+          onConnectEnd={handleConnectEnd}
           onNodeClick={handleNodeClick}
           onEdgeClick={handleEdgeClick}
-          onNodeDragStart={handleNodeDragStart}
-          onNodeDrag={handleNodeDrag}
-          onNodeDragStop={handleNodeDragStop}
-          onInit={setReactFlowInstance}
+          onInit={handleInit}
           onMove={handleMove}
           onPaneClick={handlePaneClick}
+          nodesDraggable={false}
+          panOnDrag
+          panOnScroll
+          zoomOnScroll={false}
+          selectionOnDrag={false}
           fitView
           attributionPosition="bottom-left"
           connectionMode={ConnectionMode.Loose}
@@ -1599,7 +1746,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
 
           {hoverNode.visible && (
             <AddNodeHover
-              screenPosition={hoverNode.screenPosition}
+              screenPosition={safeHoverScreenPosition}
               onClick={handleAddNodeFromHover}
             />
           )}

@@ -92,3 +92,29 @@ class Concept(Node):
     
     def __str__(self):
          return f'Concept: {self.name or "Unnamed"} [ [{self.related_topic.module.index if self.related_topic and self.related_topic.module else "No Module"}] Topic "{self.related_topic.name if self.related_topic else "No Topic"}"]'
+
+class StudentNote(models.Model):
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        related_name='topic_notes'
+    )
+    topic = models.ForeignKey(
+        'Topic', 
+        on_delete=models.CASCADE,
+        related_name='student_notes'
+    )
+    content = models.TextField(
+        blank=True,
+        help_text="Student's notes in JSON/HTML format from Lexical editor"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'student_notes'
+        unique_together = ('student', 'topic') 
+        ordering = ['-updated_at']
+    
+    def __str__(self):
+        return f"{self.student.username} - {self.topic.name}"

@@ -1,38 +1,28 @@
-"""
-URL configuration for api project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
 from app import views
-from app.views import homepage_view,classify_chathistory, display_chathistory, percentage_chathistory, time_spent_per_topic, percentage_learning_style, taxonomy_progression, bloom_by_topic_classifier
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.homepage_view, name="homepage"),
+
+    # Students
     path('api/student/<str:pk>/', views.getStudent, name='get_student'),
-    path('api/nodes/<str:module_id>', views.getTopicAndConcepts, name='get_nodes'),
-    path('api/relationships/<str:module_id>', views.getRelationships, name='get_relationships'),
+    path('api/student/<str:student_id>/topic/<str:topic_id>/notes/', views.student_topic_notes, name='student_topic_notes'),
+
+    # Modules & topics
+    path('api/module/<str:pk>/', views.getModule, name='get_module'),
+    path('api/nodes/<str:module_id>/', views.getTopicAndConcepts, name='get_nodes'),
+    path('api/relationships/<str:module_id>/', views.getRelationships, name='get_relationships'),
+    path('api/module/<str:module_id>/topic/<str:topic_id>/', views.getTopic, name='get_topic'),
+    path('api/module/<str:module_id>/topic/<str:topic_id>/full/', views.getTopicWithConcepts, name='get_topic_with_concepts'),
+
+    # Chat analytics
     path('api/classify-chat-history/', views.classify_chathistory, name="classify-chathistory"),
     path('api/display-chat-history/', views.display_chathistory, name="display-chathistory"),
     path('api/percentage-chat-history/', views.percentage_chathistory, name="percentage-chathistory"),
     path('api/time-spent-per-topic/', views.time_spent_per_topic, name="time-spent-per-topic"),
     path('api/percentage-learning-style/', views.percentage_learning_style, name="percentage-learningstyle"),
-    path('api/module/<str:pk>/', views.getModule, name='get_module'),
-    path('api/percentage-learning-style/', views.percentage_learning_style, name="percentage-learningstyle"),
     path('api/taxonomy-progression/', views.taxonomy_progression, name="taxonomy-progression"),
     path('api/bloom-by-topic-classifier/', views.bloom_by_topic_classifier, name="bloom-by-topic-classifier"),
-    path('api/module/<str:module_id>/topic/<str:topic_id>/notes', views.getTopic, name='get_topic'),
 ]

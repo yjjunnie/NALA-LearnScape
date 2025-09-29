@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import (Module, Node, Relationship, Student, Topic, Concept)
+from .models import (Module, Node, Relationship, Student, Topic, Concept, StudentNote)
 
 class ModuleSerializer(serializers.ModelSerializer):
     topics = serializers.SerializerMethodField() 
@@ -143,3 +143,41 @@ class StudentSerializer(serializers.ModelSerializer):
     
     def get_learning_style_description(self, obj):
         return obj.get_learning_style_description()
+
+class TopicWithConceptsSerializer(serializers.ModelSerializer):
+    concepts = serializers.SerializerMethodField()
+    module_info = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Topic
+        fields = ['id', 'name', 'summary', 'module', 'module_info', 'concepts']
+    
+    def get_concepts(self, obj):
+        concepts = Concept.objects.filter(related_topic=obj).order_by('id')
+        return [{
+            'id': concept.id,
+            'name': concept.name,
+            'description': concept.summary 
+        } for concept in concepts]
+    
+    def get_module_info(self, obj):
+        if obj.module:
+            return {
+                'id': obj.module.id,
+                'index': obj.module.index,
+                'name': obj.module.name
+            }
+        return None
+
+class StudentNoteSerializer(serializers.ModelSerializer):
+    """
+    Serializer for StudentNote model
+    """
+    topic_name = serializers.CharField(source='topic.name', read_only=True)
+    student_name = serializers.CharField(source='student.name', read_only=True)
+    
+    class Meta:
+        model = StudentNote
+        fields = ['id', 'student', 'topic', 'content', 'created_at', 
+                 'updated_at', 'topic_name', 'student_name']
+        read_only_fields = ['created_at', 'updated_at']

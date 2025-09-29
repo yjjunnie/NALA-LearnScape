@@ -10,6 +10,7 @@ def load_data(apps, schema_editor):
     Concept = apps.get_model("app", "Concept")
     Relationship = apps.get_model("app", "Relationship")
     Module = apps.get_model("app", "Module")
+    Student = apps.get_model("app", "Student")
     StudentQuizHistory = apps.get_model("app", "StudentQuizHistory")
 
     base_dir = os.path.dirname(__file__)
@@ -20,9 +21,8 @@ def load_data(apps, schema_editor):
         with open(modules_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # Create or update Module entries
                 Module.objects.update_or_create(
-                    id=(row["module_id"]),
+                    id=row["module_id"],
                     defaults={
                         "name": row["module_name"],
                         "index": row.get("module_index", "")
@@ -38,9 +38,7 @@ def load_data(apps, schema_editor):
             name = row["node_name"]
             summary = row["node_description"]
             node_type = row["node_type"].lower()
-            module_id = row["node_module_id"] if row.get("node_module_id") else None
-
-            # Assign the module to each Node, Topic, or Concept
+            module_id = row.get("node_module_id")
             module = Module.objects.get(id=module_id) if module_id else None
 
             if node_type == "topic":
@@ -49,7 +47,7 @@ def load_data(apps, schema_editor):
                     defaults={"name": name, "summary": summary, "module": module}
                 )
             elif node_type == "concept":
-                parent_id = row["parent_node_id"] if row["parent_node_id"] else None
+                parent_id = row.get("parent_node_id")
                 if parent_id:
                     parent_topic = Topic.objects.get(id=parent_id)
                     Concept.objects.update_or_create(
@@ -57,7 +55,6 @@ def load_data(apps, schema_editor):
                         defaults={"name": name, "summary": summary, "related_topic": parent_topic, "module": module}
                     )
                 else:
-                    # Fallback: create as plain Node if no topic found
                     Node.objects.update_or_create(
                         id=node_id,
                         defaults={"name": name, "summary": summary, "module": module}
@@ -77,7 +74,6 @@ def load_data(apps, schema_editor):
             first_node = Node.objects.get(id=row["node_id_1"])
             second_node = Node.objects.get(id=row["node_id_2"])
             rs_type = row["relationship_type"]
-
             Relationship.objects.update_or_create(
                 id=rel_id,
                 defaults={"first_node": first_node, "second_node": second_node, "rs_type": rs_type}
@@ -85,12 +81,18 @@ def load_data(apps, schema_editor):
 
     # === Load Quiz Questions ===
     quiz_path = os.path.join(base_dir, "quiz_questions.csv")
-    quiz_data = []
     if os.path.exists(quiz_path):
         with open(quiz_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                quiz_data.append({
+                # Get module and topics
+                module = Module.objects.get(id=row["module_id"])
+                topic_ids = [int(tid.strip()) for tid in row["topic_id"].split(",")]
+                topics = Topic.objects.filter(id__in=topic_ids)
+                quiz_type = row.get("quiz_type", "weekly")
+
+                # Build question dict
+                question_dict = {
                     "question": row["question"],
                     "options": {
                         "A": row["option_A"],
@@ -100,20 +102,20 @@ def load_data(apps, schema_editor):
                     },
                     "answer": row["answer"],
                     "bloom_level": row["bloom_level"]
-                })
+                }
 
-    # === Assign Quiz to All Students ===
-    if quiz_data:
-        module = Module.objects.first()  # or pick specific module if you want
-        for student in Student.objects.all():
-            StudentQuizHistory.objects.create(
-                student=student,
-                module=module,
-                quiz_data=quiz_data,
-                student_answers={},  # empty at start
-                score=None,
-                completed=False,
-            )
+                # Assign quiz to all students
+                for student in Student.objects.all():
+                    history = StudentQuizHistory.objects.create(
+                        student=student,
+                        module=module,
+                        quiz_data=[question_dict],
+                        student_answers={},
+                        score=None,
+                        completed=False,
+                        quiz_type=quiz_type
+                    )
+                    history.topics_covered.set(topics)
 
 
 def unload_data(apps, schema_editor):
@@ -122,12 +124,11 @@ def unload_data(apps, schema_editor):
     Relationship.objects.all().delete()
     Node.objects.all().delete()
 
+
 class Migration(migrations.Migration):
-
     dependencies = [
-        ("app", "0001_initial"),  # Adjust if needed
+        ("app", "0001_initial"),
     ]
-
     operations = [
         migrations.RunPython(load_data, reverse_code=unload_data),
     ]

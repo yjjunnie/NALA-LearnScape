@@ -90,6 +90,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
 
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
+  const [showEdges, setShowEdges] = useState<boolean>(false);
 
   const availableModules = useMemo(() => {
     const moduleIds = new Set<string>();
@@ -1333,7 +1334,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         <ReactFlow<FlowNode, FlowEdge>
           nodes={nodes}
           nodeTypes={nodeTypes}
-          edges={edges}
+          edges={showEdges ? edges : []}
           edgeTypes={edgeTypes}
           onNodesChange={handleNodesChange}
           onEdgesChange={onEdgesChange}

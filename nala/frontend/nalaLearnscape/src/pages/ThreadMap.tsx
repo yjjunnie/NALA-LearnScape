@@ -224,7 +224,8 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
 
         setModuleLookup((prev) => {
           const moduleKey = String(rawModule.id ?? module_id);
-          const baseColor = prev[moduleKey]?.color ?? getColorForModule(moduleKey, prev);
+          const baseColor =
+            prev[moduleKey]?.color ?? getColorForModule(moduleKey, prev);
           return {
             ...prev,
             [moduleKey]: {
@@ -268,7 +269,9 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   }, [module_id, moduleLookup]);
 
   useEffect(() => {
-    const moduleIds = Array.from(new Set(dbNodes.map((node) => node.module_id)));
+    const moduleIds = Array.from(
+      new Set(dbNodes.map((node) => node.module_id))
+    );
     const missingIds = moduleIds.filter((moduleId) => !moduleLookup[moduleId]);
 
     if (missingIds.length === 0) {
@@ -303,7 +306,8 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         results.forEach(({ id, rawModule }) => {
           const moduleKey = String(rawModule?.id ?? id);
           const existing = prev[moduleKey];
-          const baseColor = existing?.color ?? getColorForModule(moduleKey, prev);
+          const baseColor =
+            existing?.color ?? getColorForModule(moduleKey, prev);
           next[moduleKey] = {
             module_id: moduleKey,
             module_name: rawModule?.name ?? existing?.module_name,

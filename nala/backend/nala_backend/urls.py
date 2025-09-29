@@ -34,4 +34,5 @@ urlpatterns = [
     path('api/percentage-learning-style/', views.percentage_learning_style, name="percentage-learningstyle"),
     path('api/taxonomy-progression/', views.taxonomy_progression, name="taxonomy-progression"),
     path('api/bloom-by-topic-classifier/', views.bloom_by_topic_classifier, name="bloom-by-topic-classifier")
+    path('api/module/<int:module_id>/topic/<int:topic_id>/notes', views.getTopic, name='get_topic'),
 ]

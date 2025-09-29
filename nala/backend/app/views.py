@@ -81,6 +81,15 @@ def getRelationships(request, module_id=None):
     return Response(serializedData)
 
 @api_view(["GET"])
+def getTopic(request, module_id, topic_id):
+    try:
+        topic = Topic.objects.get(pk=topic_id, module_id=module_id)
+    except Topic.DoesNotExist:
+        return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+    serializedData = TopicSerializer(topic).data
+    return Response(serializedData)
+
+@api_view(["GET"])
 def percentage_learning_style(request):
     filepath = "app/services/chat_history/newlearningstyle.json"
     results = learning_style_from_json(filepath)

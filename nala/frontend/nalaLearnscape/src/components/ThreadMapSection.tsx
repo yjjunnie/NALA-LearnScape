@@ -86,7 +86,7 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
             onClick={(event) => setFilterAnchor(event.currentTarget)}
           >
             <FilterListRoundedIcon className="w-5 h-5" />
-            Select Module
+            {getModuleLabel(selectedModule)}
           </button>
 
           <Menu

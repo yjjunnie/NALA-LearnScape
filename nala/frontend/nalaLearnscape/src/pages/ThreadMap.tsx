@@ -26,7 +26,7 @@ import type {
   EdgeMouseHandler,
 } from "@xyflow/react";
 import * as d3 from "d3";
-import { Trash2 } from "lucide-react";
+import { SlidersHorizontal, Trash2 } from "lucide-react";
 import "@xyflow/react/dist/style.css";
 import "../App.css";
 import type {
@@ -91,6 +91,11 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
   const [showEdges, setShowEdges] = useState<boolean>(false);
+  const [isControlPanelOpen, setIsControlPanelOpen] = useState<boolean>(false);
+  const [controlPosition, setControlPosition] = useState<{ x: number; y: number }>(
+    { x: 24, y: 24 }
+  );
+  const [isDraggingControl, setIsDraggingControl] = useState(false);
 
   const availableModules = useMemo(() => {
     const moduleIds = new Set<string>();
@@ -378,6 +383,16 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   const pendingNodePositionRef = useRef<XYPosition | null>(null); // Holds the pending position for a new node (before it’s added)
   const draggedNodeIdRef = useRef<string | null>(null); // Tracks the ID of the node currently being dragged
   const shouldRunSimulationRef = useRef<boolean>(false); //A flag indicating whether the D3 simulation should run to adjust node positions
+  const controlDragStartRef = useRef<
+    | {
+        startX: number;
+        startY: number;
+        originX: number;
+        originY: number;
+      }
+    | null
+  >(null);
+  const controlDraggedRef = useRef<boolean>(false);
 
   const popupNode = useMemo(
     // Calculate and memoize the node that is associated with the activePopup
@@ -677,6 +692,24 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       target: edge.target,
     }));
 
+    const topicSimulationNodes = simulationNodes.filter(
+      (node) => node.data.node_type === "topic"
+    );
+    const topicAnchors = new Map<string, { x: number; y: number }>();
+
+    if (topicSimulationNodes.length > 0) {
+      const radius = Math.min(width, height) * 0.45;
+      const angleStep = (2 * Math.PI) / Math.max(topicSimulationNodes.length, 1);
+
+      topicSimulationNodes.forEach((node, index) => {
+        const angle = index * angleStep;
+        topicAnchors.set(node.id, {
+          x: width / 2 + Math.cos(angle) * radius,
+          y: height / 2 + Math.sin(angle) * radius,
+        });
+      });
+    }
+
     simulation.nodes(simulationNodes as any);
     simulation.force("center", d3.forceCenter(width / 2, height / 2));
     simulation.alphaDecay(0.25);
@@ -687,9 +720,9 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       d3
         .forceManyBody()
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "topic" ? -320 : -160
+          (d.data as NodeData).node_type === "topic" ? -460 : -240
         )
-        .distanceMax(240)
+        .distanceMax(520)
     );
 
     simulation.force(
@@ -698,7 +731,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
         .forceCollide()
         .radius((d: any) => {
           const nodeData = d.data as NodeData;
-          return nodeData.node_type === "topic" ? 95 : 60;
+          return nodeData.node_type === "topic" ? 110 : 48;
         })
         .strength(0.9)
         .iterations(2)
@@ -722,13 +755,13 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
           const isParentChild =
             sourceNode?.data?.parent_node_id === targetNode?.id ||
             targetNode?.data?.parent_node_id === sourceNode?.id;
-          if (isParentChild) return 110;
+          if (isParentChild) return 85;
 
           const sourceRoot = findRootTopicId(sourceNode);
           const targetRoot = findRootTopicId(targetNode);
-          if (sourceRoot && targetRoot && sourceRoot === targetRoot) return 160;
+          if (sourceRoot && targetRoot && sourceRoot === targetRoot) return 140;
 
-          return 220;
+          return 300;
         })
         .strength((link: any) => {
           const resolveNode = (value: any) =>
@@ -743,13 +776,13 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
           const isParentChild =
             sourceNode?.data?.parent_node_id === targetNode?.id ||
             targetNode?.data?.parent_node_id === sourceNode?.id;
-          if (isParentChild) return 0.9;
+          if (isParentChild) return 1;
 
           const sourceRoot = findRootTopicId(sourceNode);
           const targetRoot = findRootTopicId(targetNode);
-          if (sourceRoot && targetRoot && sourceRoot === targetRoot) return 0.5;
+          if (sourceRoot && targetRoot && sourceRoot === targetRoot) return 0.6;
 
-          return 0.25;
+          return 0.18;
         })
     );
 
@@ -766,7 +799,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
           return d.x ?? width / 2;
         })
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "concept" ? 0.12 : 0.02
+          (d.data as NodeData).node_type === "concept" ? 0.22 : 0.04
         )
     );
 
@@ -783,7 +816,35 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
           return d.y ?? height / 2;
         })
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "concept" ? 0.12 : 0.02
+          (d.data as NodeData).node_type === "concept" ? 0.22 : 0.04
+        )
+    );
+
+    simulation.force(
+      "topic-x",
+      d3
+        .forceX((d: any) => {
+          if ((d.data as NodeData).node_type === "topic") {
+            return topicAnchors.get(d.id)?.x ?? width / 2;
+          }
+          return d.x ?? width / 2;
+        })
+        .strength((d: any) =>
+          (d.data as NodeData).node_type === "topic" ? 0.06 : 0.015
+        )
+    );
+
+    simulation.force(
+      "topic-y",
+      d3
+        .forceY((d: any) => {
+          if ((d.data as NodeData).node_type === "topic") {
+            return topicAnchors.get(d.id)?.y ?? height / 2;
+          }
+          return d.y ?? height / 2;
+        })
+        .strength((d: any) =>
+          (d.data as NodeData).node_type === "topic" ? 0.06 : 0.015
         )
     );
 
@@ -899,7 +960,7 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
       };
 
       const isTooCloseToNode = nodes.some((node) => {
-        const nodeSize = node.data.node_type === "topic" ? 120 : 80;
+        const nodeSize = node.data.node_type === "topic" ? 120 : 70;
         const distance = Math.sqrt(
           Math.pow(flowPosition.x - node.position.x, 2) +
             Math.pow(flowPosition.y - node.position.y, 2)
@@ -919,6 +980,98 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
   const handleMouseLeave = useCallback(() => {
     setHoverNode((prev) => ({ ...prev, visible: false }));
   }, []);
+
+  const controlButtonSize = 44;
+
+  const handleControlMouseDown = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      controlDraggedRef.current = false;
+      controlDragStartRef.current = {
+        startX: event.clientX,
+        startY: event.clientY,
+        originX: controlPosition.x,
+        originY: controlPosition.y,
+      };
+
+      setIsDraggingControl(true);
+    },
+    [controlPosition]
+  );
+
+  const handleControlDragMove = useCallback(
+    (event: MouseEvent) => {
+      const dragState = controlDragStartRef.current;
+      if (!dragState) return;
+
+      const bounds = containerRef.current?.getBoundingClientRect();
+      const maxX = (bounds?.width ?? window.innerWidth) - controlButtonSize - 12;
+      const maxY = (bounds?.height ?? window.innerHeight) - controlButtonSize - 12;
+
+      const deltaX = event.clientX - dragState.startX;
+      const deltaY = event.clientY - dragState.startY;
+
+      if (
+        !controlDraggedRef.current &&
+        Math.sqrt(deltaX * deltaX + deltaY * deltaY) > 4
+      ) {
+        controlDraggedRef.current = true;
+      }
+
+      const nextX = Math.max(12, Math.min(maxX, dragState.originX + deltaX));
+      const nextY = Math.max(12, Math.min(maxY, dragState.originY + deltaY));
+
+      setControlPosition({ x: nextX, y: nextY });
+    },
+    []
+  );
+
+  const handleControlDragEnd = useCallback(() => {
+    setIsDraggingControl(false);
+    controlDragStartRef.current = null;
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  }, []);
+
+  const handleControlClick = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation();
+
+      if (controlDraggedRef.current) {
+        controlDraggedRef.current = false;
+        return;
+      }
+
+      setIsControlPanelOpen((prev) => !prev);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!isDraggingControl) return;
+
+    const handleMove = (event: MouseEvent) => {
+      handleControlDragMove(event);
+      document.body.style.cursor = "grabbing";
+      document.body.style.userSelect = "none";
+    };
+
+    const handleUp = () => {
+      handleControlDragEnd();
+    };
+
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isDraggingControl, handleControlDragMove, handleControlDragEnd]);
 
   const handleAddNodeFromHover = useCallback(() => {
     setPendingNodePosition(hoverNode.flowPosition);
@@ -1224,100 +1377,188 @@ const ThreadMap: React.FC<{ module_id: string }> = ({ module_id }) => {
     handlePopupMouseUp,
   ]);
 
+  const controlPanelWidth = 240;
+  const controlPanelHeight = 220;
+  const containerBounds = containerRef.current?.getBoundingClientRect();
+  const panelOffsetX =
+    !containerBounds ||
+    controlPosition.x + controlButtonSize + 16 + controlPanelWidth <=
+      containerBounds.width
+      ? controlButtonSize + 16
+      : -controlPanelWidth - 16;
+  const panelOffsetY =
+    !containerBounds ||
+    controlPosition.y + controlButtonSize + 16 + controlPanelHeight <=
+      containerBounds.height
+      ? controlButtonSize + 12
+      : -controlPanelHeight - 16;
+
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
-      {/* Control Panel */}
+      {/* Floating Control Toggle */}
       <div
         style={{
-          fontFamily: "GlacialIndifference, sans-serif",
           position: "absolute",
-          top: "20px",
-          left: "20px",
-          zIndex: 10,
-          background: "white",
-          padding: "16px",
-          borderRadius: "8px",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-          minWidth: "200px",
+          top: controlPosition.y,
+          left: controlPosition.x,
+          zIndex: 30,
+          pointerEvents: "none",
         }}
       >
-        <h3
+        <button
+          onMouseDown={handleControlMouseDown}
+          onClick={handleControlClick}
+          aria-label="Toggle threadmap controls"
           style={{
-            margin: "0 0 12px 0",
-            fontSize: "16px",
-            fontWeight: "bold",
+            pointerEvents: "auto",
+            width: controlButtonSize,
+            height: controlButtonSize,
+            borderRadius: "50%",
+            border: "none",
+            background: "#1f2937",
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 12px 26px rgba(15, 23, 42, 0.35)",
+            cursor: isDraggingControl ? "grabbing" : "grab",
+            transition: "transform 0.2s ease, box-shadow 0.2s ease",
+            transform: isControlPanelOpen ? "scale(1.05)" : "scale(1)",
           }}
         >
-          ThreadMap Controls
-        </h3>
+          <SlidersHorizontal size={22} />
+        </button>
 
-        <div
-          style={{
-            marginBottom: "12px",
-            fontSize: "12px",
-            color: "#666",
-            fontFamily: "GlacialIndifference, sans-serif",
-          }}
-        >
-          Nodes: {getNodeCount()} | Edges: {getEdgeCount()}
-        </div>
-
-        <div
-          style={{
-            marginBottom: "12px",
-            fontSize: "11px",
-            color: "#666",
-            lineHeight: "1.4",
-          }}
-        >
-          • Hover over empty space to add nodes
-          <br />
-          • Drag from node handles to create edges
-          <br />• Click nodes/edges to select/delete
-        </div>
-
-        {selectedNode && (
-          <button
-            onClick={deleteSelectedNode}
+        {isControlPanelOpen && (
+          <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "8px 12px",
-              background: "#e53e3e",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "12px",
-              cursor: "pointer",
-              width: "100%",
-              justifyContent: "center",
+              pointerEvents: "auto",
+              position: "absolute",
+              top: panelOffsetY,
+              left: panelOffsetX,
+              width: controlPanelWidth,
+              background: "#ffffff",
+              borderRadius: "16px",
+              boxShadow: "0 20px 45px rgba(15, 23, 42, 0.35)",
+              padding: "16px",
+              fontFamily: "GlacialIndifference, sans-serif",
+              color: "#1e293b",
             }}
           >
-            <Trash2 size={14} style={{ marginRight: "4px" }} />
-            Delete Selected Node
-          </button>
-        )}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+                marginBottom: "12px",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: 700,
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  ThreadMap Controls
+                </div>
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "#64748b",
+                    marginTop: "4px",
+                  }}
+                >
+                  Nodes: {getNodeCount()} | Edges: {getEdgeCount()}
+                </div>
+              </div>
+              <button
+                onClick={() => setIsControlPanelOpen(false)}
+                aria-label="Close controls"
+                style={{
+                  border: "none",
+                  background: "#e2e8f0",
+                  color: "#0f172a",
+                  width: "28px",
+                  height: "28px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: "16px",
+                  lineHeight: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                ×
+              </button>
+            </div>
 
-        {selectedEdge && (
-          <button
-            onClick={deleteSelectedEdge}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "8px 12px",
-              background: "#e53e3e",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "12px",
-              cursor: "pointer",
-              width: "100%",
-              justifyContent: "center",
-            }}
-          >
-            <Trash2 size={14} style={{ marginRight: "4px" }} />
-            Delete Selected Edge
-          </button>
+            <div
+              style={{
+                fontSize: "11px",
+                color: "#475569",
+                lineHeight: 1.5,
+                marginBottom: "12px",
+              }}
+            >
+              • Hover over empty space to add nodes
+              <br />• Drag from node handles to create edges
+              <br />• Click nodes/edges to select or delete
+            </div>
+
+            {selectedNode && (
+              <button
+                onClick={deleteSelectedNode}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: "#ef4444",
+                  color: "#fff",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  marginBottom: selectedEdge ? "8px" : 0,
+                  boxShadow: "0 10px 20px rgba(239, 68, 68, 0.35)",
+                }}
+              >
+                <Trash2 size={14} /> Delete Selected Node
+              </button>
+            )}
+
+            {selectedEdge && (
+              <button
+                onClick={deleteSelectedEdge}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: "#ef4444",
+                  color: "#fff",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  boxShadow: "0 10px 20px rgba(239, 68, 68, 0.35)",
+                }}
+              >
+                <Trash2 size={14} /> Delete Selected Edge
+              </button>
+            )}
+          </div>
         )}
       </div>
 

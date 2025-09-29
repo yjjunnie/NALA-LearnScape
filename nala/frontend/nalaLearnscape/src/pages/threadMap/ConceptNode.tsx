@@ -12,8 +12,8 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
   data,
   selected = false,
 }) => {
-  const size = data.node_type === "topic" ? 120 : 80;
-  const fontSize = data.node_type === "topic" ? "16px" : "14px";
+  const size = data.node_type === "topic" ? 120 : 68;
+  const fontSize = data.node_type === "topic" ? "16px" : "12px";
 
   const moduleNumber = data.node_module_index ?? data.node_module_id;
 
@@ -87,7 +87,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
     color: "#1f2937",
     fontFamily: '"Fredoka", sans-serif',
     fontWeight: data.node_type === "topic" ? 700 : 600,
-    fontSize: data.node_type === "topic" ? "16px" : "13px",
+    fontSize: data.node_type === "topic" ? "16px" : "12px",
     lineHeight: 1.25,
     maxWidth: circleSize,
     wordBreak: "normal", // Avoid breaking words
@@ -146,7 +146,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
         >
           <div
             style={{
-              fontSize: data.node_type === "topic" ? "24px" : "18px",
+              fontSize: data.node_type === "topic" ? "24px" : "16px",
               fontWeight: 700,
             }}
           >
@@ -155,7 +155,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
 
           <div
             style={{
-              fontSize: data.node_type === "topic" ? "11px" : "10px",
+              fontSize: data.node_type === "topic" ? "11px" : "9px",
               lineHeight: "1.2",
               maxWidth: "90%",
               overflow: "hidden",

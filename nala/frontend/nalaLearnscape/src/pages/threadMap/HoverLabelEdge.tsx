@@ -2,7 +2,8 @@ import React, { useMemo, useState } from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
-  getStraightPath,
+  getBezierPath,
+  Position,
   useReactFlow,
 } from "@xyflow/react";
 import type { EdgeProps, XYPosition } from "@xyflow/react";
@@ -114,7 +115,7 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
   );
 
   const parallelIndex = parallelEdges.findIndex((edge) => edge.id === id);
-  const offsetStep = 18;
+  const offsetStep = 26;
   const offsetAmount =
     parallelEdges.length > 1
       ? (parallelIndex - (parallelEdges.length - 1) / 2) * offsetStep
@@ -127,11 +128,32 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
   const offsetX = (-dy / length) * offsetAmount;
   const offsetY = (dx / length) * offsetAmount;
 
-  const [edgePath, labelX, labelY] = getStraightPath({
+  const dominantAxisIsHorizontal = Math.abs(dx) >= Math.abs(dy);
+  const sourcePosition = dominantAxisIsHorizontal
+    ? dx >= 0
+      ? Position.Right
+      : Position.Left
+    : dy >= 0
+    ? Position.Bottom
+    : Position.Top;
+  const targetPosition = dominantAxisIsHorizontal
+    ? dx >= 0
+      ? Position.Left
+      : Position.Right
+    : dy >= 0
+    ? Position.Top
+    : Position.Bottom;
+
+  const curvature = Math.min(0.6, 0.35 + Math.abs(offsetAmount) / 160);
+
+  const [edgePath, labelX, labelY] = getBezierPath({
     sourceX: rawSourcePoint.x + offsetX,
     sourceY: rawSourcePoint.y + offsetY,
+    sourcePosition,
     targetX: rawTargetPoint.x + offsetX,
     targetY: rawTargetPoint.y + offsetY,
+    targetPosition,
+    curvature,
   });
 
   const [isHovered, setIsHovered] = useState(false);

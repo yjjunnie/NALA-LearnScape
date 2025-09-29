@@ -7,7 +7,7 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import NotesEditor from "../components/editor/NotesEditor";
 
 type Topic = {
-  id: number;
+  id: string;
   name: string;
   notes?: string;
 };

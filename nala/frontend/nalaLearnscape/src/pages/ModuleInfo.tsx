@@ -5,12 +5,12 @@ import { IconButton } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 
 type Topic = {
-  id: number;
+  id: string;
   name: string;
 };
 
 type Module = {
-  id: number;
+  id: string;
   index: string;
   name: string;
   topics: Topic[];

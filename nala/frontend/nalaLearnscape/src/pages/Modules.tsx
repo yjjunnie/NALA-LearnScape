@@ -7,7 +7,7 @@ import SideNav from "../components/SideNav";
 import { Link } from 'react-router-dom';
 
 interface Module {
-  id: number;
+  id: string;
   index: number;
   name: string;
 }

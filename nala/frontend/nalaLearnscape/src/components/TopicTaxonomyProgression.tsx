@@ -311,7 +311,7 @@ const TopicTaxonomyProgression = () => {
             <div key={moduleName} className="space-y-2">
               <button
                 onClick={() => handleModuleClick(moduleName)}
-                className="w-full text-left rounded-xl px-4 py-3 transition-all duration-200 hover:bg-[rgba(76,115,255,0.12)] focus:outline-none focus:ring-2 focus:ring-[#4C73FF] focus:ring-opacity-30"
+                className="w-full text-left rounded-xl px-4 py-3 transition-all duration-200"
                 style={{
                   backgroundColor: isModuleExpanded ? 'rgba(76,115,255,0.15)' : 'rgba(232,241,255,0.5)',
                 }}

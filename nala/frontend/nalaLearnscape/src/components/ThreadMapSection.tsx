@@ -1,123 +1,47 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { Menu, MenuItem } from "@mui/material";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import { ThreadMap } from "../pages";
 
-// Types for backend integration
-type Module = {
+export type ThreadMapModule = {
   id: string;
-  code: string;
-  name: string;
-  description?: string;
+  code?: string | null;
+  name?: string | null;
+  description?: string | null;
+};
+
+const getModuleLabel = (module?: ThreadMapModule) => {
+  if (!module) {
+    return "Select a Module";
+  }
+
+  const identifier = module.code ?? "";
+  const name = module.name ?? "";
+  return [identifier, name].filter(Boolean).join(" ") || "Module";
 };
 
 type ThreadMapSectionProps = {
-  // Props for backend integration
-  studentId?: string;
+  modules?: ThreadMapModule[];
   onModuleSelect: (moduleId: string) => void;
   selectedModuleId?: string;
-  passedmodules: Module[];
 };
 
 const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
-  studentId,
+  modules = [],
   onModuleSelect,
   selectedModuleId,
-  passedmodules = [],
 }) => {
-  const [modules, setModules] = useState<Module[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const [filterAnchor, setFilterAnchor] = useState<null | HTMLElement>(null);
 
-  // Fetch student modules from backend or use provided modules
-  useEffect(() => {
-    if (passedmodules.length > 0) {
-      setModules(passedmodules);
-      setError(null);
-      setLoading(false);
-
-      if (!selectedModuleId) {
-        onModuleSelect(passedmodules[0].id);
-      }
-      return;
-    }
-
-    if (!studentId) {
-      setModules([]);
-      setLoading(false);
-      return;
-    }
-
-    const fetchModules = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`/api/student/${studentId}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch student.");
-        }
-        const student = await response.json();
-        if (!student) {
-          throw new Error("Student not found.");
-        }
-        const data = student.enrolled_modules || [];
-        setModules(data);
-
-        if (data.length > 0 && !selectedModuleId) {
-          onModuleSelect(data[0].id);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-        console.error("Error fetching modules:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchModules();
-  }, [
-    passedmodules,
-    studentId,
-    selectedModuleId,
-    onModuleSelect,
-  ]);
-
-  const selectedModule = modules.find(
-    (module) => module.id === selectedModuleId
+  const selectedModule = useMemo(
+    () => modules.find((module) => module.id === selectedModuleId),
+    [modules, selectedModuleId]
   );
 
   const handleModuleSelect = (moduleId: string) => {
     onModuleSelect(moduleId);
     setFilterAnchor(null);
   };
-
-  if (loading) {
-    return (
-      <div
-        className="flex flex-col gap-4 rounded-[20px] px-6 py-6 md:px-8 md:py-8 bg-white"
-        style={{ border: "2px solid rgba(76,115,255,0.12)" }}
-      >
-        <div className="flex items-center justify-center min-h-[200px]">
-          <div className="text-gray-500">Loading modules...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div
-        className="flex flex-col gap-4 rounded-[20px] px-6 py-6 md:px-8 md:py-8 bg-white"
-        style={{ border: "2px solid rgba(76,115,255,0.12)" }}
-      >
-        <div className="flex items-center justify-center min-h-[200px]">
-          <div className="text-red-500">Error: {error}</div>
-        </div>
-      </div>
-    );
-  }
 
   if (modules.length === 0) {
     return (
@@ -126,7 +50,7 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
         style={{ border: "2px solid rgba(76,115,255,0.12)" }}
       >
         <div className="flex items-center justify-center min-h-[200px]">
-          <div className="text-gray-500">No modules found</div>
+          <div className="text-gray-500">No modules available</div>
         </div>
       </div>
     );
@@ -143,9 +67,7 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
             className="text-2xl mb-1 text-[#4C73FF]"
             style={{ fontFamily: '"Fredoka", sans-serif' }}
           >
-            {selectedModule
-              ? `${selectedModule.code} ${selectedModule.name}`
-              : "Select a Module"}
+            {getModuleLabel(selectedModule)}
           </h2>
           {selectedModule?.description && (
             <p className="text-sm text-gray-600">
@@ -201,7 +123,7 @@ const ThreadMapSection: React.FC<ThreadMapSectionProps> = ({
                     fontFamily: '"Fredoka", sans-serif',
                   }}
                 >
-                  {module.code} {module.name}
+                  {getModuleLabel(module)}
                 </div>
                 {module.description && (
                   <div className="text-sm text-gray-600">

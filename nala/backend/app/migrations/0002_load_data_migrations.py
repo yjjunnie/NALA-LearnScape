@@ -10,6 +10,7 @@ def load_data(apps, schema_editor):
     Concept = apps.get_model("app", "Concept")
     Relationship = apps.get_model("app", "Relationship")
     Module = apps.get_model("app", "Module")
+    StudentQuizHistory = apps.get_model("app", "StudentQuizHistory")
 
     base_dir = os.path.dirname(__file__)
 
@@ -81,6 +82,39 @@ def load_data(apps, schema_editor):
                 id=rel_id,
                 defaults={"first_node": first_node, "second_node": second_node, "rs_type": rs_type}
             )
+
+    # === Load Quiz Questions ===
+    quiz_path = os.path.join(base_dir, "quiz_questions.csv")
+    quiz_data = []
+    if os.path.exists(quiz_path):
+        with open(quiz_path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                quiz_data.append({
+                    "question": row["question"],
+                    "options": {
+                        "A": row["option_A"],
+                        "B": row["option_B"],
+                        "C": row["option_C"],
+                        "D": row["option_D"],
+                    },
+                    "answer": row["answer"],
+                    "bloom_level": row["bloom_level"]
+                })
+
+    # === Assign Quiz to All Students ===
+    if quiz_data:
+        module = Module.objects.first()  # or pick specific module if you want
+        for student in Student.objects.all():
+            StudentQuizHistory.objects.create(
+                student=student,
+                module=module,
+                quiz_data=quiz_data,
+                student_answers={},  # empty at start
+                score=None,
+                completed=False,
+            )
+
 
 def unload_data(apps, schema_editor):
     Node = apps.get_model("app", "Node")

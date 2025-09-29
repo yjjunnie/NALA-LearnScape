@@ -117,4 +117,40 @@ class StudentNote(models.Model):
         ordering = ['-updated_at']
     
     def __str__(self):
-        return f"{self.student.username} - {self.topic.name}"
+        return f"{self.student.name} - {self.topic.name}"
+
+
+class StudentQuizHistory(models.Model):
+    id = models.AutoField(primary_key=True)
+    
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='quiz_histories')
+    module = models.ForeignKey(Module, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # The generated quiz (questions, options, correct answers, Bloom levels)
+    quiz_data = models.JSONField(default=dict)  
+    
+    # The student's submitted answers, stored as {"question_index": "selected_option", ...}
+    student_answers = models.JSONField(default=dict, blank=True)
+    
+    # Track score and completion status
+    score = models.FloatField(null=True, blank=True)
+    completed = models.BooleanField(default=False)
+
+    # Quiz Type (Weekly vs Custom)
+    quiz_type = models.CharField(
+        max_length=20, 
+        choices=[("weekly", "Weekly"), ("custom", "Custom")], 
+        default="weekly"
+    )
+
+    # Topics
+    topics_covered = models.ManyToManyField(Topic, related_name="quizzes", blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return (
+            f"QuizHistory: {self.student.name} - Module: "
+            f"{self.module.name if self.module else 'N/A'} ({self.quiz_type})"
+        )

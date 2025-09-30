@@ -16,6 +16,10 @@ type ScenarioMessage = Omit<Message, "id">;
 
 type ScenarioKey = keyof typeof CHAT_SCENARIOS;
 
+type BloomInitializeResponse = {
+  bloom_summary?: Record<string, Record<string, number>>;
+};
+
 type LearningPreferenceSnapshot = {
   breakdown: Record<string, number>;
   style: string | null;
@@ -363,6 +367,14 @@ export default function ChatbotDemo() {
 
         if (!bloomResponse.ok) {
           throw new Error("Bloom taxonomy classifier could not be triggered.");
+        }
+
+        const bloomPayload = (await bloomResponse
+          .json()
+          .catch(() => null)) as BloomInitializeResponse | null;
+
+        if (bloomPayload?.bloom_summary) {
+          setBloomSummary(bloomPayload.bloom_summary);
         }
 
         const learningPreferenceResponse = await fetch(

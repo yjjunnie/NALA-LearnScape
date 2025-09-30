@@ -145,8 +145,12 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           cursor: "pointer",
           borderStyle: "solid",
           borderWidth: 3,
-          borderColor: selected ? "#ff6b35" : "rgba(255,255,255,0.35)",
-          transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+          borderColor: selected ? "#ef4444" : "rgba(255,255,255,0.35)",
+          transition:
+            "box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease",
+          boxShadow: selected
+            ? "0 0 0 3px rgba(239, 68, 68, 0.45), 0 16px 30px rgba(15, 23, 42, 0.22)"
+            : "0 12px 22px rgba(15, 23, 42, 0.12)",
           boxSizing: "border-box",
           position: "relative",
           overflow: "hidden",

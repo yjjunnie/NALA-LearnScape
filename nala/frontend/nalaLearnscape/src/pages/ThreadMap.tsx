@@ -425,11 +425,12 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     () => location.pathname.toLowerCase().includes("threadmap"),
     [location.pathname]
   );
+  const hasSelection = Boolean(selectedNode || selectedEdge);
   const deleteSelectionLabel = selectedNode
     ? "Delete Selected Node"
     : selectedEdge
     ? "Delete Selected Edge"
-    : "";
+    : "Delete selection";
   const editToggleLabel = isEditMode
     ? "Switch to move mode"
     : "Switch to edit mode";
@@ -869,20 +870,22 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
         colorCache.set(node.id, nodeColor);
 
+        const isSelected = existing?.selected ?? false;
+
         return existing
           ? {
               ...existing,
               type: node.type === "topic" ? "topicNode" : "conceptNode",
               position: position ?? existing.position,
               data,
-              selected: selectedNode === node.id,
+              selected: isSelected,
             }
           : {
               id: node.id,
               type: node.type === "topic" ? "topicNode" : "conceptNode",
               position: position ?? { x: 0, y: 0 },
               data,
-              selected: selectedNode === node.id,
+              selected: isSelected,
             };
       });
 
@@ -930,7 +933,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         const baseRadius = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_GAP;
         const maxRadius =
           parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_MAX_OFFSET;
-        const radius = Math.min(maxRadius, baseRadius + count * 28);
+        const clusterLimit = Math.min(maxRadius, baseRadius + count * 28);
+        const radialRange = Math.max(0, clusterLimit - baseRadius);
+        const spacing = radialRange > 0 ? radialRange / Math.max(count, 1) : 0;
 
         sortedChildren.forEach((child, index) => {
           const ratio = count > 1 ? index / (count - 1) : 0.5;
@@ -939,8 +944,17 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             ((index % 2 === 0 ? 1 : -1) * angleSpread) /
             Math.max(count * 8, 16);
           const angle = baseAngle + ratio * angleSpread + jitter;
-          const x = parentPosition.x + Math.cos(angle) * radius;
-          const y = parentPosition.y + Math.sin(angle) * radius;
+          const baseDistance =
+            spacing > 0 ? baseRadius + spacing * (index + 0.5) : baseRadius;
+          const wobble = radialRange
+            ? Math.sin((index + 1) * 1.45) * radialRange * 0.12
+            : 0;
+          const targetRadius = Math.min(
+            maxRadius,
+            Math.max(baseRadius, baseDistance + wobble)
+          );
+          const x = parentPosition.x + Math.cos(angle) * targetRadius;
+          const y = parentPosition.y + Math.sin(angle) * targetRadius;
           child.position = { x, y };
         });
       });
@@ -953,16 +967,39 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     if (pendingUsed) {
       pendingNodePositionRef.current = null;
     }
-  }, [dbNodes, getLayoutCenter, moduleLookup, selectedNode, setNodes]);
+  }, [dbNodes, getLayoutCenter, moduleLookup, setNodes]);
+
+  useEffect(() => {
+    setNodes((prevNodes) => {
+      let hasChanges = false;
+      const nextNodes = prevNodes.map((node) => {
+        const nextSelected = selectedNode === node.id;
+        if (node.selected !== nextSelected) {
+          hasChanges = true;
+          return { ...node, selected: nextSelected };
+        }
+        return node;
+      });
+
+      return hasChanges ? nextNodes : prevNodes;
+    });
+  }, [selectedNode, setNodes]);
 
   // Sync edges with database relationships
   useEffect(() => {
     const hadEdges = edges.length > 0;
 
-    const getEdgeStyle = (edgeId: string) => ({
-      stroke: selectedEdge === edgeId ? "#ff6b6b" : "#b1b1b7",
-      strokeWidth: selectedEdge === edgeId ? 3 : 2,
-    });
+    const getEdgeStyle = (edgeId: string) => {
+      const isSelected = selectedEdge === edgeId;
+      return {
+        stroke: isSelected ? "#ef4444" : "#b1b1b7",
+        strokeWidth: isSelected ? 3 : 2,
+        filter: isSelected
+          ? "drop-shadow(0 0 6px rgba(239, 68, 68, 0.6))"
+          : "drop-shadow(0 0 2px rgba(15, 23, 42, 0.15))",
+        transition: "stroke 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease",
+      } as React.CSSProperties;
+    };
 
     const seenEdgeKeys = new Set<string>();
     const relationshipEdges: FlowEdge[] = dbRelationships.map((rel) => {
@@ -1139,7 +1176,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         : TOPIC_BASE_RADIUS;
       const baseRadius = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_GAP;
       const maxRadius = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_MAX_OFFSET;
-      const radius = Math.min(maxRadius, baseRadius + count * 28);
+      const clusterLimit = Math.min(maxRadius, baseRadius + count * 28);
+      const radialRange = Math.max(0, clusterLimit - baseRadius);
+      const spacing = radialRange > 0 ? radialRange / Math.max(count, 1) : 0;
 
       sortedChildren.forEach((child, index) => {
         const ratio = count > 1 ? index / (count - 1) : 0.5;
@@ -1147,7 +1186,16 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         const jitter =
           ((index % 2 === 0 ? 1 : -1) * angleSpread) / Math.max(count * 8, 16);
         const angle = baseAngle + ratio * angleSpread + jitter;
-        conceptLayoutTargets.set(String(child.id), { angle, radius });
+        const baseDistance =
+          spacing > 0 ? baseRadius + spacing * (index + 0.5) : baseRadius;
+        const wobble = radialRange
+          ? Math.sin((index + 1) * 1.45) * radialRange * 0.12
+          : 0;
+        const targetRadius = Math.min(
+          maxRadius,
+          Math.max(baseRadius, baseDistance + wobble)
+        );
+        conceptLayoutTargets.set(String(child.id), { angle, radius: targetRadius });
       });
     });
 
@@ -1180,9 +1228,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       d3
         .forceManyBody()
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "topic" ? -260 : -180
+          (d.data as NodeData).node_type === "topic" ? -180 : -120
         )
-        .distanceMax(460)
+        .distanceMax(360)
+        .distanceMin(90)
     );
 
     simulation.force(
@@ -1191,10 +1240,15 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         .forceCollide()
         .radius((d: any) => {
           const nodeData = d.data as NodeData;
-          return nodeData.node_type === "topic" ? 66 : 40;
+          const baseRadius =
+            nodeData.node_type === "topic"
+              ? TOPIC_BASE_RADIUS
+              : CONCEPT_BASE_RADIUS;
+          const padding = nodeData.node_type === "topic" ? 32 : 22;
+          return baseRadius + padding;
         })
-        .strength(0.95)
-        .iterations(5)
+        .strength(1)
+        .iterations(6)
     );
 
     simulation.force(
@@ -1824,14 +1878,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       const bounds = containerRef.current?.getBoundingClientRect();
       const widgetWidth = isTaxonomyCollapsed ? 280 : 360;
       const widgetHeight = isTaxonomyCollapsed ? 76 : 460;
-      const maxX = Math.max(
-        12,
-        (bounds?.width ?? window.innerWidth) - widgetWidth - 12
-      );
-      const maxY = Math.max(
-        12,
-        (bounds?.height ?? window.innerHeight) - widgetHeight - 12
-      );
+      const availableWidth = isStandaloneView
+        ? Math.max(window.innerWidth, bounds?.width ?? 0)
+        : bounds?.width ?? window.innerWidth;
+      const availableHeight = isStandaloneView
+        ? Math.max(window.innerHeight, bounds?.height ?? 0)
+        : bounds?.height ?? window.innerHeight;
+      const maxX = Math.max(12, availableWidth - widgetWidth - 12);
+      const maxY = Math.max(12, availableHeight - widgetHeight - 12);
 
       const deltaX = event.clientX - dragState.startX;
       const deltaY = event.clientY - dragState.startY;
@@ -1841,7 +1895,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
       setTaxonomyPosition({ x: nextX, y: nextY });
     },
-    [isTaxonomyCollapsed]
+    [isStandaloneView, isTaxonomyCollapsed]
   );
 
   const handleTaxonomyDragEnd = useCallback(() => {
@@ -1961,24 +2015,26 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
   useEffect(() => {
     const bounds = containerRef.current?.getBoundingClientRect();
-    if (!bounds) {
-      return;
-    }
-
     const widgetWidth = isTaxonomyCollapsed ? 280 : 360;
     const widgetHeight = isTaxonomyCollapsed ? 76 : 460;
+    const availableWidth = isStandaloneView
+      ? Math.max(window.innerWidth, bounds?.width ?? 0)
+      : bounds?.width ?? window.innerWidth;
+    const availableHeight = isStandaloneView
+      ? Math.max(window.innerHeight, bounds?.height ?? 0)
+      : bounds?.height ?? window.innerHeight;
+    const maxX = Math.max(12, availableWidth - widgetWidth - 12);
+    const maxY = Math.max(12, availableHeight - widgetHeight - 12);
+
     setTaxonomyPosition((prev) => {
-      const x = Math.max(12, Math.min(bounds.width - widgetWidth - 12, prev.x));
-      const y = Math.max(
-        12,
-        Math.min(bounds.height - widgetHeight - 12, prev.y)
-      );
+      const x = Math.max(12, Math.min(maxX, prev.x));
+      const y = Math.max(12, Math.min(maxY, prev.y));
       if (x === prev.x && y === prev.y) {
         return prev;
       }
       return { x, y };
     });
-  }, [isTaxonomyCollapsed, viewport]);
+  }, [isStandaloneView, isTaxonomyCollapsed, viewport]);
 
   useEffect(() => {
     if (!isStandaloneView) {
@@ -2342,31 +2398,38 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               >
                 {isEditMode ? <Pencil size={18} /> : <Hand size={18} />}
               </button>
-              {isEditMode && deleteSelectionLabel && (
+              {isEditMode && (
                 <button
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation();
                     handleDeleteSelection();
                   }}
-                  onMouseEnter={() => setIsDeleteHovered(true)}
-                  onMouseLeave={() => setIsDeleteHovered(false)}
+                  onMouseEnter={() => hasSelection && setIsDeleteHovered(true)}
+                  onMouseLeave={() => hasSelection && setIsDeleteHovered(false)}
                   style={{
                     width: controlButtonSize - 6,
                     height: controlButtonSize - 6,
                     borderRadius: "50%",
                     border: "none",
-                    background: isDeleteHovered ? "#b91c1c" : "#dc2626",
-                    color: "#fff",
+                    background: hasSelection
+                      ? isDeleteHovered
+                        ? "#b91c1c"
+                        : "#dc2626"
+                      : "#e2e8f0",
+                    color: hasSelection ? "#fff" : "#94a3b8",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 12px 26px rgba(220, 38, 38, 0.4)",
-                    cursor: "pointer",
+                    boxShadow: hasSelection
+                      ? "0 12px 26px rgba(220, 38, 38, 0.4)"
+                      : "none",
+                    cursor: hasSelection ? "pointer" : "not-allowed",
                     transition: "background 0.2s ease",
                   }}
                   aria-label={deleteSelectionLabel}
                   title={deleteSelectionLabel}
+                  disabled={!hasSelection}
                 >
                   <Trash2 size={18} />
                 </button>

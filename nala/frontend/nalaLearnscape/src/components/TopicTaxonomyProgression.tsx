@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Tooltip } from "@mui/material";
 
 interface TopicData {
@@ -186,15 +186,19 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
   };
 
   // Group data by module
-  const moduleData = rawData.reduce((acc, item) => {
-    if (!acc[item.module]) {
-      acc[item.module] = [];
-    }
-    acc[item.module].push(item);
-    return acc;
-  }, {});
+  const moduleData = useMemo(
+    () =>
+      rawData.reduce<Record<string, TopicData[]>>((acc, item) => {
+        if (!acc[item.module]) {
+          acc[item.module] = [];
+        }
+        acc[item.module].push(item);
+        return acc;
+      }, {}),
+    [rawData]
+  );
 
-  const modules = Object.keys(moduleData);
+  const modules = useMemo(() => Object.keys(moduleData), [moduleData]);
 
   // Get filtered data
   const filteredModules = selectedModule
@@ -226,11 +230,11 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
     setExpandedTopic(null); // collapse any topic when switching modules
   };
 
-  const handleTopicClick = (topicName) => {
+  const handleTopicClick = (topicName: string) => {
     setExpandedTopic(expandedTopic === topicName ? null : topicName);
   };
 
-  const handleFilterSelect = (module) => {
+  const handleFilterSelect = (module: string | null) => {
     setSelectedModule(module);
     setSelectedModuleDisplay(module);
     setShowFilterMenu(false);
@@ -281,11 +285,25 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
       setSelectedModule(matchedModule);
       setExpandedModule(matchedModule);
       setSelectedModuleDisplay(matchedModule);
-    } else {
-      setSelectedModule(null);
-      setExpandedModule(null);
-      setSelectedModuleDisplay(passedModule);
+      return;
     }
+
+    const numericValue = Number.parseInt(passedModule, 10);
+    const isNumeric = !Number.isNaN(numericValue);
+    if (isNumeric && modules.length > 0) {
+      const index = Math.max(0, Math.min(modules.length - 1, numericValue - 1));
+      const fallbackModule = modules[index];
+      if (fallbackModule) {
+        setSelectedModule(fallbackModule);
+        setExpandedModule(fallbackModule);
+        setSelectedModuleDisplay(fallbackModule);
+        return;
+      }
+    }
+
+    setSelectedModule(null);
+    setExpandedModule(null);
+    setSelectedModuleDisplay(passedModule);
   }, [modules, passedModule]);
 
   return (

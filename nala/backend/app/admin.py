@@ -26,7 +26,7 @@ class StudentQuizHistoryAdmin(admin.ModelAdmin):
 @admin.register(StudentBloomRecord)
 class StudentBloomRecordAdmin(admin.ModelAdmin):
     list_display = ('student', 'module')
-    readonly_fields = ('bloom_summary', 'last_processed_msg_id')
+    readonly_fields = ('last_processed_msg_id',)
 
 # Conversation
 @admin.register(Conversation)

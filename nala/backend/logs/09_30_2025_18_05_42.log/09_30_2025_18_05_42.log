@@ -1,0 +1,4 @@
+[ 2025-09-30 18:05:42,601 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-09-30 18:05:42,607 ] 97 werkzeug - INFO -  * Debugger PIN: 758-854-900
+[ 2025-09-30 18:19:27,503 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 18:19:27] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 18:22:07,114 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 18:22:07] "GET /student/student123/topics HTTP/1.1" 200 -

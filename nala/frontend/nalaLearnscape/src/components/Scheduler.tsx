@@ -1,16 +1,20 @@
 import React, { useState, useRef, useCallback } from "react";
 
+// API Integration
 const fetchTopicsWithPredictions = async (studentId) => {
   try {
     const response = await fetch(`http://localhost:5000/student/${studentId}/topics`);
     const data = await response.json();
     
     if (data.success) {
-      console.log(data.topics);
-      return data.topics; // Array of topics with predictions
+      return data.topics;
+    } else {
+      console.error('API Error:', data.message);
+      return null;
     }
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Fetch Error:', error);
+    return null;
   }
 };
 
@@ -19,8 +23,9 @@ interface ScheduleItem {
   id: string;
   title: string;
   start: number; // minutes from midnight
-  duration: number; // minutes
   color: string;
+  predictedHours?: number;
+  bloomsLevel?: string;
 }
 
 // Constants
@@ -42,11 +47,19 @@ const minutesToTime = (minutes: number): string => {
   return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
 };
 
+/*
 const formatDuration = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   if (hours > 0) return `${hours}h ${mins}m`;
   return `${mins}m`;
+};
+*/
+
+const formatDuration = (durationHours: number): string => {
+  const hours = Math.floor(durationHours);
+  const minutes = Math.round((durationHours - hours) * 60);
+  return `${hours}h ${minutes.toString().padStart(2, "0")}mins`;
 };
 
 // Snap to 15-minute intervals

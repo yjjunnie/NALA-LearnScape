@@ -29,11 +29,11 @@ def get_blooms_level(student_id, topic_id):
 
 def get_topic_difficulty(topic_id):
     dummy_difficulties = {
-        "1": 4,
-        "2": 3,
-        "3": 5,
-        "4": 2,
-        "5": 4
+        "1": 5,
+        "2": 5,
+        "3": 2,
+        "4": 6,
+        "5": 2
     }
     return dummy_difficulties.get(str(topic_id), 3)
 
@@ -41,17 +41,17 @@ def get_previous_grades(student_id, topic_id):
     """Get student's previous grades for this topic - DUMMY DATA for now"""
     dummy_grades = {
         "student123": {
-            "1": 85,
-            "2": 90,
-            "3": 75,
-            "4": 88,
-            "5": 82
+            "1": 66,
+            "2": 99,
+            "3": 99,
+            "4": 99,
+            "5": 99
         },
         "student456": {
-            "1": 78,
-            "2": 85,
+            "1": 33,
+            "2": 32,
             "3": 80,
-            "4": 92,
+            "4": 22,
             "5": 87
         }
     }

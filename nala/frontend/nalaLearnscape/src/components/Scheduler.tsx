@@ -258,7 +258,7 @@ const Scheduler: React.FC = () => {
     const fetchTopics = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/student/student123/topics');
+        const response = await fetch('http://localhost:5000/student/student456/topics');
         
         if (!response.ok) {
           throw new Error('Failed to fetch topics');

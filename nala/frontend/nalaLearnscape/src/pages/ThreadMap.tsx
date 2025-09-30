@@ -137,6 +137,42 @@ const getHighestBloomLevel = (
   return { label: null, value: null };
 };
 
+const normalizeBloomCounts = (
+  value: unknown
+): Record<string, number> | null => {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  if (
+    typeof record.bloom_levels === "object" &&
+    record.bloom_levels !== null
+  ) {
+    return normalizeBloomCounts(record.bloom_levels);
+  }
+
+  const counts: Record<string, number> = {};
+  let hasValues = false;
+
+  Object.entries(record).forEach(([key, raw]) => {
+    const numeric =
+      typeof raw === "number"
+        ? raw
+        : typeof raw === "string"
+        ? Number.parseFloat(raw)
+        : Number.NaN;
+
+    if (Number.isFinite(numeric)) {
+      counts[key] = numeric;
+      hasValues = true;
+    }
+  });
+
+  return hasValues ? counts : null;
+};
+
 const distancePointToSegment = (
   point: XYPosition,
   start: XYPosition,
@@ -718,12 +754,12 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             }
 
             const payload = (await response.json()) as {
-              bloom_summary?: Record<string, Record<string, number>>;
+              bloom_summary?: Record<string, unknown>;
             };
 
             const summary = payload?.bloom_summary ?? {};
-            Object.entries(summary).forEach(([topicId, counts]) => {
-              const safeCounts = counts ?? {};
+            Object.entries(summary).forEach(([topicId, rawCounts]) => {
+              const safeCounts = normalizeBloomCounts(rawCounts);
               const { label, value } = getHighestBloomLevel(safeCounts);
               combined[String(topicId)] = {
                 label,
@@ -2909,8 +2945,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             </div>
           </div>
         </div>
-          </div>
-        )}
       </div>
 
       {isStandaloneView && (

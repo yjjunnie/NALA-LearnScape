@@ -237,10 +237,22 @@ def generate_custom_quiz(request, module_id):
     Generate a custom quiz using LLM based on user's preferences.
     """
     try:
-        num_questions = request.data.get('num_questions', 10)
+        try:
+            num_questions = int(request.data.get('num_questions', 10))
+        except (TypeError, ValueError):
+            return Response({'error': 'num_questions must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if num_questions <= 0:
+            return Response({'error': 'num_questions must be greater than zero'}, status=status.HTTP_400_BAD_REQUEST)
+
         bloom_levels = request.data.get('bloom_levels', ['Remember', 'Understand'])
+        if isinstance(bloom_levels, str):
+            bloom_levels = [level.strip() for level in bloom_levels.split(',') if level.strip()]
+
         student_id = request.data.get('student_id')
         topic_ids = request.data.get('topic_ids', [])
+        if isinstance(topic_ids, str):
+            topic_ids = [tid.strip() for tid in topic_ids.split(',') if tid.strip()]
         
         if not student_id:
             return Response({'error': 'student_id is required in request body'}, status=status.HTTP_400_BAD_REQUEST)
@@ -267,9 +279,19 @@ def generate_custom_quiz(request, module_id):
                 bloom_levels=bloom_levels,
                 num_questions=questions_per_topic
             )
+
+            if not topic_questions:
+                continue
+
             for q in topic_questions:
                 q['topic_id'] = str(topic.id)  # store as string
             all_questions.extend(topic_questions)
+
+        if not all_questions:
+            return Response(
+                {'error': 'Unable to generate quiz questions at this time. Please try again later.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
         
         all_questions = all_questions[:num_questions]
         

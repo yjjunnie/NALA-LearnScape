@@ -137,27 +137,23 @@ export default function ModuleInfo() {
         {/* ThreadMap Column */}
         <div className="flex flex-col gap-6 w-full md:w-1/2 p-4">
           <div>
-            <h2 className="font-['Fredoka'] font-bold text-[#004aad] text-3xl mb-4 text-center">
+            <h2 className="font-['Fredoka'] font-bold text-[#004aad] text-3xl mb-[-28px] text-center">
               ThreadMap
             </h2>
-            <div
-              style={{
-                transform: "scale(0.75)",
-                transformOrigin: "top left",
-                width: "60vw",
-                height: "70vh",
-                overflow: "hidden",
-                boxShadow: "0 10px 12px rgba(0, 0, 0, 0.1)",
-              }}
-            >
+            <div className="flex justify-center md:justify-start">
+  <div
+    className="overflow-hidden shadow-md transform scale-75
+               w-[80vw] h-[60vh] md:w-[60vw] md:h-[70vh] rounded-2xl"
+  >
               <ThreadMap module_id={moduleId!} />
+            </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Learning Tools Section */}
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto mt-[-2]">
         <h2 className="font-['Fredoka'] font-bold text-[#004aad] text-3xl mb-6 text-center">
           Learning Tools
         </h2>

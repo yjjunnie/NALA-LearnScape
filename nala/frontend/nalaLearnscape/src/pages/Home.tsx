@@ -8,6 +8,7 @@ import ThreadMapSection, {
 import SideNav from "../components/SideNav";
 import LearningStyleOverview from "../components/LearningStyleOverview";
 import TopicTaxonomyProgression from "../components/TopicTaxonomyProgression";
+import NextSteps from "../components/NextSteps";
 
 const Home: React.FC = () => {
   const DEMO_STUDENT_ID = "1"; // For demo purposes
@@ -112,8 +113,8 @@ const Home: React.FC = () => {
           {/* Right column container */}
           <div className="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-end-3 flex flex-col gap-4 md:gap-6">
             <LearningStyleOverview />
-            <div className="flex-1 bg-gradient-to-br from-purple-100 to-blue-100 border border-purple-200/40 rounded-3xl p-6 flex items-center justify-center">
-              <TopicTaxonomyProgression passedModule="1" />
+            <div className="flex-1 min-h-[500px]">
+              <NextSteps studentId={DEMO_STUDENT_ID} />
             </div>
           </div>
 

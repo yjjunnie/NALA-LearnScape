@@ -95,7 +95,7 @@ const LearningStyleOverview = () => {
     >
       <div className="mb-4">
         <h2 className="text-sm font-bold font-family-body tracking-wider uppercase text-[#4C73FF] mb-1">
-          Current Learning Preference
+          Current Study Method
         </h2>
         <h1 className="font-bold font-['Fredoka'] text-3xl md:text-3xl text-[#4C73FF]">
           {currentStyle}

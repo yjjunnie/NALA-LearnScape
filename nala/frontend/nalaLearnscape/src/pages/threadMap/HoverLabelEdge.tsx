@@ -18,6 +18,7 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
     markerEnd,
     markerStart,
     data,
+    selected,
   } = props;
 
   const { getEdges, getNode } = useReactFlow<FlowNode, FlowEdge>();
@@ -146,6 +147,19 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
 
   const [isHovered, setIsHovered] = useState(false);
 
+  const showLabelFromNodeHover =
+    typeof data === "object" && data !== null
+      ? Boolean((data as { showLabel?: boolean }).showLabel)
+      : false;
+  const labelText =
+    typeof data?.label === "string"
+      ? data.label
+      : typeof data?.label === "number"
+      ? String(data.label)
+      : "";
+  const hasLabel = labelText.trim() !== "";
+  const shouldRenderLabel = hasLabel && (isHovered || showLabelFromNodeHover || Boolean(selected));
+
   return (
     <>
       <BaseEdge
@@ -153,28 +167,28 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
         style={style}
         markerEnd={markerEnd}
         markerStart={markerStart}
-        interactionWidth={28}
+        interactionWidth={48}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       />
-      {isHovered &&
-        typeof data?.label === "string" &&
-        data.label.trim() !== "" && (
+      {shouldRenderLabel && (
           <EdgeLabelRenderer>
             <div
               style={{
                 position: "absolute",
                 transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
                 pointerEvents: "none",
-                background: "rgba(0, 0, 0, 0.75)",
-                color: "#fff",
-                padding: "4px 8px",
-                borderRadius: "4px",
-                fontSize: "10px",
+                background: "rgba(15, 23, 42, 0.92)",
+                color: "#f8fafc",
+                padding: "6px 10px",
+                borderRadius: "6px",
+                fontSize: "11px",
                 whiteSpace: "nowrap",
+                boxShadow: "0 8px 16px rgba(15, 23, 42, 0.3)",
+                fontFamily: '"GlacialIndifference", sans-serif',
               }}
             >
-              {data.label}
+              {labelText}
             </div>
           </EdgeLabelRenderer>
         )}

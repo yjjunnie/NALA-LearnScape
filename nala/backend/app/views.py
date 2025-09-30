@@ -3,7 +3,17 @@ from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Module, Node, Relationship, Student, Topic, Concept, StudentNote, StudentQuizHistory
+from .models import (
+    Module,
+    Node,
+    Relationship,
+    Student,
+    Topic,
+    Concept,
+    StudentNote,
+    StudentQuizHistory,
+    StudentBloomRecord,
+)
 from .serializers import (
     StudentSerializer, ModuleSerializer, TopicSerializer, ConceptSerializer,
     ThreadMapTopicSerializer, ThreadMapConceptSerializer, ThreadMapRelationshipSerializer
@@ -15,7 +25,7 @@ from app.services.classifierjson import (
     percentage_from_json,
     calculate_time_spent_per_topic,
     calculate_taxonomy_progression_time,
-    classify_chathistory_by_topic_and_taxonomy
+    classify_chathistory_by_topic_and_taxonomy,
 )
 
 from app.services.blooms import (
@@ -644,6 +654,178 @@ def initialize_bloom_from_history(request):
             'bloom_summary': bloom_summary
         }, status=status.HTTP_200_OK)
         
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+def restore_bloom_summary(request):
+    """Restore a student's Bloom summary to a provided snapshot."""
+    try:
+        data = request.data
+        student_id = data.get('student_id')
+        module_id = data.get('module_id')
+        bloom_summary = data.get('bloom_summary')
+
+        if not student_id or not module_id:
+            return Response(
+                {'error': 'student_id and module_id are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not isinstance(bloom_summary, dict):
+            return Response(
+                {'error': 'A bloom_summary dictionary is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            student = Student.objects.get(id=student_id)
+        except Student.DoesNotExist:
+            return Response(
+                {'error': 'Student not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            module = Module.objects.get(id=module_id)
+        except Module.DoesNotExist:
+            return Response(
+                {'error': 'Module not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        record, _ = StudentBloomRecord.objects.get_or_create(student=student, module=module)
+        record.bloom_summary = bloom_summary
+        record.save()
+
+        return Response(
+            {
+                'message': 'Bloom summary restored successfully',
+                'bloom_summary': record.bloom_summary
+            },
+            status=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+def update_learning_preferences(request):
+    """Update a student's learning preference breakdown and primary style."""
+    try:
+        data = request.data
+        student_id = data.get('student_id')
+
+        if not student_id:
+            return Response(
+                {'error': 'student_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            student = Student.objects.get(id=student_id)
+        except Student.DoesNotExist:
+            return Response(
+                {'error': 'Student not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        chat_filepath = data.get('chat_filepath')
+        breakdown_payload = data.get('learning_style_breakdown') or data.get('breakdown')
+
+        breakdown = None
+        if chat_filepath:
+            results = learning_style_from_json(chat_filepath)
+            if not results or any('error' in result for result in results if isinstance(result, dict)):
+                return Response(
+                    {'error': 'Unable to classify learning style from chat history'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if isinstance(results, list):
+                breakdown = results[0] if results else {}
+            elif isinstance(results, dict):
+                breakdown = results
+
+        if breakdown is None:
+            if isinstance(breakdown_payload, dict):
+                breakdown = breakdown_payload
+            else:
+                return Response(
+                    {'error': 'Provide either chat_filepath or learning_style_breakdown'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        if not isinstance(breakdown, dict):
+            return Response(
+                {'error': 'learning_style_breakdown must be a dictionary'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        sanitized_breakdown = {}
+        for key, value in breakdown.items():
+            sanitized_key = str(key)
+            if isinstance(value, (int, float)):
+                sanitized_breakdown[sanitized_key] = float(value)
+            else:
+                try:
+                    sanitized_breakdown[sanitized_key] = float(value)
+                except (TypeError, ValueError):
+                    sanitized_breakdown[sanitized_key] = 0.0
+
+        style_code = data.get('learning_style')
+        valid_styles = {choice[0] for choice in Student.LEARNING_STYLE_CHOICES}
+        if style_code and style_code not in valid_styles:
+            style_code = None
+
+        if not style_code:
+            key_map = {
+                'Retrieval Practice': 'RETRIEVAL',
+                'Elaboration': 'ELABORATION',
+                'Concrete Examples': 'CONCRETE',
+                'Interleaving': 'INTERLEAVING',
+                'Dual Coding': 'DUAL_CODING',
+                'Spaced Practice': 'SPACED',
+            }
+
+            primary_key = None
+            highest_value = float('-inf')
+            for key, value in sanitized_breakdown.items():
+                if key == 'total_user_messages':
+                    continue
+                if key not in key_map:
+                    continue
+                if value > highest_value:
+                    highest_value = value
+                    primary_key = key
+
+            if primary_key:
+                style_code = key_map[primary_key]
+
+        if style_code:
+            student.learningStyle = style_code
+
+        student.learningStyleBreakdown = sanitized_breakdown
+        student.save()
+
+        return Response(
+            {
+                'student_id': student_id,
+                'learning_style': student.learningStyle,
+                'learning_style_display': student.get_learningStyle_display(),
+                'learning_style_breakdown': student.learningStyleBreakdown,
+            },
+            status=status.HTTP_200_OK
+        )
+
     except Exception as e:
         return Response(
             {'error': str(e)},

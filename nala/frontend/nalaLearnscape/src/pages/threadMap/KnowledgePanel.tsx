@@ -1,6 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
-
-import KnowledgeCapsule from "../KnowledgeCapsule";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 interface Concept {
   id: string;
@@ -41,57 +39,146 @@ const extractTextFromNode = (node: any): string => {
   return "";
 };
 
-const extractConceptNotes = (notes: string, conceptName: string): string[] => {
+interface KnowledgeBlock {
+  type: "heading" | "paragraph";
+  text: string;
+  tag?: string;
+}
+
+const parsePlainTextNotes = (notes: string): KnowledgeBlock[] => {
+  const lines = notes.split(/\r?\n/);
+  const blocks: KnowledgeBlock[] = [];
+  let paragraphBuffer: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraphBuffer.length === 0) {
+      return;
+    }
+
+    const paragraphText = paragraphBuffer.join(" ").trim();
+    paragraphBuffer = [];
+
+    if (paragraphText.length === 0) {
+      return;
+    }
+
+    blocks.push({ type: "paragraph", text: paragraphText });
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      flushParagraph();
+      continue;
+    }
+
+    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    if (headingMatch) {
+      flushParagraph();
+      const [, hashes, headingText] = headingMatch;
+      blocks.push({
+        type: "heading",
+        text: headingText.trim(),
+        tag: `h${Math.min(hashes.length, 6)}`,
+      });
+      continue;
+    }
+
+    paragraphBuffer.push(line);
+  }
+
+  flushParagraph();
+
+  return blocks;
+};
+
+const parseStructuredNotes = (notes: string): KnowledgeBlock[] => {
   try {
     const parsed = JSON.parse(notes);
     const children: any[] = parsed?.root?.children ?? [];
-    const target = normalize(conceptName);
-    const collected: string[] = [];
-    let capturing = false;
+
+    const blocks: KnowledgeBlock[] = [];
+
+    const addBlock = (block: KnowledgeBlock) => {
+      if (!block.text || block.text.trim().length === 0) {
+        return;
+      }
+      blocks.push({ ...block, text: block.text.trim() });
+    };
 
     for (const child of children) {
-      if (child.type === "heading") {
-        const headingText = normalize(extractTextFromNode(child));
-        if (headingText === target) {
-          capturing = true;
-          continue;
-        }
-
-        if (capturing) {
-          break;
-        }
+      if (!child) {
+        continue;
       }
 
-      if (capturing) {
-        const text = extractTextFromNode(child).trim();
-        if (text) {
-          collected.push(text);
-        }
+      if (child.type === "heading") {
+        addBlock({
+          type: "heading",
+          text: extractTextFromNode(child),
+          tag: typeof child.tag === "string" ? child.tag : undefined,
+        });
+      } else if (child.type === "paragraph") {
+        addBlock({
+          type: "paragraph",
+          text: extractTextFromNode(child),
+        });
+      } else if (Array.isArray(child.children)) {
+        child.children.forEach((nested: any) => {
+          if (nested?.type === "heading") {
+            addBlock({
+              type: "heading",
+              text: extractTextFromNode(nested),
+              tag: typeof nested.tag === "string" ? nested.tag : undefined,
+            });
+          } else if (nested?.type === "paragraph") {
+            addBlock({
+              type: "paragraph",
+              text: extractTextFromNode(nested),
+            });
+          }
+        });
       }
     }
 
-    return collected;
+    return blocks;
   } catch (error) {
-    console.error("Failed to parse notes for concept preview", error);
-    return [];
+    if (!(error instanceof SyntaxError)) {
+      console.warn("Failed to parse structured knowledge capsule notes", error);
+    }
+    return parsePlainTextNotes(notes);
   }
 };
 
-const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName }) => {
+const parseTopicNotes = (notes?: string | null): KnowledgeBlock[] => {
+  if (!notes) {
+    return [];
+  }
+
+  const trimmed = notes.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  const looksLikeJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+  return looksLikeJson
+    ? parseStructuredNotes(trimmed)
+    : parsePlainTextNotes(trimmed);
+};
+
+const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
+  topicId,
+  conceptName,
+}) => {
   const [topic, setTopic] = useState<Topic | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const blockRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const showConceptView = Boolean(conceptName);
 
   useEffect(() => {
-    if (!showConceptView) {
-      setTopic(null);
-      setLoading(false);
-      setError(null);
-      return;
-    }
-
     let ignore = false;
 
     const fetchTopic = async () => {
@@ -102,10 +189,9 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName })
         return;
       }
 
-      setLoading(true);
-      setError(null);
-
       try {
+        setLoading(true);
+        setError(null);
         const response = await fetch(
           `/api/student/${STUDENT_ID}/topic/${topicId}/notes/`
         );
@@ -136,7 +222,7 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName })
     return () => {
       ignore = true;
     };
-  }, [showConceptView, topicId]);
+  }, [topicId]);
 
   const focusedConcept = useMemo(() => {
     if (!conceptName || !topic?.concepts) {
@@ -150,15 +236,78 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName })
     );
   }, [conceptName, topic?.concepts]);
 
-  const conceptNotes = useMemo(() => {
-    if (!conceptName || !topic?.notes) {
-      return [];
+  const knowledgeBlocks = useMemo(() => {
+    const parsed = parseTopicNotes(topic?.notes);
+
+    if (parsed.length > 0) {
+      return parsed;
     }
 
-    return extractConceptNotes(topic.notes, conceptName);
-  }, [conceptName, topic?.notes]);
+    const fallback: KnowledgeBlock[] = [];
+
+    if (topic?.description) {
+      fallback.push({ type: "paragraph", text: topic.description });
+    }
+
+    if (topic?.concepts) {
+      topic.concepts.forEach((concept) => {
+        fallback.push({ type: "heading", text: concept.name, tag: "h3" });
+        if (concept.description) {
+          fallback.push({ type: "paragraph", text: concept.description });
+        }
+      });
+    }
+
+    return fallback;
+  }, [topic?.concepts, topic?.description, topic?.notes]);
+
+  const focusBlockIndex = useMemo(() => {
+    if (!showConceptView || !conceptName) {
+      return 0;
+    }
+
+    const target = normalize(conceptName);
+    const index = knowledgeBlocks.findIndex((block) => {
+      if (block.type !== "heading") {
+        return false;
+      }
+
+      return normalize(block.text) === target;
+    });
+
+    return index >= 0 ? index : 0;
+  }, [conceptName, knowledgeBlocks, showConceptView]);
+
+  useEffect(() => {
+    blockRefs.current = [];
+  }, [knowledgeBlocks]);
 
   const panelTitle = conceptName ?? topic?.name ?? "Knowledge capsule";
+
+  useEffect(() => {
+    if (!scrollContainerRef.current) {
+      return;
+    }
+    const container = scrollContainerRef.current;
+
+    if (showConceptView) {
+      const target = blockRefs.current[focusBlockIndex];
+      if (target) {
+        const top = target.offsetTop;
+        container.scrollTo({ top: Math.max(top - 12, 0), left: 0, behavior: "auto" });
+        return;
+      }
+    }
+
+    container.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [
+    conceptName,
+    focusBlockIndex,
+    knowledgeBlocks,
+    showConceptView,
+    topic?.id,
+    topicId,
+  ]);
 
   if (!topicId) {
     return (
@@ -178,7 +327,7 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName })
     );
   }
 
-  if (showConceptView && loading) {
+  if (loading) {
     return (
       <div
         style={{
@@ -195,7 +344,7 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName })
     );
   }
 
-  if (showConceptView && error) {
+  if (error) {
     return (
       <div
         style={{
@@ -209,7 +358,7 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName })
     );
   }
 
-  if (showConceptView && !topic) {
+  if (!topic) {
     return (
       <div
         style={{
@@ -223,20 +372,6 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName })
     );
   }
 
-  if (!showConceptView) {
-    return (
-      <div
-        style={{
-          height: "100%",
-          width: "100%",
-          overflow: "auto",
-        }}
-      >
-        <KnowledgeCapsule topicIdOverride={topicId} hideBackButton />
-      </div>
-    );
-  }
-
   return (
     <div
       style={{
@@ -246,6 +381,7 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName })
         gap: "16px",
         fontFamily: "'GlacialIndifference', sans-serif",
         color: "#0f172a",
+        height: "100%",
       }}
     >
       <div>
@@ -264,180 +400,121 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName })
         <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 700 }}>{panelTitle}</h3>
       </div>
 
-      {showConceptView ? (
+      {showConceptView && (
         <div
           style={{
-            background: "#f8fafc",
-            borderRadius: "12px",
-            border: "1px solid #e2e8f0",
+            background: "#fff",
+            borderRadius: "10px",
+            border: "1px solid #dbeafe",
             padding: "16px",
             display: "flex",
             flexDirection: "column",
-            gap: "12px",
-            overflowY: "auto",
-            maxHeight: "100%",
+            gap: "10px",
+            boxShadow: "0 12px 28px rgba(30, 64, 175, 0.12)",
           }}
         >
-          {focusedConcept ? (
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: "10px",
-                border: "1px solid #dbeafe",
-                padding: "14px",
-                boxShadow: "0 10px 24px rgba(148, 163, 184, 0.18)",
-              }}
-            >
-              <div style={{ fontWeight: 700, fontSize: "15px" }}>
-                Concept overview
-              </div>
-              {focusedConcept.description ? (
-                <p style={{ marginTop: "8px", fontSize: "13px", lineHeight: 1.6 }}>
-                  {focusedConcept.description}
-                </p>
-              ) : (
-                <p style={{ marginTop: "8px", fontSize: "13px", color: "#64748b" }}>
-                  No concept description available.
-                </p>
-              )}
-            </div>
-          ) : (
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: "10px",
-                border: "1px dashed #d6d3f0",
-                padding: "16px",
-                color: "#64748b",
-                fontStyle: "italic",
-              }}
-            >
-              This concept is not documented in the knowledge capsule yet.
-            </div>
-          )}
-
-          {conceptNotes.length > 0 && (
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: "10px",
-                border: "1px solid #cbd5f5",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-              }}
-            >
-              <div style={{ fontWeight: 700, fontSize: "14px" }}>
-                Notes from knowledge capsule
-              </div>
-              {conceptNotes.map((paragraph, index) => (
-                <p key={index} style={{ margin: 0, fontSize: "13px", lineHeight: 1.6 }}>
-                  {paragraph}
-                </p>
-              ))}
-            </div>
-          )}
-
-          {conceptNotes.length === 0 && focusedConcept && (
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: "10px",
-                border: "1px dashed #d6d3f0",
-                padding: "16px",
-                color: "#64748b",
-                fontSize: "12.5px",
-              }}
-            >
-              The notes for this concept are empty. Visit the full knowledge capsule to add
-              more details.
-            </div>
-          )}
-        </div>
-      ) : (
-        <div
-          style={{
-            background: "#f8fafc",
-            borderRadius: "12px",
-            border: "1px solid #e2e8f0",
-            padding: "16px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-            overflowY: "auto",
-            maxHeight: "100%",
-          }}
-        >
-          {topic.description && (
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: "10px",
-                border: "1px solid #dbeafe",
-                padding: "16px",
-                boxShadow: "0 10px 24px rgba(148, 163, 184, 0.18)",
-                fontSize: "13px",
-                lineHeight: 1.6,
-              }}
-            >
-              {topic.description}
-            </div>
-          )}
-
-          {topic.concepts && topic.concepts.length > 0 && (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
-              <div style={{ fontWeight: 700, fontSize: "14px" }}>
-                Concepts in this topic
-              </div>
-              {topic.concepts.map((concept) => (
-                <div
-                  key={concept.id}
-                  style={{
-                    background: "#fff",
-                    borderRadius: "10px",
-                    border: "1px solid #e2e8f0",
-                    padding: "14px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "6px",
-                  }}
-                >
-                  <div style={{ fontWeight: 600 }}>{concept.name}</div>
-                  <div style={{ fontSize: "12.5px", color: "#475569" }}>
-                    {concept.description || "No description yet."}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {!topic.description && (!topic.concepts || topic.concepts.length === 0) && (
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: "10px",
-                border: "1px dashed #d6d3f0",
-                padding: "16px",
-                color: "#64748b",
-                fontStyle: "italic",
-                fontSize: "12.5px",
-              }}
-            >
-              This topic has not been documented yet.
-            </div>
-          )}
+          <div style={{ fontSize: "17px", fontWeight: 700 }}>
+            {focusedConcept?.name ?? conceptName}
+          </div>
+          <div style={{ fontSize: "13px", color: "#1e3a8a", fontWeight: 600 }}>
+            Concept focus
+          </div>
+          <div style={{ fontSize: "13px", lineHeight: 1.6 }}>
+            {focusedConcept?.description ||
+              "No description available for this concept."}
+          </div>
         </div>
       )}
+
+      <div
+        style={{
+          background: "#f8fafc",
+          borderRadius: "12px",
+          border: "1px solid #e2e8f0",
+          padding: "16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "14px",
+          overflowY: "auto",
+          maxHeight: "100%",
+        }}
+        ref={scrollContainerRef}
+      >
+        {knowledgeBlocks.length === 0 && (
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "10px",
+              border: "1px dashed #d6d3f0",
+              padding: "16px",
+              color: "#64748b",
+              fontSize: "12.5px",
+              fontStyle: "italic",
+            }}
+          >
+            This knowledge capsule does not have any saved notes yet.
+          </div>
+        )}
+
+        {knowledgeBlocks.map((block, index) => {
+          const isFocus = showConceptView && index === focusBlockIndex;
+
+          if (block.type === "heading") {
+            return (
+              <div
+                key={`${block.type}-${index}-${block.text}`}
+                ref={(element) => {
+                  blockRefs.current[index] = element;
+                }}
+                style={{
+                  padding: isFocus ? "14px 12px" : "0",
+                  borderRadius: isFocus ? "10px" : undefined,
+                  background: isFocus ? "rgba(191, 219, 254, 0.35)" : undefined,
+                  border: isFocus ? "1px solid rgba(59, 130, 246, 0.35)" : undefined,
+                  scrollMarginTop: "12px",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize:
+                      block.tag === "h1"
+                        ? "22px"
+                        : block.tag === "h2"
+                        ? "20px"
+                        : "18px",
+                    fontWeight: 700,
+                    color: isFocus ? "#1d4ed8" : "#0f172a",
+                  }}
+                >
+                  {block.text}
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={`${block.type}-${index}-${block.text.slice(0, 24)}`}
+              ref={(element) => {
+                blockRefs.current[index] = element;
+              }}
+              style={{
+                fontSize: "13px",
+                lineHeight: 1.6,
+                color: "#1f2937",
+                background: isFocus ? "rgba(191, 219, 254, 0.15)" : undefined,
+                borderRadius: isFocus ? "8px" : undefined,
+                padding: isFocus ? "10px 12px" : "0",
+                scrollMarginTop: "12px",
+              }}
+            >
+              {block.text}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
 
 export default KnowledgePanel;
-

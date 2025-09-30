@@ -110,6 +110,12 @@ const BLOOM_LEVEL_MAP = BLOOM_LEVEL_ORDER.reduce<Record<string, number>>(
   {}
 );
 
+type TopicBloomSummary = {
+  label: string | null;
+  value: number | null;
+  counts: Record<string, number> | null;
+};
+
 const getHighestBloomLevel = (
   counts?: Record<string, number> | null
 ): { label: string | null; value: number | null } => {
@@ -232,14 +238,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     visible: false,
   });
   const [topicBloomLevels, setTopicBloomLevels] = useState<
-    Record<
-      string,
-      {
-        label: string | null;
-        value: number | null;
-        counts: Record<string, number> | null;
-      }
-    >
+    Record<string, TopicBloomSummary>
   >({});
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -373,18 +372,33 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       return true;
     });
   }, [edgeTypeFilter, edges, nodes, showConceptParentEdges]);
-  const bloomModuleIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (activeModuleId && activeModuleId.trim().length > 0) {
-      ids.add(String(activeModuleId));
-    }
+  const topicBloomRequests = useMemo(() => {
+    const seen = new Set<string>();
+    const requests: { moduleId: string; topicId: string }[] = [];
+
     dbNodes.forEach((node) => {
-      if (node.module_id) {
-        ids.add(String(node.module_id));
+      if (node.type !== "topic") {
+        return;
       }
+
+      const moduleId = String(node.module_id ?? "").trim();
+      const topicId = String(node.id ?? "").trim();
+
+      if (!moduleId || !topicId) {
+        return;
+      }
+
+      const key = `${moduleId}::${topicId}`;
+      if (seen.has(key)) {
+        return;
+      }
+
+      seen.add(key);
+      requests.push({ moduleId, topicId });
     });
-    return Array.from(ids).sort((a, b) => a.localeCompare(b));
-  }, [activeModuleId, dbNodes]);
+
+    return requests;
+  }, [dbNodes]);
   const activeModuleInfo = activeModuleId
     ? moduleLookup[activeModuleId]
     : undefined;
@@ -706,31 +720,26 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, [popupSizing]);
 
   useEffect(() => {
-    if (bloomModuleIds.length === 0) {
+    if (topicBloomRequests.length === 0) {
       setTopicBloomLevels({});
       return;
     }
 
     let isMounted = true;
-    const controllers = bloomModuleIds.map(() => new AbortController());
+    const controllers = topicBloomRequests.map(() => new AbortController());
 
     const fetchSummaries = async () => {
-      const combined: Record<
-        string,
-        {
-          label: string | null;
-          value: number | null;
-          counts: Record<string, number> | null;
-        }
-      > = {};
+      const combined: Record<string, TopicBloomSummary> = {};
 
       await Promise.all(
-        bloomModuleIds.map(async (moduleId, index) => {
+        topicBloomRequests.map(async ({ moduleId, topicId }, index) => {
           const controller = controllers[index];
+
           try {
             const params = new URLSearchParams({
               student_id: STUDENT_ID,
               module_id: moduleId,
+              topic_id: topicId,
             });
             const response = await fetch(
               `/api/bloom/summary/?${params.toString()}`,
@@ -739,7 +748,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
             if (!response.ok) {
               throw new Error(
-                `Failed to fetch Bloom summary for module ${moduleId}`
+                `Failed to fetch Bloom summary for topic ${topicId} in module ${moduleId}`
               );
             }
 
@@ -747,21 +756,22 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               bloom_summary?: Record<string, unknown>;
             };
 
-            const summary = payload?.bloom_summary ?? {};
-            Object.entries(summary).forEach(([topicId, rawCounts]) => {
-              const safeCounts = normalizeBloomCounts(rawCounts);
-              const { label, value } = getHighestBloomLevel(safeCounts);
-              combined[String(topicId)] = {
-                label,
-                value,
-                counts: safeCounts,
-              };
-            });
+            const safeCounts = normalizeBloomCounts(payload?.bloom_summary);
+            const { label, value } = getHighestBloomLevel(safeCounts);
+
+            combined[String(topicId)] = {
+              label,
+              value,
+              counts: safeCounts,
+            };
           } catch (error) {
             if (error instanceof DOMException && error.name === "AbortError") {
               return;
             }
-            console.error("Failed to load Bloom summary for thread map", error);
+            console.error(
+              `Failed to load Bloom summary for topic ${topicId} in module ${moduleId}`,
+              error
+            );
           }
         })
       );
@@ -770,7 +780,18 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         return;
       }
 
-      setTopicBloomLevels(combined);
+      setTopicBloomLevels(() => {
+        const next: Record<string, TopicBloomSummary> = {};
+        topicBloomRequests.forEach(({ topicId }) => {
+          next[String(topicId)] =
+            combined[String(topicId)] ?? {
+              label: null,
+              value: null,
+              counts: null,
+            };
+        });
+        return next;
+      });
     };
 
     fetchSummaries();
@@ -779,7 +800,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       isMounted = false;
       controllers.forEach((controller) => controller.abort());
     };
-  }, [bloomModuleIds]);
+  }, [topicBloomRequests]);
 
   useEffect(() => {
     if (interactionMode !== "cursor") {

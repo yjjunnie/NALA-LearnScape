@@ -997,7 +997,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         filter: isSelected
           ? "drop-shadow(0 0 6px rgba(239, 68, 68, 0.6))"
           : "drop-shadow(0 0 2px rgba(15, 23, 42, 0.15))",
-        transition: "stroke 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease",
+        transition:
+          "stroke 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease",
       } as React.CSSProperties;
     };
 
@@ -1195,7 +1196,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           maxRadius,
           Math.max(baseRadius, baseDistance + wobble)
         );
-        conceptLayoutTargets.set(String(child.id), { angle, radius: targetRadius });
+        conceptLayoutTargets.set(String(child.id), {
+          angle,
+          radius: targetRadius,
+        });
       });
     });
 

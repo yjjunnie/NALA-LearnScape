@@ -29,17 +29,7 @@ import type {
   OnNodeDrag,
 } from "@xyflow/react";
 import * as d3 from "d3";
-import {
-  ChevronDown,
-  ChevronUp,
-  Hand,
-  Info,
-  Maximize2,
-  Minimize2,
-  Pencil,
-  Trash2,
-  Link2,
-} from "lucide-react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import "@xyflow/react/dist/style.css";
 import "../App.css";
@@ -60,7 +50,6 @@ import ConceptNode from "./threadMap/ConceptNode";
 import NodeInputModal from "./threadMap/NodeInputModal";
 import HoverLabelEdge from "./threadMap/HoverLabelEdge";
 import AddNodeHover from "./threadMap/AddNodeHover";
-import TopicTaxonomyProgression from "../components/TopicTaxonomyProgression";
 import { useThreadMapData } from "./threadMap/hooks/useThreadMapData";
 import {
   CLUSTER_GAP,
@@ -70,6 +59,9 @@ import {
 } from "./threadMap/constants";
 import EdgeInputModal from "./threadMap/EdgeInputModal";
 import KnowledgePanel from "./threadMap/KnowledgePanel";
+import ThreadMapControls from "./threadMap/ThreadMapControls";
+import TaxonomyWidget from "./threadMap/TaxonomyWidget";
+import KnowledgePopup from "./threadMap/KnowledgePopup";
 import {
   adjustNodePositions,
   getNodeLayoutRadius,
@@ -102,6 +94,26 @@ interface ThreadMapProps {
 }
 
 const LONG_PRESS_MS = 320;
+
+const distancePointToSegment = (
+  point: XYPosition,
+  start: XYPosition,
+  end: XYPosition
+) => {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  if (dx === 0 && dy === 0) {
+    return Math.hypot(point.x - start.x, point.y - start.y);
+  }
+
+  const t =
+    ((point.x - start.x) * dx + (point.y - start.y) * dy) /
+    (dx * dx + dy * dy);
+  const clampedT = Math.max(0, Math.min(1, t));
+  const closestX = start.x + clampedT * dx;
+  const closestY = start.y + clampedT * dy;
+  return Math.hypot(point.x - closestX, point.y - closestY);
+};
 
 const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   const [searchParams] = useSearchParams();
@@ -181,6 +193,35 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     [location.pathname]
   );
   const hasSelection = Boolean(selectedNode || selectedEdge);
+  const createEdgeStyle = useCallback(
+    (isSelected: boolean): React.CSSProperties => ({
+      stroke: isSelected ? "#ef4444" : "#b1b1b7",
+      strokeWidth: isSelected ? 3 : 2,
+      filter: isSelected
+        ? "drop-shadow(0 0 6px rgba(239, 68, 68, 0.6))"
+        : "drop-shadow(0 0 2px rgba(15, 23, 42, 0.15))",
+      transition: "stroke 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease",
+    }),
+    []
+  );
+  const setEdgeSelection = useCallback(
+    (edgeId: string | null) => {
+      setEdges((prevEdges) =>
+        prevEdges.map((edge) => {
+          const isSelected = edge.id === edgeId;
+          return {
+            ...edge,
+            selected: isSelected,
+            style: createEdgeStyle(isSelected),
+          };
+        })
+      );
+    },
+    [createEdgeStyle, setEdges]
+  );
+  const clearEdgeSelection = useCallback(() => {
+    setEdgeSelection(null);
+  }, [setEdgeSelection]);
   const deleteSelectionLabel = selectedNode
     ? "Delete Selected Node"
     : selectedEdge
@@ -454,23 +495,43 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     }
 
     if (popupNode.data?.node_type === "concept") {
-      return popupNode.data.parent_node_id
-        ? String(popupNode.data.parent_node_id)
-        : undefined;
+      if (popupNode.data.parent_node_id) {
+        return String(popupNode.data.parent_node_id);
+      }
+
+      const conceptId = String(
+        popupNode.data.node_id ?? popupNode.id ?? ""
+      );
+      const conceptRecord = dbNodes.find(
+        (node) => String(node.id) === conceptId
+      );
+      if (conceptRecord?.related_topic) {
+        return String(conceptRecord.related_topic);
+      }
     }
 
     return undefined;
-  }, [popupNode]);
+  }, [dbNodes, popupNode]);
 
   const popupConceptName = useMemo(() => {
     if (!popupNode) {
       return undefined;
     }
 
-    return popupNode.data?.node_type === "concept"
-      ? popupNode.data?.node_name
-      : undefined;
-  }, [popupNode]);
+    if (popupNode.data?.node_type !== "concept") {
+      return undefined;
+    }
+
+    if (popupNode.data?.node_name) {
+      return popupNode.data.node_name;
+    }
+
+    const conceptId = String(popupNode.data.node_id ?? popupNode.id ?? "");
+    const conceptRecord = dbNodes.find(
+      (node) => String(node.id) === conceptId
+    );
+    return conceptRecord?.name;
+  }, [dbNodes, popupNode]);
 
   const popupLayout = useMemo(() => {
     if (!activePopup || !reactFlowInstance || !containerRef.current)
@@ -772,19 +833,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   useEffect(() => {
     const hadEdges = edges.length > 0;
 
-    const getEdgeStyle = (edgeId: string) => {
-      const isSelected = selectedEdge === edgeId;
-      return {
-        stroke: isSelected ? "#ef4444" : "#b1b1b7",
-        strokeWidth: isSelected ? 3 : 2,
-        filter: isSelected
-          ? "drop-shadow(0 0 6px rgba(239, 68, 68, 0.6))"
-          : "drop-shadow(0 0 2px rgba(15, 23, 42, 0.15))",
-        transition:
-          "stroke 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease",
-      } as React.CSSProperties;
-    };
-
     const seenEdgeKeys = new Set<string>();
     const relationshipEdges: FlowEdge[] = dbRelationships.map((rel) => {
       const source = String(rel.first_node);
@@ -792,15 +840,17 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       seenEdgeKeys.add(`${source}->${target}`);
       seenEdgeKeys.add(`${target}->${source}`);
       const rsType = rel.rs_type?.trim() ?? "";
+      const edgeId = String(rel.id);
+      const isSelected = selectedEdge === edgeId;
 
       return {
-        id: String(rel.id),
+        id: edgeId,
         source,
         target,
         type: "hoverLabel",
-        style: getEdgeStyle(String(rel.id)),
+        style: createEdgeStyle(isSelected),
         animated: false,
-        selected: selectedEdge === String(rel.id),
+        selected: isSelected,
         selectable: true,
         data: { label: rsType, rsType },
       };
@@ -828,7 +878,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         source: parentId,
         target: conceptId,
         type: "hoverLabel",
-        style: getEdgeStyle(edgeId),
+        style: createEdgeStyle(false),
         animated: false,
         selectable: false,
         data: { label: "" },
@@ -842,7 +892,13 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     if (!hadEdges && newEdges.length > 0) {
       shouldRunSimulationRef.current = true;
     }
-  }, [dbNodes, dbRelationships, selectedEdge, setEdges]);
+  }, [
+    createEdgeStyle,
+    dbNodes,
+    dbRelationships,
+    selectedEdge,
+    setEdges,
+  ]);
 
   // Clean up active popup if node is deleted
   useEffect(() => {
@@ -1407,6 +1463,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         return;
       }
 
+      setSelectedEdge(null);
+      setEdgeSelection(null);
       setPendingEdge({
         firstNodeId: params.source,
         secondNodeId: params.target,
@@ -1415,7 +1473,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       setIsEdgeModalOpen(true);
       setIsAddingEdge(false);
     },
-    [isEditMode]
+    [isEditMode, setEdgeSelection]
   );
 
   // Handle node click - only select, don't trigger layout
@@ -1440,13 +1498,15 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       if (!isEditMode) {
         setSelectedNode(null);
         setSelectedEdge(null);
+        clearEdgeSelection();
         return;
       }
 
       setSelectedNode((prev) => (prev === node.id ? null : node.id));
       setSelectedEdge(null); // Deselect edge when selecting node
+      clearEdgeSelection();
     },
-    [interactionMode, isEditMode]
+    [clearEdgeSelection, interactionMode, isEditMode]
   );
 
   // Handle edge click - select edge for deletion
@@ -1463,10 +1523,12 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
       setIsEdgeModalOpen(false);
       setPendingEdge(null);
-      setSelectedEdge((prev) => (prev === edge.id ? null : edge.id));
+      const nextSelectedEdge = selectedEdge === edge.id ? null : edge.id;
+      setSelectedEdge(nextSelectedEdge);
+      setEdgeSelection(nextSelectedEdge);
       setSelectedNode(null); // Deselect node when selecting edge
     },
-    [interactionMode, isEditMode]
+    [interactionMode, isEditMode, selectedEdge, setEdgeSelection]
   );
 
   const handleMove = useCallback<OnMove>((_, nextViewport) => {
@@ -1480,7 +1542,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     setIsAddingEdge(false);
     setIsEdgeModalOpen(false);
     setPendingEdge(null);
-  }, []);
+    clearEdgeSelection();
+  }, [clearEdgeSelection]);
 
   const handleExpandThreadmap = useCallback(() => {
     if (!activeModuleId) {
@@ -1525,13 +1588,126 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         y: event.clientY - bounds.top,
       };
 
-      const isTooCloseToNode = nodes.some((node) => {
-        const nodeSize = node.data.node_type === "topic" ? 120 : 70;
-        const distance = Math.sqrt(
-          Math.pow(flowPosition.x - node.position.x, 2) +
-            Math.pow(flowPosition.y - node.position.y, 2)
+      type ExtendedNode = FlowNode & {
+        measured?: { width?: number; height?: number };
+        positionAbsolute?: XYPosition | null;
+      };
+
+      const getNodeMetrics = (node?: ExtendedNode | null) => {
+        if (!node) {
+          return null;
+        }
+
+        const measured = node.measured;
+        const width = (measured?.width ?? node.width ?? 0) as number;
+        const height = (measured?.height ?? node.height ?? 0) as number;
+        const position = (node.positionAbsolute ?? node.position ?? {
+          x: 0,
+          y: 0,
+        }) as XYPosition;
+        const centerX = position.x + width / 2;
+        const centerY = position.y + height / 2;
+        const nodeData = (node.data ?? null) as NodeData | null;
+        const measuredRadius = Math.min(width, height) / 2;
+        const fallbackRadius = nodeData?.node_type === "topic"
+          ? TOPIC_BASE_RADIUS
+          : CONCEPT_BASE_RADIUS;
+        const radius = Math.max(measuredRadius, fallbackRadius);
+
+        return { centerX, centerY, width, height, position, radius };
+      };
+
+      const getCircleAnchor = (
+        metrics: ReturnType<typeof getNodeMetrics>,
+        otherMetrics: ReturnType<typeof getNodeMetrics>
+      ) => {
+        if (!metrics || !otherMetrics) {
+          return null;
+        }
+
+        const dx = otherMetrics.centerX - metrics.centerX;
+        const dy = otherMetrics.centerY - metrics.centerY;
+        const distance = Math.hypot(dx, dy);
+
+        if (!distance) {
+          return { x: metrics.centerX, y: metrics.centerY };
+        }
+
+        const ratio = metrics.radius / distance;
+        return {
+          x: metrics.centerX + dx * ratio,
+          y: metrics.centerY + dy * ratio,
+        };
+      };
+
+      const pointerPadding = 24;
+      const allEdges = instance.getEdges();
+
+      const isOverNode = nodes.some((node) => {
+        const nodeInternal = instance.getNode(node.id) as ExtendedNode | null;
+        const metrics = getNodeMetrics(nodeInternal);
+        if (!metrics) {
+          return false;
+        }
+
+        return (
+          flowPosition.x >= metrics.position.x - pointerPadding &&
+          flowPosition.x <= metrics.position.x + metrics.width + pointerPadding &&
+          flowPosition.y >= metrics.position.y - pointerPadding &&
+          flowPosition.y <= metrics.position.y + metrics.height + pointerPadding
         );
-        return distance < nodeSize;
+      });
+
+      const isNearEdge = edges.some((edge) => {
+        const sourceNode = instance.getNode(edge.source) as ExtendedNode | null;
+        const targetNode = instance.getNode(edge.target) as ExtendedNode | null;
+        const sourceMetrics = getNodeMetrics(sourceNode);
+        const targetMetrics = getNodeMetrics(targetNode);
+        if (!sourceMetrics || !targetMetrics) {
+          return false;
+        }
+
+        const rawSource =
+          getCircleAnchor(sourceMetrics, targetMetrics) ??
+          { x: sourceMetrics.centerX, y: sourceMetrics.centerY };
+        const rawTarget =
+          getCircleAnchor(targetMetrics, sourceMetrics) ??
+          { x: targetMetrics.centerX, y: targetMetrics.centerY };
+
+        const parallelEdges = allEdges.filter(
+          (candidate) =>
+            (candidate.source === edge.source &&
+              candidate.target === edge.target) ||
+            (candidate.source === edge.target &&
+              candidate.target === edge.source)
+        );
+        const parallelIndex = parallelEdges.findIndex(
+          (candidate) => candidate.id === edge.id
+        );
+        const offsetStep = 26;
+        const offsetAmount =
+          parallelEdges.length > 1
+            ? (parallelIndex - (parallelEdges.length - 1) / 2) * offsetStep
+            : 0;
+
+        const dx = rawTarget.x - rawSource.x;
+        const dy = rawTarget.y - rawSource.y;
+        const length = Math.hypot(dx, dy) || 1;
+        const offsetX = (-dy / length) * offsetAmount;
+        const offsetY = (dx / length) * offsetAmount;
+
+        const startPoint = {
+          x: rawSource.x + offsetX,
+          y: rawSource.y + offsetY,
+        };
+        const endPoint = {
+          x: rawTarget.x + offsetX,
+          y: rawTarget.y + offsetY,
+        };
+
+        const distance = distancePointToSegment(flowPosition, startPoint, endPoint);
+        const edgeBuffer = 32;
+        return distance <= edgeBuffer;
       });
 
       const canAddNode = Boolean(activeModuleId);
@@ -1539,10 +1715,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       setHoverNode({
         flowPosition,
         screenPosition,
-        visible: !isTooCloseToNode && canAddNode,
+        visible: !isOverNode && !isNearEdge && canAddNode,
       });
     },
-    [activeModuleId, interactionMode, nodes]
+    [activeModuleId, edges, interactionMode, nodes]
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -1718,29 +1894,37 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   const deleteSelectedNode = useCallback(() => {
     if (!selectedNode || !isEditMode) return;
 
-    setDbNodes((prev) => prev.filter((node) => node.id !== selectedNode));
+    setDbNodes((prev) =>
+      prev.filter((node) => String(node.id) !== String(selectedNode))
+    );
     setDbRelationships((prev) =>
       prev.filter(
         (rel) =>
-          rel.first_node !== selectedNode && rel.second_node !== selectedNode
+          String(rel.first_node) !== String(selectedNode) &&
+          String(rel.second_node) !== String(selectedNode)
       )
     );
     setSelectedNode(null);
+    setSelectedEdge(null);
     setActivePopup((prev) => (prev?.nodeId === selectedNode ? null : prev));
     setIsEdgeModalOpen(false);
     setPendingEdge(null);
+    clearEdgeSelection();
     shouldRunSimulationRef.current = true;
-  }, [isEditMode, selectedNode]);
+  }, [clearEdgeSelection, isEditMode, selectedNode]);
 
   const deleteSelectedEdge = useCallback(() => {
     if (!selectedEdge || !isEditMode) return;
 
-    setDbRelationships((prev) => prev.filter((rel) => rel.id !== selectedEdge));
+    setDbRelationships((prev) =>
+      prev.filter((rel) => String(rel.id) !== String(selectedEdge))
+    );
     setSelectedEdge(null);
     setIsEdgeModalOpen(false);
     setPendingEdge(null);
+    clearEdgeSelection();
     shouldRunSimulationRef.current = true;
-  }, [isEditMode, selectedEdge]);
+  }, [clearEdgeSelection, isEditMode, selectedEdge]);
 
   const handleInfoToggle = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -1764,8 +1948,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     } else if (selectedEdge) {
       deleteSelectedEdge();
     }
+    clearEdgeSelection();
     setIsDeleteHovered(false);
   }, [
+    clearEdgeSelection,
     deleteSelectedEdge,
     deleteSelectedNode,
     isEditMode,
@@ -1908,14 +2094,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     setHoverNode((prev) => ({ ...prev, visible: false }));
   }, [hoverNode.flowPosition]);
 
-  const handleOpenEdgeModal = useCallback(
-    (defaults?: { firstNodeId?: string; secondNodeId?: string }) => {
-      setPendingEdge(defaults ?? {});
-      setIsEdgeModalOpen(true);
-    },
-    []
-  );
-
   const handleCloseEdgeModal = useCallback(() => {
     setIsEdgeModalOpen(false);
     setPendingEdge(null);
@@ -1945,13 +2123,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       });
 
       setSelectedEdge(createdId || null);
+      setEdgeSelection(createdId || null);
       setSelectedNode(null);
       setIsEdgeModalOpen(false);
       setPendingEdge(null);
       setIsAddingEdge(false);
       shouldRunSimulationRef.current = true;
     },
-    [setDbRelationships]
+    [setDbRelationships, setEdgeSelection]
   );
 
   const handleSaveNewNode = useCallback(
@@ -2135,6 +2314,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     },
     [popupSizing, popupSize]
   );
+
+  const togglePopupExpanded = useCallback(() => {
+    setActivePopup((prev) => (prev ? { ...prev, expanded: !prev.expanded } : prev));
+  }, []);
+
+  const handleClosePopup = useCallback(() => {
+    setActivePopup(null);
+  }, []);
 
   // Add global mouse event listeners for popup drag/resize
   useEffect(() => {
@@ -2495,129 +2682,15 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       </div>
 
       {isStandaloneView && (
-        <div
-          style={{
-            position: "absolute",
-            top: taxonomyPosition.y,
-            left: taxonomyPosition.x,
-            zIndex: 28,
-            pointerEvents: "none",
-          }}
-        >
-          <div
-            style={{
-              pointerEvents: "auto",
-              width: isTaxonomyCollapsed ? 280 : 360,
-              maxHeight: isTaxonomyCollapsed ? 110 : 460,
-              background: "#ffffff",
-              borderRadius: "16px",
-              boxShadow: "0 22px 42px rgba(15, 23, 42, 0.28)",
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <div
-              onMouseDown={handleTaxonomyMouseDown}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "12px 16px",
-                background: "#1d4ed8",
-                color: "#fff",
-                cursor: isDraggingTaxonomy ? "grabbing" : "grab",
-                userSelect: "none",
-                gap: "12px",
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: "Fredoka, sans-serif",
-                  fontWeight: 600,
-                  fontSize: "17px",
-                  color: "#ffffff",
-                }}
-              >
-                Topic taxonomy
-              </span>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  toggleTaxonomyCollapsed();
-                }}
-                aria-label={
-                  isTaxonomyCollapsed
-                    ? "Expand topic taxonomy"
-                    : "Collapse topic taxonomy"
-                }
-                style={{
-                  border: "none",
-                  borderRadius: "8px",
-                  background: "rgba(255,255,255,0.16)",
-                  color: "#fff",
-                  width: 28,
-                  height: 28,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                }}
-              >
-                {isTaxonomyCollapsed ? (
-                  <ChevronDown size={16} />
-                ) : (
-                  <ChevronUp size={16} />
-                )}
-              </button>
-            </div>
-            {isTaxonomyCollapsed ? (
-              <div
-                style={{
-                  padding: "10px 16px",
-                  fontSize: "11.5px",
-                  color: "#475569",
-                  background: "#f8fafc",
-                }}
-              >
-                View taxonomy progression
-              </div>
-            ) : (
-              <div
-                style={{
-                  padding: "12px 16px",
-                  background: "#f8fafc",
-                  overflowY: "auto",
-                  maxHeight: 360,
-                }}
-              >
-                {taxonomyModuleDisplay && (
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      color: "#334155",
-                      marginBottom: "8px",
-                      fontFamily: '"GlacialIndifference", sans-serif',
-                    }}
-                  >
-                    Showing module:
-                    <span
-                      style={{
-                        color: "#1d4ed8",
-                        marginLeft: "4px",
-                      }}
-                    >
-                      {taxonomyModuleDisplay}
-                    </span>
-                  </div>
-                )}
-                <TopicTaxonomyProgression passedModule={taxonomyModuleFilter} />
-              </div>
-            )}
-          </div>
-        </div>
+        <TaxonomyWidget
+          position={taxonomyPosition}
+          collapsed={isTaxonomyCollapsed}
+          isDragging={isDraggingTaxonomy}
+          moduleDisplay={taxonomyModuleDisplay}
+          moduleFilter={taxonomyModuleFilter}
+          onToggleCollapsed={toggleTaxonomyCollapsed}
+          onMouseDown={handleTaxonomyMouseDown}
+        />
       )}
 
       {/* React Flow Container */}
@@ -2675,7 +2748,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             }}
           >
             <Maximize2 size={16} />
-            <span>Open full view</span>
+            <span>Open Full Page</span>
           </button>
         )}
         {isStandaloneView && (
@@ -2702,7 +2775,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             }}
           >
             <Minimize2 size={16} />
-            <span>Back to home</span>
+            <span>Collapse</span>
           </button>
         )}
         {err && (
@@ -2773,121 +2846,29 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
         {/* Popup Modal */}
         {activePopup && popupLayout && popupSizing && (
-          <div
-            style={{
-              position: "absolute",
+          <KnowledgePopup
+            position={{
               top: popupPosition?.y ?? popupSizing.top,
               left: popupPosition?.x ?? popupSizing.left,
+            }}
+            size={{
               width: popupSize?.width ?? popupSizing.width,
               height: popupSize?.height ?? popupSizing.height,
-              background: "#ffffff",
-              borderRadius: "12px",
-              boxShadow: "0 18px 45px rgba(15, 23, 42, 0.25)",
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-              zIndex: 20,
             }}
-            onMouseDown={(event) => event.stopPropagation()}
-            onClick={(event) => event.stopPropagation()}
+            headerColor={popupNode?.data.color}
+            title={popupNode?.data.node_name || "Node"}
+            isExpanded={activePopup.expanded}
+            isDragging={isDraggingPopup}
+            onHeaderMouseDown={handlePopupMouseDown}
+            onToggleExpand={togglePopupExpanded}
+            onClose={handleClosePopup}
+            onResizeMouseDown={handleResizeMouseDown}
           >
-            <div
-              style={{
-                padding: "12px 16px",
-                background: popupNode?.data.color || "#1f2937",
-                color: "#ffffff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "12px",
-                cursor: isDraggingPopup ? "grabbing" : "grab",
-              }}
-              onMouseDown={handlePopupMouseDown}
-            >
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontWeight: 600, fontSize: "14px" }}>
-                  {popupNode?.data.node_name || "Node"}
-                </span>
-                <span style={{ fontSize: "11px", opacity: 0.85 }}>
-                  Embedded page preview
-                </span>
-              </div>
-              <div
-                style={{ display: "flex", gap: "8px", alignItems: "center" }}
-              >
-                <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setActivePopup((prev) =>
-                      prev ? { ...prev, expanded: !prev.expanded } : prev
-                    );
-                  }}
-                  style={{
-                    border: "none",
-                    background: "rgba(255,255,255,0.2)",
-                    color: "#fff",
-                    padding: "6px 10px",
-                    borderRadius: "6px",
-                    fontSize: "11px",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    letterSpacing: "0.01em",
-                  }}
-                >
-                  {activePopup.expanded ? "Collapse" : "Open Full Page"}
-                </button>
-                <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setActivePopup(null);
-                  }}
-                  style={{
-                    border: "none",
-                    background: "rgba(255,255,255,0.15)",
-                    color: "#fff",
-                    width: "28px",
-                    height: "28px",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    fontWeight: 700,
-                    fontSize: "14px",
-                  }}
-                  aria-label="Close embedded page"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-            <div
-              style={{
-                flex: 1,
-                overflow: "hidden",
-                background: "#f8fafc",
-                padding: "16px",
-              }}
-            >
-              <div style={{ height: "100%", overflow: "auto" }}>
-                <KnowledgePanel
-                  topicId={popupTopicId}
-                  conceptName={popupConceptName}
-                />
-              </div>
-            </div>
-            <div
-              onMouseDown={handleResizeMouseDown}
-              style={{
-                position: "absolute",
-                bottom: 0,
-                right: 0,
-                width: 18,
-                height: 18,
-                cursor: "nwse-resize",
-                background:
-                  "linear-gradient(135deg, rgba(148,163,184,0.1) 0%, rgba(148,163,184,0.6) 100%)",
-                clipPath: "polygon(100% 0, 0 100%, 100% 100%)",
-              }}
+            <KnowledgePanel
+              topicId={popupTopicId}
+              conceptName={popupConceptName}
             />
-          </div>
+          </KnowledgePopup>
         )}
       </div>
 

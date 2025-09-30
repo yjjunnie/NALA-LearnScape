@@ -13,6 +13,8 @@ interface KnowledgePopupProps {
   onClose: () => void;
   onResizeMouseDown: (event: React.MouseEvent<HTMLDivElement>) => void;
   children: React.ReactNode;
+  resetScrollOnContentChange?: boolean;
+  onScrollContainerReady?: (element: HTMLDivElement | null) => void;
 }
 
 const KnowledgePopup: React.FC<KnowledgePopupProps> = ({
@@ -27,20 +29,35 @@ const KnowledgePopup: React.FC<KnowledgePopupProps> = ({
   onClose,
   onResizeMouseDown,
   children,
+  resetScrollOnContentChange = true,
+  onScrollContainerReady,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!scrollContainerRef.current) {
+    onScrollContainerReady?.(scrollContainerRef.current);
+
+    return () => {
+      onScrollContainerReady?.(null);
+    };
+  }, [onScrollContainerReady]);
+
+  useEffect(() => {
+    if (!resetScrollOnContentChange) {
       return;
     }
 
-    scrollContainerRef.current.scrollTo({
+    const element = scrollContainerRef.current;
+    if (!element) {
+      return;
+    }
+
+    element.scrollTo({
       top: 0,
       left: 0,
       behavior: "auto",
     });
-  }, [children, isExpanded, title]);
+  }, [children, isExpanded, title, resetScrollOnContentChange]);
 
   return (
     <div

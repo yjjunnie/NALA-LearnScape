@@ -65,12 +65,14 @@ interface KnowledgeCapsuleProps {
   topicIdOverride?: string;
   weekOverride?: string | null;
   hideBackButton?: boolean;
+  useExternalScroll?: boolean;
 }
 
 export default function KnowledgeCapsule({
   topicIdOverride,
   weekOverride,
   hideBackButton = false,
+  useExternalScroll = false,
 }: KnowledgeCapsuleProps = {}) {
   const params = useParams<{ topicId: string }>();
   const [searchParams] = useSearchParams();
@@ -139,9 +141,13 @@ export default function KnowledgeCapsule({
   if (error) return <p className="p-4 text-red-500">{error}</p>;
   if (!topic) return <p className="p-4">Topic not found.</p>;
 
+  const baseContainerClass =
+    "w-full bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8";
   const containerClass = hideBackButton
-    ? "h-full bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8 overflow-y-auto"
-    : "min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8";
+    ? `${baseContainerClass} ${
+        useExternalScroll ? "min-h-full" : "h-full overflow-y-auto"
+      }`
+    : `${baseContainerClass} min-h-screen`;
   const headerClass = hideBackButton
     ? "bg-primary-dark rounded-xl shadow-lg mb-4 p-4 md:p-6 flex items-center gap-6"
     : "bg-primary-dark rounded-xl shadow-lg mb-8 p-4 md:p-6 flex items-center gap-8";

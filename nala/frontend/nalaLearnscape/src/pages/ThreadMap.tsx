@@ -276,6 +276,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
   const [isAddingEdge, setIsAddingEdge] = useState(false);
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
+  const [popupScrollContainer, setPopupScrollContainer] =
+    useState<HTMLDivElement | null>(null);
   const isStandaloneView = useMemo(
     () => location.pathname.toLowerCase().includes("threadmap"),
     [location.pathname]
@@ -2011,7 +2013,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
       event.stopPropagation();
-      setShowInfoTooltip(false);
 
       controlDraggedRef.current = false;
       controlDragStartRef.current = {
@@ -2043,6 +2044,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       Math.sqrt(deltaX * deltaX + deltaY * deltaY) > 4
     ) {
       controlDraggedRef.current = true;
+      setShowInfoTooltip(false);
     }
 
     const nextX = Math.max(12, Math.min(maxX, dragState.originX + deltaX));
@@ -2052,10 +2054,18 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, []);
 
   const handleControlDragEnd = useCallback(() => {
+    const wasDragged = controlDraggedRef.current;
+
     setIsDraggingControl(false);
     controlDragStartRef.current = null;
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
+    if (!wasDragged) {
+      setShowInfoTooltip((prev) => !prev);
+    } else {
+      setShowInfoTooltip(false);
+    }
+    controlDraggedRef.current = false;
   }, []);
 
   const handleToggleEditMode = useCallback(() => {
@@ -2164,16 +2174,15 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     shouldRunSimulationRef.current = true;
   }, [clearEdgeSelection, isEditMode, selectedEdge]);
 
-  const handleInfoMouseEnter = useCallback(() => {
-    if (isDraggingControl) {
-      return;
-    }
-    setShowInfoTooltip(true);
-  }, [isDraggingControl]);
-
-  const handleInfoMouseLeave = useCallback(() => {
-    setShowInfoTooltip(false);
-  }, []);
+  const handleInfoButtonKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        setShowInfoTooltip((prev) => !prev);
+      }
+    },
+    []
+  );
 
   const handleDeleteSelection = useCallback(() => {
     if (!isEditMode) {
@@ -2649,8 +2658,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             }}
           >
             <div
-              onMouseEnter={handleInfoMouseEnter}
-              onMouseLeave={handleInfoMouseLeave}
               style={{
                 position: "relative",
                 display: "inline-flex",
@@ -2659,8 +2666,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               <button
                 type="button"
                 onMouseDown={handleControlMouseDown}
+                onKeyDown={handleInfoButtonKeyDown}
                 aria-label="Threadmap information"
                 title="Threadmap information"
+                aria-expanded={showInfoTooltip}
                 style={{
                   width: controlButtonSize,
                   height: controlButtonSize,
@@ -3131,11 +3140,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             onToggleExpand={togglePopupExpanded}
             onClose={handleClosePopup}
             onResizeMouseDown={handleResizeMouseDown}
+            resetScrollOnContentChange={!popupConceptName}
+            onScrollContainerReady={setPopupScrollContainer}
           >
             <KnowledgePanel
               key={`${popupTopicId ?? "topic"}-${popupConceptName ?? "all"}`}
               topicId={popupTopicId}
               conceptName={popupConceptName}
+              scrollContainer={popupScrollContainer}
             />
           </KnowledgePopup>
         )}

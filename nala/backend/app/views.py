@@ -157,15 +157,20 @@ def student_topic_notes(request, student_id, topic_id):
         note_obj.save()
         return Response({"status": "saved", "notes": note_obj.content})
 
-# Quiz generation
 @api_view(['GET'])
 def get_weekly_quiz(request, module_id):
     """
     Fetch weekly quiz questions from the database for a specific module.
-    This pulls from pre-existing quiz data.
     """
     try:
-        student_id = request.GET.get('student_id', 'default_student')
+        # Get student_id from query params
+        student_id = request.GET.get('student_id')
+        if not student_id:
+            return Response(
+                {'error': 'student_id is required as query parameter'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         student = Student.objects.get(id=student_id)
         module = Module.objects.get(id=module_id)
         
@@ -181,7 +186,7 @@ def get_weekly_quiz(request, module_id):
             return Response({
                 'quiz_history_id': existing_quiz.id,
                 'questions': existing_quiz.quiz_data.get('questions', []),
-                'student_answers': existing_quiz.student_answers,
+                'student_answers': existing_quiz.student_answers or {},
                 'completed': existing_quiz.completed,
             })
         
@@ -252,9 +257,14 @@ def generate_custom_quiz(request, module_id):
     try:
         num_questions = request.data.get('num_questions', 10)
         bloom_levels = request.data.get('bloom_levels', ['Remember', 'Understand'])
+        student_id = request.data.get('student_id')
         
-        # Get the current student
-        student_id = request.data.get('student_id', 'default_student')
+        if not student_id:
+            return Response(
+                {'error': 'student_id is required in request body'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         student = Student.objects.get(id=student_id)
         module = Module.objects.get(id=module_id)
         
@@ -332,8 +342,22 @@ def save_quiz_answer(request, quiz_history_id):
     try:
         question_index = str(request.data.get('question_index'))
         answer = request.data.get('answer')
+        student_id = request.data.get('student_id')
+        
+        if not student_id:
+            return Response(
+                {'error': 'student_id is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         quiz_history = StudentQuizHistory.objects.get(id=quiz_history_id)
+        
+        # Verify the quiz belongs to this student
+        if str(quiz_history.student_id) != str(student_id):
+            return Response(
+                {'error': 'Unauthorized: Quiz does not belong to this student'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
         
         # Update the student_answers dictionary
         if not quiz_history.student_answers:
@@ -363,8 +387,22 @@ def submit_quiz(request, quiz_history_id):
     """
     try:
         answers = request.data.get('answers', {})
+        student_id = request.data.get('student_id')
+        
+        if not student_id:
+            return Response(
+                {'error': 'student_id is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         quiz_history = StudentQuizHistory.objects.get(id=quiz_history_id)
+        
+        # Verify the quiz belongs to this student
+        if str(quiz_history.student_id) != str(student_id):
+            return Response(
+                {'error': 'Unauthorized: Quiz does not belong to this student'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
         
         # Update student answers
         quiz_history.student_answers = {str(k): v for k, v in answers.items()}
@@ -441,7 +479,6 @@ def get_quiz_history(request, student_id):
             {'error': str(e)}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
 
 # ==================== BLOOM TAXONOMY TRACKING ====================
 

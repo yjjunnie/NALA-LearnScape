@@ -2,3 +2,12 @@
 [ 2025-10-01 00:43:25,202 ] 97 werkzeug - INFO -  * Debugger PIN: 928-213-346
 [ 2025-10-01 00:43:34,944 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 00:43:34] "GET /student/student456/topics HTTP/1.1" 200 -
 [ 2025-10-01 00:43:35,320 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 00:43:35] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 00:51:26,991 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 00:51:26] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 00:51:27,238 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 00:51:27] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 00:51:32,804 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 00:51:32] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 00:51:33,071 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 00:51:33] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 00:51:50,396 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 00:51:50] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 00:51:50,633 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 00:51:50] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 00:53:05,296 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 00:53:05] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 00:53:05,564 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 00:53:05] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 01:04:23,578 ] 97 werkzeug - INFO -  * Detected change in 'C:\\Users\\holly\\OneDrive\\Documents\\NALA-LearnScape\\nala\\backend\\app\\views.py', reloading

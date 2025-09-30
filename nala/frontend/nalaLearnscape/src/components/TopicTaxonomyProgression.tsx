@@ -244,6 +244,16 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
   useEffect(() => {
     let ignore = false;
     const controller = new AbortController();
+    const REQUEST_TIMEOUT_MS = 8000;
+
+    const timeoutId = window.setTimeout(() => {
+      if (!ignore) {
+        console.warn(
+          "Topic taxonomy progression request timed out. Falling back to cached data."
+        );
+        controller.abort();
+      }
+    }, REQUEST_TIMEOUT_MS);
 
     const normalizeCounts = (
       counts: unknown
@@ -366,6 +376,7 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
         }
         setRawData(dummyData.summary || []);
       } finally {
+        clearTimeout(timeoutId);
         if (!ignore) {
           setLoading(false);
         }
@@ -376,6 +387,7 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
 
     return () => {
       ignore = true;
+      clearTimeout(timeoutId);
       controller.abort();
     };
   }, [bloomOrder]);

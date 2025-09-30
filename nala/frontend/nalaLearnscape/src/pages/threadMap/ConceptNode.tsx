@@ -145,9 +145,6 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           borderStyle: "solid",
           borderWidth: 3,
           borderColor: selected ? "#ff6b35" : "rgba(255,255,255,0.35)",
-          boxShadow: selected
-            ? "0 0 20px rgba(255,107,53,0.4)"
-            : "0 4px 12px rgba(0,0,0,0.15)",
           transition: "box-shadow 0.2s ease, border-color 0.2s ease",
           boxSizing: "border-box",
           position: "relative",

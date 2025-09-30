@@ -1,2 +1,11 @@
 [ 2025-10-01 05:35:59,117 ] 97 werkzeug - WARNING -  * Debugger is active!
 [ 2025-10-01 05:35:59,122 ] 97 werkzeug - INFO -  * Debugger PIN: 758-854-900
+[ 2025-10-01 05:37:00,376 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:37:00] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:37:00,378 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:37:00] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:37:01,725 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:37:01] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:37:01,727 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:37:01] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:37:02,317 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:37:02] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:37:02,320 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:37:02] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:37:02,930 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:37:02] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:37:02,932 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:37:02] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:37:20,284 ] 97 werkzeug - INFO -  * Detected change in '/Users/yvonne/User Github/NALA-LearnScape/nala/backend/prediction_model/src/pipeline/predict_pipeline.py', reloading

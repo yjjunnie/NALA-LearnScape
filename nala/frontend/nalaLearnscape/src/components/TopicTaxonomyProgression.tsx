@@ -85,9 +85,6 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
   useEffect(() => {
     let ignore = false;
     const controller = new AbortController();
-
-<<<<<<< HEAD
-=======
     const normalizeCounts = (
       counts: unknown
     ): Record<string, number> | null => {
@@ -123,11 +120,8 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
           ? source.module
           : typeof source.module_name === "string"
           ? source.module_name
-          : typeof source.module_info === "object" &&
-            source.module_info !== null
-          ? ((source.module_info as Record<string, unknown>).name as
-              | string
-              | undefined)
+          : typeof source.module_info === "object" && source.module_info !== null
+          ? ((source.module_info as Record<string, unknown>).name as string | undefined)
           : undefined;
       const topicName =
         typeof source.topic === "string"
@@ -177,7 +171,6 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
       return [];
     };
 
->>>>>>> origin
     const fetchData = async () => {
       if (!studentId) {
         setError("Student ID is required");
@@ -206,13 +199,7 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
         });
 
         if (!response.ok) {
-<<<<<<< HEAD
-          throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
-=======
-          throw new Error(
-            `Failed to fetch topic progression: ${response.status}`
-          );
->>>>>>> origin
+          throw new Error(`Failed to fetch topic progression: ${response.status}`);
         }
 
         const result = await response.json();

@@ -115,7 +115,6 @@ type TopicBloomSummary = {
   value: number | null;
   counts: Record<string, number> | null;
 };
-
 const getHighestBloomLevel = (
   counts?: Record<string, number> | null
 ): { label: string | null; value: number | null } => {
@@ -123,17 +122,24 @@ const getHighestBloomLevel = (
     return { label: null, value: null };
   }
 
-  for (let index = BLOOM_LEVEL_ORDER.length - 1; index >= 0; index -= 1) {
-    const level = BLOOM_LEVEL_ORDER[index];
-    if ((counts[level] ?? 0) > 0) {
-      return {
-        label: level,
-        value: BLOOM_LEVEL_MAP[level],
-      };
+  let maxLevelName: string | null = null;
+  let maxCount = -1;
+
+  Object.entries(counts).forEach(([levelName, count]) => {
+    if (count > maxCount) {
+      maxCount = count;
+      maxLevelName = levelName;
     }
+  });
+
+  if (!maxLevelName) {
+    return { label: null, value: null };
   }
 
-  return { label: null, value: null };
+  return {
+    label: maxLevelName,
+    value: BLOOM_LEVEL_MAP[maxLevelName] ?? null,
+  };
 };
 
 const normalizeBloomCounts = (

@@ -35,7 +35,6 @@ export default function ModuleInfo() {
     navigate(-1);
   };
 
-<<<<<<< HEAD
   const handleStartQuiz = (numQuestions: number, selectedLevels: string[], selectedTopicIds: string[], quizType: string) => {
     const levelsParam = selectedLevels.join(',');
     const topicsParam = selectedTopicIds.join(',');
@@ -45,13 +44,6 @@ export default function ModuleInfo() {
     } else {
       navigate(`/Modules/${moduleId}/quiz?type=custom&questions=${numQuestions}&levels=${levelsParam}&topics=${topicsParam}`);
     }
-=======
-  const handleStartQuiz = (numQuestions: number, selectedLevels: string[]) => {
-    const levelsParam = selectedLevels.join(",");
-    navigate(
-      `/Modules/${moduleId}/quiz?type=custom&questions=${numQuestions}&levels=${levelsParam}`
-    );
->>>>>>> origin
     setQuizModalOpen(false);
   };
 

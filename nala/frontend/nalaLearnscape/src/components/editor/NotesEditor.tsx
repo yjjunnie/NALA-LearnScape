@@ -6,6 +6,7 @@ import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { HeadingNode } from '@lexical/rich-text';
+import type { Ref } from 'react';
 import Theme from './Theme';
 import ToolbarPlugin from './ToolbarPlugin';
 
@@ -13,6 +14,7 @@ interface NotesEditorProps {
   placeholder?: string;
   initialContent?: string;
   onSave?: (content: string) => void;
+  contentEditableRef?: Ref<HTMLDivElement>;
 }
 
 function Placeholder({ text }: { text?: string }) {
@@ -23,10 +25,11 @@ function Placeholder({ text }: { text?: string }) {
   );
 }
 
-export default function NotesEditor({ 
-  placeholder, 
+export default function NotesEditor({
+  placeholder,
   initialContent,
-  onSave 
+  onSave,
+  contentEditableRef,
 }: NotesEditorProps) {
   const initialConfig = {
     namespace: 'NotesEditor',
@@ -47,7 +50,10 @@ export default function NotesEditor({
         <div className="relative min-h-[600px]">
           <RichTextPlugin
             contentEditable={
-              <ContentEditable className="outline-none p-4 min-h-[600px] text-[#0c1e4a] font-['GlacialIndifference',sans-serif]" />
+              <ContentEditable
+                ref={contentEditableRef}
+                className="outline-none p-4 min-h-[600px] text-[#0c1e4a] font-['GlacialIndifference',sans-serif]"
+              />
             }
             placeholder={<Placeholder text={placeholder} />}
             ErrorBoundary={LexicalErrorBoundary}

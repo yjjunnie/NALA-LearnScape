@@ -29,14 +29,7 @@ import type {
   OnNodeDrag,
 } from "@xyflow/react";
 import * as d3 from "d3";
-import {
-  Info,
-  Pencil,
-  Hand,
-  Trash2,
-  Maximize2,
-  Minimize2,
-} from "lucide-react";
+import { Info, Pencil, Hand, Trash2, Maximize2, Minimize2 } from "lucide-react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import "@xyflow/react/dist/style.css";
 import "../App.css";
@@ -146,10 +139,7 @@ const normalizeBloomCounts = (
 
   const record = value as Record<string, unknown>;
 
-  if (
-    typeof record.bloom_levels === "object" &&
-    record.bloom_levels !== null
-  ) {
+  if (typeof record.bloom_levels === "object" && record.bloom_levels !== null) {
     return normalizeBloomCounts(record.bloom_levels);
   }
 
@@ -498,6 +488,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     originY: number;
   } | null>(null);
   const controlDraggedRef = useRef<boolean>(false);
+  const lastControlDragTimeRef = useRef<number>(0);
   const dragContextRef = useRef<{
     nodeId: string;
     offsets: Map<string, { dx: number; dy: number }>;
@@ -768,10 +759,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               };
             });
           } catch (error) {
-            if (
-              error instanceof DOMException &&
-              error.name === "AbortError"
-            ) {
+            if (error instanceof DOMException && error.name === "AbortError") {
               return;
             }
             console.error("Failed to load Bloom summary for thread map", error);
@@ -882,9 +870,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         }
 
         const bloomInfo =
-          node.type === "topic"
-            ? topicBloomLevels[String(node.id)]
-            : undefined;
+          node.type === "topic" ? topicBloomLevels[String(node.id)] : undefined;
 
         const data: NodeData = {
           node_id: node.id,
@@ -2011,9 +1997,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
       event.stopPropagation();
-      setShowInfoTooltip(false);
 
       controlDraggedRef.current = false;
+      lastControlDragTimeRef.current = 0;
       controlDragStartRef.current = {
         startX: event.clientX,
         startY: event.clientY,
@@ -2043,6 +2029,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       Math.sqrt(deltaX * deltaX + deltaY * deltaY) > 4
     ) {
       controlDraggedRef.current = true;
+      setShowInfoTooltip(false);
     }
 
     const nextX = Math.max(12, Math.min(maxX, dragState.originX + deltaX));
@@ -2052,11 +2039,29 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, []);
 
   const handleControlDragEnd = useCallback(() => {
+    if (controlDraggedRef.current) {
+      lastControlDragTimeRef.current = Date.now();
+    }
+    controlDraggedRef.current = false;
     setIsDraggingControl(false);
     controlDragStartRef.current = null;
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
   }, []);
+
+  const handleInfoButtonClick = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (Date.now() - lastControlDragTimeRef.current < 200) {
+        return;
+      }
+
+      setShowInfoTooltip((prev) => !prev);
+    },
+    [setShowInfoTooltip]
+  );
 
   const handleToggleEditMode = useCallback(() => {
     setIsEditMode((prev) => {
@@ -2163,17 +2168,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     clearEdgeSelection();
     shouldRunSimulationRef.current = true;
   }, [clearEdgeSelection, isEditMode, selectedEdge]);
-
-  const handleInfoMouseEnter = useCallback(() => {
-    if (isDraggingControl) {
-      return;
-    }
-    setShowInfoTooltip(true);
-  }, [isDraggingControl]);
-
-  const handleInfoMouseLeave = useCallback(() => {
-    setShowInfoTooltip(false);
-  }, []);
 
   const handleDeleteSelection = useCallback(() => {
     if (!isEditMode) {
@@ -2649,8 +2643,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             }}
           >
             <div
-              onMouseEnter={handleInfoMouseEnter}
-              onMouseLeave={handleInfoMouseLeave}
               style={{
                 position: "relative",
                 display: "inline-flex",
@@ -2659,6 +2651,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               <button
                 type="button"
                 onMouseDown={handleControlMouseDown}
+                onClick={handleInfoButtonClick}
                 aria-label="Threadmap information"
                 title="Threadmap information"
                 style={{
@@ -2705,7 +2698,11 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                     }}
                   >
                     <div
-                      style={{ fontWeight: 700, fontSize: "15px", color: "#4C73FF" }}
+                      style={{
+                        fontWeight: 700,
+                        fontSize: "15px",
+                        color: "#4C73FF",
+                      }}
                     >
                       THREADMAP QUICK GUIDE
                     </div>
@@ -2737,16 +2734,20 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                     }}
                   >
                     <div>
-                      • Drag the blue handle to move the control panel.<br />• Switch
-                      between cursor and edit modes to explore or modify the map.
+                      • Drag the blue handle to move the control panel.
+                      <br />• Switch between cursor and edit modes to explore or
+                      modify the map.
                     </div>
                     <div>
-                      • Hover nodes in cursor mode to view their relationships.<br />•
-                      Click a node to open its knowledge capsule preview.
+                      • Hover nodes in cursor mode to view their relationships.
+                      <br />• Click a node to open its knowledge capsule
+                      preview.
                     </div>
                     <div>
-                      • In edit mode, select nodes or edges to delete or reconnect
-                      them.<br />• Use the taxonomy widget to filter by Bloom’s levels.
+                      • In edit mode, select nodes or edges to delete or
+                      reconnect them.
+                      <br />• Use the taxonomy widget to filter by Bloom’s
+                      levels.
                     </div>
                   </div>
                   <div
@@ -2758,10 +2759,13 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                     }}
                   >
                     • Numbers represent Bloom's Taxonomy levels (1=Remember,
-                    6=Create).<br />• Toggle between cursor and edit mode to explore or
-                    edit relationships.<br />• Use node handles to connect concepts or
-                    restructure relationships.<br />• Click nodes in cursor mode to view
-                    details and in edit mode to modify them.
+                    6=Create).
+                    <br />• Toggle between cursor and edit mode to explore or
+                    edit relationships.
+                    <br />• Use node handles to connect concepts or restructure
+                    relationships.
+                    <br />• Click nodes in cursor mode to view details and in
+                    edit mode to modify them.
                   </div>
                   <div
                     style={{

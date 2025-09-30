@@ -58,9 +58,7 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
     const nodeData = (extended.data ?? null) as NodeData | null;
     const measuredRadius = Math.min(width, height) / 2;
     const fallbackRadius =
-      nodeData?.node_type === "topic"
-        ? TOPIC_BASE_RADIUS
-        : CONCEPT_BASE_RADIUS;
+      nodeData?.node_type === "topic" ? TOPIC_BASE_RADIUS : CONCEPT_BASE_RADIUS;
     const radius = Math.max(measuredRadius, fallbackRadius);
 
     return { centerX, centerY, radius };
@@ -158,7 +156,8 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
       ? String(data.label)
       : "";
   const hasLabel = labelText.trim() !== "";
-  const shouldRenderLabel = hasLabel && (isHovered || showLabelFromNodeHover || Boolean(selected));
+  const shouldRenderLabel =
+    hasLabel && (isHovered || showLabelFromNodeHover || Boolean(selected));
 
   return (
     <>
@@ -172,26 +171,26 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
         onMouseLeave={() => setIsHovered(false)}
       />
       {shouldRenderLabel && (
-          <EdgeLabelRenderer>
-            <div
-              style={{
-                position: "absolute",
-                transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-                pointerEvents: "none",
-                background: "rgba(15, 23, 42, 0.92)",
-                color: "#f8fafc",
-                padding: "6px 10px",
-                borderRadius: "6px",
-                fontSize: "11px",
-                whiteSpace: "nowrap",
-                boxShadow: "0 8px 16px rgba(15, 23, 42, 0.3)",
-                fontFamily: '"GlacialIndifference", sans-serif',
-              }}
-            >
-              {labelText}
-            </div>
-          </EdgeLabelRenderer>
-        )}
+        <EdgeLabelRenderer>
+          <div
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              pointerEvents: "none",
+              background: "rgba(15, 23, 42, 0.92)",
+              color: "#f8fafc",
+              padding: "6px 10px",
+              borderRadius: "6px",
+              fontSize: "11px",
+              whiteSpace: "nowrap",
+              boxShadow: "0 8px 16px rgba(15, 23, 42, 0.3)",
+              fontFamily: '"GlacialIndifference", sans-serif',
+            }}
+          >
+            {labelText}
+          </div>
+        </EdgeLabelRenderer>
+      )}
     </>
   );
 };

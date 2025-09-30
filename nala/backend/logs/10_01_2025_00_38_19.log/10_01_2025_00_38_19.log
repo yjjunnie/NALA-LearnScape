@@ -1,0 +1,5 @@
+[ 2025-10-01 00:38:19,137 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-10-01 00:38:19,139 ] 97 werkzeug - INFO -  * Debugger PIN: 928-213-346
+[ 2025-10-01 00:38:47,633 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 00:38:47] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 00:38:47,879 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 00:38:47] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 00:40:38,725 ] 97 werkzeug - INFO -  * Detected change in 'C:\\Users\\holly\\OneDrive\\Documents\\NALA-LearnScape\\nala\\backend\\prediction_model\\src\\pipeline\\predict_pipeline.py', reloading

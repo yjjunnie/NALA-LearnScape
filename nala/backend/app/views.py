@@ -161,92 +161,74 @@ def student_topic_notes(request, student_id, topic_id):
 def get_weekly_quiz(request, module_id):
     """
     Fetch weekly quiz questions from the database for a specific module.
+    Weekly quizzes are pre-loaded, so this only retrieves existing entries.
     """
     try:
-        # Get student_id from query params
         student_id = request.GET.get('student_id')
+        topic_ids_param = request.GET.get('topics')
+        
         if not student_id:
             return Response(
                 {'error': 'student_id is required as query parameter'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        student = Student.objects.get(id=student_id)
-        module = Module.objects.get(id=module_id)
+        student = Student.objects.get(id=str(student_id))
+        module = Module.objects.get(id=str(module_id))
         
-        # Check if there's an existing incomplete weekly quiz
-        existing_quiz = StudentQuizHistory.objects.filter(
-            student=student,
-            module=module,
-            completed=False,
-            quiz_data__quiz_type='weekly'
-        ).first()
+        # Parse topic IDs (strings only)
+        if not topic_ids_param:
+            return Response(
+                {'error': 'topics parameter is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        if existing_quiz:
-            return Response({
-                'quiz_history_id': existing_quiz.id,
-                'questions': existing_quiz.quiz_data.get('questions', []),
-                'student_answers': existing_quiz.student_answers or {},
-                'completed': existing_quiz.completed,
-            })
+        topic_ids = [tid.strip() for tid in topic_ids_param.split(',')]
+        topic_ids_set = set(topic_ids)
         
-        # Get topics for this module
-        topics = Topic.objects.filter(module=module)
+        topics = Topic.objects.filter(module=module, id__in=topic_ids)
         
         if not topics.exists():
             return Response(
-                {'error': 'No topics found for this module'}, 
+                {'error': 'No topics found for the provided IDs'}, 
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Generate a weekly quiz covering all topics
-        all_questions = []
-        for topic in topics:
-            topic_questions = generate_quiz(
-                topic_name=topic.name,
-                module_name=module.name,
-                bloom_levels=['Remember', 'Understand'],
-                num_questions=2  # 2 questions per topic for weekly review
-            )
-            # Add topic_id to each question for bloom tracking
-            for q in topic_questions:
-                q['topic_id'] = str(topic.id)
-            all_questions.extend(topic_questions)
-        
-        # Create a new quiz history entry
-        quiz_history = StudentQuizHistory.objects.create(
+        # Find existing weekly quiz by matching exact topic_ids in quiz_data
+        existing_quiz = None
+        candidate_quizzes = StudentQuizHistory.objects.filter(
             student=student,
             module=module,
-            quiz_data={
-                'questions': all_questions,
-                'quiz_type': 'weekly'
-            },
-            student_answers={},
-            completed=False
+            quiz_data__quiz_type='weekly'
         )
         
+        for quiz in candidate_quizzes:
+            stored_topic_ids = [str(tid) for tid in quiz.quiz_data.get('topic_ids', [])]
+            if set(stored_topic_ids) == topic_ids_set:
+                existing_quiz = quiz
+                break
+        
+        if not existing_quiz:
+            return Response(
+                {'error': 'Weekly quiz not found for selected topics. Please contact your instructor.'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
         return Response({
-            'quiz_history_id': quiz_history.id,
-            'questions': all_questions,
-            'student_answers': {},
-            'completed': False,
+            'quiz_history_id': str(existing_quiz.id),
+            'questions': existing_quiz.quiz_data.get('questions', []),
+            'student_answers': existing_quiz.student_answers or {},
+            'completed': existing_quiz.completed,
+            'score': existing_quiz.score,
+            'can_retry': True,
         })
         
     except Student.DoesNotExist:
-        return Response(
-            {'error': 'Student not found'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Student not found'}, status=status.HTTP_404_NOT_FOUND)
     except Module.DoesNotExist:
-        return Response(
-            {'error': 'Module not found'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Module not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return Response(
-            {'error': str(e)}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -258,45 +240,41 @@ def generate_custom_quiz(request, module_id):
         num_questions = request.data.get('num_questions', 10)
         bloom_levels = request.data.get('bloom_levels', ['Remember', 'Understand'])
         student_id = request.data.get('student_id')
+        topic_ids = request.data.get('topic_ids', [])
         
         if not student_id:
-            return Response(
-                {'error': 'student_id is required in request body'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'student_id is required in request body'}, status=status.HTTP_400_BAD_REQUEST)
         
-        student = Student.objects.get(id=student_id)
-        module = Module.objects.get(id=module_id)
+        student = Student.objects.get(id=str(student_id))
+        module = Module.objects.get(id=str(module_id))
         
-        # Get all topics for this module
-        topics = Topic.objects.filter(module=module)
+        if topic_ids:
+            topics = Topic.objects.filter(module=module, id__in=topic_ids)
+        else:
+            topics = Topic.objects.filter(module=module)
         
         if not topics.exists():
-            return Response(
-                {'error': 'No topics found for this module'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({'error': 'No topics found for this module'}, status=status.HTTP_404_NOT_FOUND)
         
-        # Distribute questions across topics
-        questions_per_topic = max(1, num_questions // topics.count())
+        topics_list = list(topics)
+        questions_per_topic = max(1, num_questions // len(topics_list))
         all_questions = []
         
-        for topic in topics[:num_questions]:  # Limit to needed topics
+        for topic in topics_list:
             topic_questions = generate_quiz(
                 topic_name=topic.name,
                 module_name=module.name,
                 bloom_levels=bloom_levels,
                 num_questions=questions_per_topic
             )
-            # Add topic_id to each question for bloom tracking
             for q in topic_questions:
-                q['topic_id'] = str(topic.id)
+                q['topic_id'] = str(topic.id)  # store as string
             all_questions.extend(topic_questions)
         
-        # Trim to exact number requested
         all_questions = all_questions[:num_questions]
         
-        # Create a new quiz history entry
+        topic_ids_to_store = [str(t.id) for t in topics_list]
+        
         quiz_history = StudentQuizHistory.objects.create(
             student=student,
             module=module,
@@ -304,34 +282,29 @@ def generate_custom_quiz(request, module_id):
                 'questions': all_questions,
                 'quiz_type': 'custom',
                 'bloom_levels': bloom_levels,
-                'num_questions': num_questions
+                'num_questions': num_questions,
+                'topic_ids': topic_ids_to_store
             },
             student_answers={},
-            completed=False
+            completed=False,
+            score=None
         )
         
+        quiz_history.topics_covered.set(topics)
+        
         return Response({
-            'quiz_history_id': quiz_history.id,
+            'quiz_history_id': str(quiz_history.id),
             'questions': all_questions,
             'student_answers': {},
             'completed': False,
         }, status=status.HTTP_201_CREATED)
         
     except Student.DoesNotExist:
-        return Response(
-            {'error': 'Student not found'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Student not found'}, status=status.HTTP_404_NOT_FOUND)
     except Module.DoesNotExist:
-        return Response(
-            {'error': 'Module not found'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Module not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return Response(
-            {'error': str(e)}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['PATCH'])
@@ -345,69 +318,47 @@ def save_quiz_answer(request, quiz_history_id):
         student_id = request.data.get('student_id')
         
         if not student_id:
-            return Response(
-                {'error': 'student_id is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'student_id is required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        quiz_history = StudentQuizHistory.objects.get(id=quiz_history_id)
+        quiz_history = StudentQuizHistory.objects.get(id=str(quiz_history_id))
         
-        # Verify the quiz belongs to this student
         if str(quiz_history.student_id) != str(student_id):
-            return Response(
-                {'error': 'Unauthorized: Quiz does not belong to this student'}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({'error': 'Unauthorized: Quiz does not belong to this student'}, status=status.HTTP_403_FORBIDDEN)
         
-        # Update the student_answers dictionary
         if not quiz_history.student_answers:
             quiz_history.student_answers = {}
         
-        quiz_history.student_answers[question_index] = answer
+        quiz_history.student_answers[str(question_index)] = answer
         quiz_history.save()
         
         return Response({'status': 'success', 'message': 'Answer saved'})
         
     except StudentQuizHistory.DoesNotExist:
-        return Response(
-            {'error': 'Quiz not found'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Quiz not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return Response(
-            {'error': str(e)}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
 def submit_quiz(request, quiz_history_id):
     """
     Submit the complete quiz, calculate score, and update Bloom records.
+    For weekly quizzes, this updates the same entry (allowing retries).
     """
     try:
         answers = request.data.get('answers', {})
         student_id = request.data.get('student_id')
         
         if not student_id:
-            return Response(
-                {'error': 'student_id is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'student_id is required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        quiz_history = StudentQuizHistory.objects.get(id=quiz_history_id)
+        quiz_history = StudentQuizHistory.objects.get(id=str(quiz_history_id))
         
-        # Verify the quiz belongs to this student
         if str(quiz_history.student_id) != str(student_id):
-            return Response(
-                {'error': 'Unauthorized: Quiz does not belong to this student'}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({'error': 'Unauthorized: Quiz does not belong to this student'}, status=status.HTTP_403_FORBIDDEN)
         
-        # Update student answers
         quiz_history.student_answers = {str(k): v for k, v in answers.items()}
         
-        # Calculate score
         questions = quiz_history.quiz_data.get('questions', [])
         correct_count = 0
         
@@ -422,26 +373,23 @@ def submit_quiz(request, quiz_history_id):
         quiz_history.completed = True
         quiz_history.save()
         
-        # Update Bloom records based on correct answers
         update_bloom_from_quiz(quiz_history.student, quiz_history)
+        
+        quiz_type = quiz_history.quiz_data.get('quiz_type', 'unknown')
         
         return Response({
             'status': 'success',
             'score': score,
             'correct_count': correct_count,
-            'total_questions': len(questions)
+            'total_questions': len(questions),
+            'quiz_type': quiz_type,
+            'can_retry': quiz_type == 'weekly',
         })
         
     except StudentQuizHistory.DoesNotExist:
-        return Response(
-            {'error': 'Quiz not found'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Quiz not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return Response(
-            {'error': str(e)}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])

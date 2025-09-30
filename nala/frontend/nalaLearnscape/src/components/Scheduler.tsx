@@ -1,23 +1,5 @@
 import React, { useState, useRef, useCallback } from "react";
 
-// API Integration
-const fetchTopicsWithPredictions = async (studentId) => {
-  try {
-    const response = await fetch(`http://localhost:5000/student/${studentId}/topics`);
-    const data = await response.json();
-    
-    if (data.success) {
-      return data.topics;
-    } else {
-      console.error('API Error:', data.message);
-      return null;
-    }
-  } catch (error) {
-    console.error('Fetch Error:', error);
-    return null;
-  }
-};
-
 // Simple data structures
 interface ScheduleItem {
   id: string;
@@ -47,19 +29,11 @@ const minutesToTime = (minutes: number): string => {
   return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
 };
 
-/*
 const formatDuration = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   if (hours > 0) return `${hours}h ${mins}m`;
   return `${mins}m`;
-};
-*/
-
-const formatDuration = (durationHours: number): string => {
-  const hours = Math.floor(durationHours);
-  const minutes = Math.round((durationHours - hours) * 60);
-  return `${hours}h ${minutes.toString().padStart(2, "0")}mins`;
 };
 
 // Snap to 15-minute intervals

@@ -49,7 +49,7 @@ export const Modules: React.FC = () => {
         // Fetch bloom data for each module in parallel
         const bloomPromises = modules.map(async (module: Module) => {
           try {
-            const response = await axios.get("/api/bloom-summary/", {
+            const response = await axios.get("/api/bloom/summary/", {
               params: {
                 student_id: STUDENT_ID,
                 module_id: module.id,

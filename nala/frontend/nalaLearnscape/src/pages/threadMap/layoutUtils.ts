@@ -1,4 +1,11 @@
-import { CONCEPT_BASE_RADIUS, TOPIC_BASE_RADIUS } from "./constants";
+import type { XYPosition } from "@xyflow/react";
+
+import {
+  CLUSTER_GAP,
+  CLUSTER_MAX_OFFSET,
+  CONCEPT_BASE_RADIUS,
+  TOPIC_BASE_RADIUS,
+} from "./constants";
 import type { FlowNode } from "./types";
 
 export const getNodeRadius = (node: FlowNode): number => {
@@ -37,14 +44,31 @@ export const estimateNodeLabelSize = (node: FlowNode) => {
     lines.push(currentLine);
   }
 
-  const longestLine = lines.reduce((max, line) => Math.max(max, line.length), 0);
+  const longestLine = lines.reduce(
+    (max, line) => Math.max(max, line.length),
+    0
+  );
   const width = Math.min(240, Math.max(110, longestLine * 8.2 + 32));
   const height = Math.min(220, Math.max(60, lines.length * 24 + 36));
 
   return { width, height };
 };
 
-export const centerNodesAroundCentroid = (nodes: FlowNode[]): FlowNode[] => {
+export const getNodeLayoutRadius = (node: FlowNode): number => {
+  const baseRadius = getNodeRadius(node);
+  if (node.data?.node_type !== "topic") {
+    return baseRadius;
+  }
+
+  const labelSize = estimateNodeLabelSize(node);
+  const labelPadding = Math.max(48, labelSize.height * 0.75);
+  return baseRadius + labelPadding;
+};
+
+const centerNodesAroundCentroid = (
+  nodes: FlowNode[],
+  center: XYPosition = { x: 0, y: 0 }
+): FlowNode[] => {
   if (nodes.length === 0) {
     return nodes;
   }
@@ -63,7 +87,10 @@ export const centerNodesAroundCentroid = (nodes: FlowNode[]): FlowNode[] => {
     y: sum.y / nodes.length,
   };
 
-  if (Math.abs(centroid.x) < 1 && Math.abs(centroid.y) < 1) {
+  if (
+    Math.abs(centroid.x - center.x) < 1 &&
+    Math.abs(centroid.y - center.y) < 1
+  ) {
     return nodes;
   }
 
@@ -72,8 +99,8 @@ export const centerNodesAroundCentroid = (nodes: FlowNode[]): FlowNode[] => {
     return {
       ...node,
       position: {
-        x: position.x - centroid.x,
-        y: position.y - centroid.y,
+        x: position.x - centroid.x + center.x,
+        y: position.y - centroid.y + center.y,
       },
     };
   });
@@ -112,14 +139,14 @@ export const resolveNodeCollisions = (
         const labelSizeA = estimateNodeLabelSize(nodeA);
         const labelSizeB = estimateNodeLabelSize(nodeB);
         const effectiveRadiusA = Math.max(
-          getNodeRadius(nodeA),
-          labelSizeA.width / 2 + 18,
-          labelSizeA.height / 2 + 18
+          getNodeLayoutRadius(nodeA) + 16,
+          labelSizeA.width / 2 + 20,
+          labelSizeA.height / 2 + 20
         );
         const effectiveRadiusB = Math.max(
-          getNodeRadius(nodeB),
-          labelSizeB.width / 2 + 18,
-          labelSizeB.height / 2 + 18
+          getNodeLayoutRadius(nodeB) + 16,
+          labelSizeB.width / 2 + 20,
+          labelSizeB.height / 2 + 20
         );
         const minDistance = effectiveRadiusA + effectiveRadiusB;
 
@@ -157,6 +184,7 @@ export const resolveNodeCollisions = (
             moved = true;
             continue;
           }
+
           if (nodeB.id === lockedNodeId && nodeA.id !== lockedNodeId) {
             resolvedNodes[i] = {
               ...nodeA,
@@ -193,7 +221,7 @@ export const resolveNodeCollisions = (
     }
   }
 
-  return centerNodesAroundCentroid(resolvedNodes);
+  return resolvedNodes;
 };
 
 export const keepConceptsNearParent = (nodes: FlowNode[]): FlowNode[] => {
@@ -216,8 +244,9 @@ export const keepConceptsNearParent = (nodes: FlowNode[]): FlowNode[] => {
     const dy = nodePosition.y - parentPosition.y;
     const distance = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    const minDistance = getNodeRadius(parent) + 56;
-    const maxDistance = getNodeRadius(parent) + 220;
+    const parentRadius = getNodeLayoutRadius(parent);
+    const minDistance = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_GAP;
+    const maxDistance = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_MAX_OFFSET;
 
     if (distance >= minDistance && distance <= maxDistance) {
       return node;
@@ -238,10 +267,10 @@ export const keepConceptsNearParent = (nodes: FlowNode[]): FlowNode[] => {
 
 export const adjustNodePositions = (
   nodes: FlowNode[],
-  options: { lockedNodeId?: string } = {}
+  options: { lockedNodeId?: string; center?: XYPosition } = {}
 ): FlowNode[] => {
   const withoutCollisions = resolveNodeCollisions(nodes, options.lockedNodeId);
   const clustered = keepConceptsNearParent(withoutCollisions);
-  return centerNodesAroundCentroid(clustered);
+  return centerNodesAroundCentroid(clustered, options.center);
 };
 

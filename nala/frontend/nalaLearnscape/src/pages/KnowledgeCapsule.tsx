@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import IconButton from "@mui/material/IconButton";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import NotesEditor from "../components/editor/NotesEditor";
@@ -61,11 +61,28 @@ function generateTopicNotes(topic: Topic): string {
   return text;
 }
 
-export default function KnowledgeCapsule() {
-  const { topicId } = useParams<{ topicId: string }>();
+interface KnowledgeCapsuleProps {
+  topicIdOverride?: string;
+  weekOverride?: string | null;
+  hideBackButton?: boolean;
+}
+
+export default function KnowledgeCapsule({
+  topicIdOverride,
+  weekOverride,
+  hideBackButton = false,
+}: KnowledgeCapsuleProps = {}) {
+  const params = useParams<{ topicId: string }>();
   const [searchParams] = useSearchParams();
-  const weekNumber = searchParams.get('week');
   const navigate = useNavigate();
+
+  const topicId = topicIdOverride ?? params.topicId;
+  const weekNumber = useMemo(() => {
+    if (typeof weekOverride !== "undefined") {
+      return weekOverride;
+    }
+    return searchParams.get("week");
+  }, [searchParams, weekOverride]);
 
   const studentId = "1"; // replace with logged-in user ID
   const [topic, setTopic] = useState<Topic | null>(null);
@@ -78,7 +95,12 @@ export default function KnowledgeCapsule() {
   const handleSaveNotes = async (content: string) => {
     try {
       setSaveStatus('saving');
-      await axios.post(`/api/student/${studentId}/topic/${topicId}/notes/`, { content });
+      if (!topicId) {
+        return;
+      }
+      await axios.post(`/api/student/${studentId}/topic/${topicId}/notes/`, {
+        content,
+      });
       setTopic(prev => prev ? { ...prev, notes: content } : prev);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
@@ -109,16 +131,38 @@ export default function KnowledgeCapsule() {
     fetchTopic();
   }, [topicId]);
 
+  if (!topicId) {
+    return <p className="p-4">Topic not found.</p>;
+  }
+
   if (loading) return <p className="p-4">Loading topic...</p>;
   if (error) return <p className="p-4 text-red-500">{error}</p>;
   if (!topic) return <p className="p-4">Topic not found.</p>;
 
+  const containerClass = hideBackButton
+    ? "h-full bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8 overflow-y-auto"
+    : "min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8";
+  const headerClass = hideBackButton
+    ? "bg-primary-dark rounded-xl shadow-lg mb-4 p-4 md:p-6 flex items-center gap-6"
+    : "bg-primary-dark rounded-xl shadow-lg mb-8 p-4 md:p-6 flex items-center gap-8";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8">
-      <div className="bg-primary-dark rounded-xl shadow-lg mb-8 p-4 md:p-6 flex items-center gap-8">
-        <IconButton onClick={handleBackClick} sx={{ borderRadius: 2.5, border: "1px solid rgba(255, 255, 255, 0.2)", backgroundColor: "rgba(255, 255, 255, 0.1)", color: "white", p: 1.5 }}>
-          <ArrowBackRoundedIcon />
-        </IconButton>
+    <div className={containerClass}>
+      <div className={headerClass}>
+        {!hideBackButton && (
+          <IconButton
+            onClick={handleBackClick}
+            sx={{
+              borderRadius: 2.5,
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+              color: "white",
+              p: 1.5,
+            }}
+          >
+            <ArrowBackRoundedIcon />
+          </IconButton>
+        )}
         <div className="flex-1">
           <h1 className="text-2xl md:text-3xl font-bold text-white">
             {weekNumber ? `Week ${weekNumber}: ${topic.name}` : topic.name}

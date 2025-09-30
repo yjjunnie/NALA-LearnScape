@@ -1,7 +1,5 @@
+import { CONCEPT_BASE_RADIUS, TOPIC_BASE_RADIUS } from "./constants";
 import type { FlowNode } from "./types";
-
-const TOPIC_BASE_RADIUS = 120;
-const CONCEPT_BASE_RADIUS = 72;
 
 export const getNodeRadius = (node: FlowNode): number => {
   const type = node.data?.node_type;

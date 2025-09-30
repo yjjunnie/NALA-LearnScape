@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Handle, Position } from "@xyflow/react";
 
+import { CONCEPT_NODE_DIAMETER, TOPIC_NODE_DIAMETER } from "./constants";
 import type { NodeData } from "./types";
 
 interface ConceptNodeProps {
@@ -13,8 +14,8 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
   selected = false,
 }) => {
   const isTopic = data.node_type === "topic";
-  const size = isTopic ? 120 : 68;
-  const fontSize = isTopic ? "16px" : "12px";
+  const diameter = isTopic ? TOPIC_NODE_DIAMETER : CONCEPT_NODE_DIAMETER;
+  const fontSize = isTopic ? "18px" : "14px";
 
   const moduleNumber = data.node_module_index ?? data.node_module_id;
   const showModuleBadge = isTopic;
@@ -82,15 +83,15 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
     </React.Fragment>
   );
 
-  const circleSize = `${size}px`;
+  const circleSize = `${diameter}px`;
   const topicNameStyles: React.CSSProperties = {
     marginTop: "10px",
     textAlign: "center",
     color: "#1f2937",
     fontFamily: '"Fredoka", sans-serif',
     fontWeight: isTopic ? 700 : 600,
-    fontSize: isTopic ? "16px" : "12px",
-    lineHeight: 1.25,
+    fontSize: isTopic ? "20px" : "14px",
+    lineHeight: 1.3,
     maxWidth: circleSize,
     wordBreak: "normal", // Avoid breaking words
     overflowWrap: "break-word", // Allow wrapping of long words when necessary
@@ -102,12 +103,12 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "12px",
+    padding: "16px",
     color: "#ffffff",
     fontFamily: '"GlacialIndifference", sans-serif',
     fontWeight: 600,
-    fontSize: "12px",
-    lineHeight: 1.3,
+    fontSize: "14px",
+    lineHeight: 1.35,
     textAlign: "center",
     pointerEvents: "none",
   };
@@ -115,7 +116,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
     overflow: "hidden",
     textOverflow: "ellipsis",
     display: "-webkit-box",
-    WebkitLineClamp: 3,
+    WebkitLineClamp: 4,
     WebkitBoxOrient: "vertical",
     width: "100%",
   };

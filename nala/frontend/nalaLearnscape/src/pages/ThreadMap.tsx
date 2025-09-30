@@ -36,6 +36,7 @@ import {
   Info,
   Maximize2,
   Minimize2,
+  Pencil,
   Trash2,
 } from "lucide-react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
@@ -60,6 +61,12 @@ import HoverLabelEdge from "./threadMap/HoverLabelEdge";
 import AddNodeHover from "./threadMap/AddNodeHover";
 import TopicTaxonomyProgression from "../components/TopicTaxonomyProgression";
 import { useThreadMapData } from "./threadMap/hooks/useThreadMapData";
+import {
+  CLUSTER_GAP,
+  CLUSTER_MAX_OFFSET,
+  CONCEPT_BASE_RADIUS,
+  TOPIC_BASE_RADIUS,
+} from "./threadMap/constants";
 
 type RawDatabaseNode = {
   id: number | string;
@@ -87,8 +94,6 @@ interface ThreadMapProps {
   module_id?: string;
 }
 
-const TOPIC_BASE_RADIUS = 120;
-const CONCEPT_BASE_RADIUS = 72;
 const LONG_PRESS_MS = 320;
 
 const getNodeRadius = (node: FlowNode): number => {
@@ -137,7 +142,10 @@ const estimateNodeLabelSize = (node: FlowNode) => {
   return { width, height };
 };
 
-const centerNodesAroundCentroid = (nodes: FlowNode[]): FlowNode[] => {
+const centerNodesAroundCentroid = (
+  nodes: FlowNode[],
+  center: XYPosition = { x: 0, y: 0 }
+): FlowNode[] => {
   if (nodes.length === 0) {
     return nodes;
   }
@@ -156,16 +164,20 @@ const centerNodesAroundCentroid = (nodes: FlowNode[]): FlowNode[] => {
     y: sum.y / nodes.length,
   };
 
-  if (Math.abs(centroid.x) < 1 && Math.abs(centroid.y) < 1) {
+  if (
+    Math.abs(centroid.x - center.x) < 1 &&
+    Math.abs(centroid.y - center.y) < 1
+  ) {
     return nodes;
   }
+
   return nodes.map((node) => {
     const position = node.position ?? { x: 0, y: 0 };
     return {
       ...node,
       position: {
-        x: position.x - centroid.x,
-        y: position.y - centroid.y,
+        x: position.x - centroid.x + center.x,
+        y: position.y - centroid.y + center.y,
       },
     };
   });
@@ -204,14 +216,14 @@ const resolveNodeCollisions = (
         const labelSizeA = estimateNodeLabelSize(nodeA);
         const labelSizeB = estimateNodeLabelSize(nodeB);
         const effectiveRadiusA = Math.max(
-          getNodeRadius(nodeA),
-          labelSizeA.width / 2 + 18,
-          labelSizeA.height / 2 + 18
+          getNodeRadius(nodeA) + 16,
+          labelSizeA.width / 2 + 20,
+          labelSizeA.height / 2 + 20
         );
         const effectiveRadiusB = Math.max(
-          getNodeRadius(nodeB),
-          labelSizeB.width / 2 + 18,
-          labelSizeB.height / 2 + 18
+          getNodeRadius(nodeB) + 16,
+          labelSizeB.width / 2 + 20,
+          labelSizeB.height / 2 + 20
         );
         const minDistance = effectiveRadiusA + effectiveRadiusB;
         0;
@@ -286,7 +298,7 @@ const resolveNodeCollisions = (
     }
   }
 
-  return centerNodesAroundCentroid(resolvedNodes);
+  return resolvedNodes;
 };
 
 const keepConceptsNearParent = (nodes: FlowNode[]): FlowNode[] => {
@@ -309,8 +321,9 @@ const keepConceptsNearParent = (nodes: FlowNode[]): FlowNode[] => {
     const dy = nodePosition.y - parentPosition.y;
     const distance = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    const minDistance = getNodeRadius(parent) + 56;
-    const maxDistance = getNodeRadius(parent) + 220;
+    const parentRadius = getNodeRadius(parent);
+    const minDistance = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_GAP;
+    const maxDistance = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_MAX_OFFSET;
 
     if (distance >= minDistance && distance <= maxDistance) {
       return node;
@@ -334,11 +347,11 @@ const keepConceptsNearParent = (nodes: FlowNode[]): FlowNode[] => {
 
 const adjustNodePositions = (
   nodes: FlowNode[],
-  options: { lockedNodeId?: string } = {}
+  options: { lockedNodeId?: string; center?: XYPosition } = {}
 ): FlowNode[] => {
   const withoutCollisions = resolveNodeCollisions(nodes, options.lockedNodeId);
   const clustered = keepConceptsNearParent(withoutCollisions);
-  return centerNodesAroundCentroid(clustered);
+  return centerNodesAroundCentroid(clustered, options.center);
 };
 
 const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
@@ -604,6 +617,12 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   });
   const allowNodeDragRef = useRef<boolean>(false);
 
+  const getLayoutCenter = useCallback((): XYPosition => {
+    const width = containerRef.current?.clientWidth ?? 800;
+    const height = containerRef.current?.clientHeight ?? 600;
+    return { x: width / 2, y: height / 2 };
+  }, []);
+
   const adjacencyMap = useMemo(() => {
     const map = new Map<string, Set<string>>();
     edges.forEach((edge) => {
@@ -868,6 +887,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       });
 
       const topicPositions = new Map<string, XYPosition>();
+      const topicNodeLookup = new Map<string, FlowNode>();
       const conceptGroups = new Map<string, FlowNode[]>();
 
       updatedNodes.forEach((node) => {
@@ -876,6 +896,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             x: node.position?.x ?? 0,
             y: node.position?.y ?? 0,
           });
+          topicNodeLookup.set(String(node.id), node);
         } else if (
           node.data?.node_type === "concept" &&
           node.data.parent_node_id
@@ -902,7 +923,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
         const directionAngle = Math.PI / 8; // Bias cluster toward the upper-right quadrant
         const angleSpread = Math.min(Math.PI * 0.9, Math.PI / 3 + count * 0.15);
-        const radius = Math.max(140, 110 + count * 24);
+        const parentNode = topicNodeLookup.get(parentId);
+        const parentRadius = parentNode
+          ? getNodeRadius(parentNode)
+          : TOPIC_BASE_RADIUS;
+        const baseRadius = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_GAP;
+        const maxRadius =
+          parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_MAX_OFFSET;
+        const radius = Math.min(maxRadius, baseRadius + count * 28);
 
         sortedChildren.forEach((child, index) => {
           const ratio = count > 1 ? index / (count - 1) : 0.5;
@@ -917,13 +945,15 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         });
       });
 
-      return adjustNodePositions(updatedNodes);
+      return adjustNodePositions(updatedNodes, {
+        center: getLayoutCenter(),
+      });
     });
 
     if (pendingUsed) {
       pendingNodePositionRef.current = null;
     }
-  }, [dbNodes, moduleLookup, selectedNode, setNodes]);
+  }, [dbNodes, getLayoutCenter, moduleLookup, selectedNode, setNodes]);
 
   // Sync edges with database relationships
   useEffect(() => {
@@ -1101,7 +1131,15 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       const count = sortedChildren.length;
       const directionAngle = Math.PI / 8;
       const angleSpread = Math.min(Math.PI * 0.9, Math.PI / 3 + count * 0.15);
-      const radius = Math.max(140, 110 + count * 24);
+      const parentNode = simulationNodeMap.get(parentId) as
+        | SimulationNode
+        | undefined;
+      const parentRadius = parentNode
+        ? getNodeRadius(parentNode as unknown as FlowNode)
+        : TOPIC_BASE_RADIUS;
+      const baseRadius = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_GAP;
+      const maxRadius = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_MAX_OFFSET;
+      const radius = Math.min(maxRadius, baseRadius + count * 28);
 
       sortedChildren.forEach((child, index) => {
         const ratio = count > 1 ? index / (count - 1) : 0.5;
@@ -1336,13 +1374,16 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         node.vx = 0;
         node.vy = 0;
       });
+      setNodes((prevNodes) =>
+        adjustNodePositions(prevNodes, { center: getLayoutCenter() })
+      );
       if (reactFlowInstanceRef.current) {
         reactFlowInstanceRef.current.fitView({ padding: 0.35, duration: 350 });
       }
     });
 
     simulation.alpha(0.9).restart();
-  }, [nodes, edges, setNodes]);
+  }, [edges, getLayoutCenter, nodes, setNodes]);
 
   const handleConnectStart = useCallback<OnConnectStart>(() => {
     if (!isEditMode) {
@@ -1381,7 +1422,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   const handleNodeDragStop: OnNodeDrag<FlowNode> = useCallback(() => {
     allowNodeDragRef.current = false;
     pointerPressRef.current = { nodeId: null, time: 0 };
-  }, []);
+    setNodes((prevNodes) =>
+      adjustNodePositions(prevNodes, { center: getLayoutCenter() })
+    );
+    shouldRunSimulationRef.current = true;
+    if (simulationRef.current) {
+      simulationRef.current.alpha(0.6).restart();
+    }
+  }, [getLayoutCenter, setNodes]);
 
   const handleNodesChange = useCallback(
     (changes: NodeChange<FlowNode>[]) => {
@@ -1485,7 +1533,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           }
         });
 
-        const adjusted = adjustNodePositions(nextNodes, { lockedNodeId });
+        const adjusted = adjustNodePositions(nextNodes, {
+          lockedNodeId,
+          center: getLayoutCenter(),
+        });
         return adjusted;
       });
 
@@ -1493,7 +1544,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         shouldRunSimulationRef.current = true;
       }
     },
-    [adjacencyMap, interactionMode, isEditMode, setNodes]
+    [adjacencyMap, getLayoutCenter, interactionMode, isEditMode, setNodes]
   );
 
   // Handle connection
@@ -2289,7 +2340,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                   transition: "background 0.2s ease, box-shadow 0.2s ease",
                 }}
               >
-                {isEditMode ? <Trash2 size={18} /> : <Hand size={18} />}
+                {isEditMode ? <Pencil size={18} /> : <Hand size={18} />}
               </button>
               {isEditMode && deleteSelectionLabel && (
                 <button
@@ -2301,20 +2352,23 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                   onMouseEnter={() => setIsDeleteHovered(true)}
                   onMouseLeave={() => setIsDeleteHovered(false)}
                   style={{
+                    width: controlButtonSize - 6,
+                    height: controlButtonSize - 6,
+                    borderRadius: "50%",
                     border: "none",
-                    borderRadius: "9999px",
-                    padding: "10px 16px",
-                    fontFamily: '"GlacialIndifference", sans-serif',
-                    fontSize: "12px",
-                    fontWeight: 600,
                     background: isDeleteHovered ? "#b91c1c" : "#dc2626",
                     color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     boxShadow: "0 12px 26px rgba(220, 38, 38, 0.4)",
                     cursor: "pointer",
                     transition: "background 0.2s ease",
                   }}
+                  aria-label={deleteSelectionLabel}
+                  title={deleteSelectionLabel}
                 >
-                  {deleteSelectionLabel}
+                  <Trash2 size={18} />
                 </button>
               )}
             </div>

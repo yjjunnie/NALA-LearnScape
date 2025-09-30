@@ -143,6 +143,9 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
   const [rawData, setRawData] = useState<TopicData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [selectedModuleDisplay, setSelectedModuleDisplay] = useState<
+    string | null
+  >(passedModule ?? null);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -165,6 +168,9 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
     "Evaluate",
     "Create",
   ];
+
+  const normalizeModuleValue = (value: string) =>
+    value.toString().toLowerCase().replace(/[^a-z0-9]+/g, "");
 
   const descriptions = {
     Remember: "You managed to recall those essential facts and definitions!",
@@ -195,6 +201,9 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
     ? { [selectedModule]: moduleData[selectedModule] }
     : moduleData;
 
+  const selectedModuleLabel =
+    selectedModuleDisplay ?? selectedModule ?? "All Modules";
+
   // Show loading state
   if (loading) {
     console.log("Render: still loading");
@@ -223,6 +232,7 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
 
   const handleFilterSelect = (module) => {
     setSelectedModule(module);
+    setSelectedModuleDisplay(module);
     setShowFilterMenu(false);
     setExpandedModule(module);
     setExpandedTopic(null);
@@ -245,25 +255,38 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!passedModule || rawData.length === 0) {
+    if (!passedModule) {
+      setSelectedModule(null);
+      setExpandedModule(null);
+      setSelectedModuleDisplay(null);
       return;
     }
 
-    const normalized = passedModule.toString().trim().toLowerCase();
+    const normalized = normalizeModuleValue(passedModule);
     if (!normalized) {
+      setSelectedModuleDisplay(passedModule);
       return;
     }
 
-    const matchedModule =
-      modules.find((module) => module.toLowerCase() === normalized) ||
-      modules.find((module) => module.toLowerCase().includes(normalized)) ||
-      modules.find((module) => normalized.includes(module.toLowerCase()));
+    const matchedModule = modules.find((module) => {
+      const normalizedModule = normalizeModuleValue(module);
+      return (
+        normalizedModule === normalized ||
+        normalizedModule.includes(normalized) ||
+        normalized.includes(normalizedModule)
+      );
+    });
 
     if (matchedModule) {
       setSelectedModule(matchedModule);
       setExpandedModule(matchedModule);
+      setSelectedModuleDisplay(matchedModule);
+    } else {
+      setSelectedModule(null);
+      setExpandedModule(null);
+      setSelectedModuleDisplay(passedModule);
     }
-  }, [modules, passedModule, rawData]);
+  }, [modules, passedModule]);
 
   return (
     <div
@@ -281,6 +304,11 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
           <h1 className="font-bold font-['Fredoka'] text-3xl text-[#4C73FF]">
             Bloom's Taxonomy
           </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            {selectedModuleLabel === "All Modules"
+              ? "Showing all available modules"
+              : `Showing module: ${selectedModuleLabel}`}
+          </p>
         </div>
 
         {/* Filter Button */}
@@ -306,7 +334,7 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
                 d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
               />
             </svg>
-            {selectedModule || "All Modules"}
+            {selectedModuleLabel}
             <svg
               className={`w-3 h-3 transition-transform duration-200 ${
                 showFilterMenu ? "rotate-180" : ""

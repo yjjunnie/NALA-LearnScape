@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { BaseEdge, EdgeLabelRenderer, useReactFlow } from "@xyflow/react";
 import type { EdgeProps, XYPosition } from "@xyflow/react";
+
+import { CONCEPT_BASE_RADIUS, TOPIC_BASE_RADIUS } from "./constants";
 import type { FlowEdge, FlowNode, NodeData } from "./types";
 
 const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
@@ -53,13 +55,11 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
     const centerY = position.y + height / 2;
     const nodeData = (extended.data ?? null) as NodeData | null;
     const measuredRadius = Math.min(width, height) / 2;
-    let radius = measuredRadius;
-
-    if (nodeData?.node_type === "topic") {
-      radius = Math.max(measuredRadius, 60);
-    } else if (nodeData?.node_type === "concept") {
-      radius = Math.max(measuredRadius, 34);
-    }
+    const fallbackRadius =
+      nodeData?.node_type === "topic"
+        ? TOPIC_BASE_RADIUS
+        : CONCEPT_BASE_RADIUS;
+    const radius = Math.max(measuredRadius, fallbackRadius);
 
     return { centerX, centerY, radius };
   };

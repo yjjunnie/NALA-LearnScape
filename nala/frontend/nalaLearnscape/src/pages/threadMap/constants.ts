@@ -1,0 +1,8 @@
+export const TOPIC_BASE_RADIUS = 84;
+export const CONCEPT_BASE_RADIUS = 52;
+
+export const TOPIC_NODE_DIAMETER = TOPIC_BASE_RADIUS * 2;
+export const CONCEPT_NODE_DIAMETER = CONCEPT_BASE_RADIUS * 2;
+
+export const CLUSTER_GAP = 72;
+export const CLUSTER_MAX_OFFSET = 260;

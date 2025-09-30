@@ -183,7 +183,7 @@ def get_weekly_quiz(request, module_id):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        topic_ids = [tid.strip() for tid in topic_ids_param.split(',')]
+        topic_ids = [tid.strip() for tid in topic_ids_param.split(',') if tid.strip()]
         topic_ids_set = set(topic_ids)
         
         topics = Topic.objects.filter(module=module, id__in=topic_ids)
@@ -199,12 +199,12 @@ def get_weekly_quiz(request, module_id):
         candidate_quizzes = StudentQuizHistory.objects.filter(
             student=student,
             module=module,
-            quiz_data__quiz_type='weekly'
+            quiz_type='weekly'
         )
         
         for quiz in candidate_quizzes:
-            stored_topic_ids = [str(tid) for tid in quiz.quiz_data.get('topic_ids', [])]
-            if set(stored_topic_ids) == topic_ids_set:
+            stored_topic_ids = set(quiz.get_topic_ids())
+            if stored_topic_ids == topic_ids_set:
                 existing_quiz = quiz
                 break
         
@@ -214,13 +214,15 @@ def get_weekly_quiz(request, module_id):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        questions = existing_quiz.get_questions()
+
         return Response({
             'quiz_history_id': str(existing_quiz.id),
-            'questions': existing_quiz.quiz_data.get('questions', []),
+            'questions': questions,
             'student_answers': existing_quiz.student_answers or {},
             'completed': existing_quiz.completed,
             'score': existing_quiz.score,
-            'can_retry': True,
+            'can_retry': existing_quiz.get_effective_quiz_type() == 'weekly',
         })
         
     except Student.DoesNotExist:
@@ -309,7 +311,8 @@ def generate_custom_quiz(request, module_id):
             },
             student_answers={},
             completed=False,
-            score=None
+            score=None,
+            quiz_type='custom'
         )
         
         quiz_history.topics_covered.set(topics)
@@ -381,12 +384,13 @@ def submit_quiz(request, quiz_history_id):
         
         quiz_history.student_answers = {str(k): v for k, v in answers.items()}
         
-        questions = quiz_history.quiz_data.get('questions', [])
+        questions = quiz_history.get_questions()
         correct_count = 0
-        
+
         for idx, question in enumerate(questions):
             student_answer = quiz_history.student_answers.get(str(idx))
-            if student_answer == question.get('answer'):
+            correct_answer = question.get('answer') or question.get('correct_answer')
+            if student_answer == correct_answer:
                 correct_count += 1
         
         score = (correct_count / len(questions)) * 100 if questions else 0
@@ -397,7 +401,7 @@ def submit_quiz(request, quiz_history_id):
         
         update_bloom_from_quiz(quiz_history.student, quiz_history)
         
-        quiz_type = quiz_history.quiz_data.get('quiz_type', 'unknown')
+        quiz_type = quiz_history.get_effective_quiz_type()
         
         return Response({
             'status': 'success',
@@ -425,15 +429,16 @@ def get_quiz_history(request, student_id):
             student=student,
             completed=True
         ).order_by('-created_at')
-        
+
         history_data = []
         for quiz in quiz_histories:
+            questions = quiz.get_questions()
             history_data.append({
                 'id': quiz.id,
                 'module_name': quiz.module.name if quiz.module else 'N/A',
                 'score': quiz.score,
-                'num_questions': len(quiz.quiz_data.get('questions', [])),
-                'quiz_type': quiz.quiz_data.get('quiz_type', 'unknown'),
+                'num_questions': len(questions),
+                'quiz_type': quiz.get_effective_quiz_type(),
                 'created_at': quiz.created_at.isoformat(),
             })
         

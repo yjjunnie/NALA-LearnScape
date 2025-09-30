@@ -39,9 +39,19 @@ def classify_chathistory(request):
     results = classify_messages_from_json(filepath)
     return Response(results)
 
+CHAT_HISTORY_SCENARIOS = {
+    "foundations": "app/services/chat_history/newconvohistoryposted.json",
+    "progression": "app/services/chat_history/newlinearalgprogression.json",
+}
+
+
 @api_view(["GET"])
 def display_chathistory(request):
-    filepath = "app/services/chat_history/newconvohistoryposted.json"
+    scenario_key = (request.GET.get("scenario") or "").strip().lower()
+    filepath = CHAT_HISTORY_SCENARIOS.get(
+        scenario_key,
+        "app/services/chat_history/newconvohistoryposted.json"
+    )
     results = display_messages_from_json(filepath)
     return Response(results)
 

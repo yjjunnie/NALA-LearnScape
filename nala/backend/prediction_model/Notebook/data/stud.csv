@@ -1,1000 +1,1582 @@
 blooms_level,topic_difficulty,previous_grade,actual_study_hours
-remember, 9, 50, 4.7 
-understand, 8, 58, 4.1 
-apply, 7, 65, 3.4 
-analyze, 6, 75, 2.6 
-evaluate, 5, 82, 1.9 
-create, 4, 88, 1.2 
-remember, 6, 68, 3.6 
-understand, 5, 80, 2.5 
-apply, 9, 60, 4.0 
-analyze, 3, 93, 1.0
-evaluate, 7, 77, 2.3
-create, 2, 95, 0.8
-remember, 8, 59, 4.2
-understand, 7, 64, 3.5
-apply, 5, 72, 2.3
-analyze, 4, 86, 1.6
-evaluate, 3, 90, 1.1
-create, 6, 83, 1.5
-remember, 10, 52, 5.0
-understand, 9, 58, 4.3
-apply, 6, 61, 3.0
-analyze, 7, 69, 2.7
-evaluate, 5, 74, 1.8
-create, 4, 91, 1.2
-remember, 7, 63, 4.0
-understand, 6, 79, 3.0
-apply, 8, 67, 3.5
-analyze, 5, 76, 2.2
-evaluate, 2, 89, 1.0
-create, 1, 97, 0.6
-remember, 4, 70, 3.5
-understand, 3, 66, 3.6
-apply, 4, 59, 3.1
-analyze, 6, 80, 2.4
-evaluate, 8, 73, 2.4
-create, 7, 87, 1.4
-remember, 6, 55, 4.3
-understand, 5, 61, 3.3
-apply, 7, 66, 3.2
-analyze, 9, 70, 3.0
-evaluate, 7, 78, 2.1
-create, 5, 89, 1.3
-remember, 3, 49, 4.6
-understand, 4, 52, 4.0
-apply, 5, 63, 3.0
-analyze, 6, 67, 2.6
-evaluate, 5, 85, 1.6
-create, 6, 92, 1.1
-remember, 9, 46, 4.9
-understand, 8, 60, 4.1
-apply, 7, 68, 3.6
-analyze, 4, 83, 1.7
-evaluate, 6, 75, 1.9
-create, 5, 96, 1.0
-remember, 8, 59, 4.4
-understand, 7, 66, 3.7
-apply, 6, 72, 2.9
-analyze, 5, 78, 2.2
-evaluate, 3, 81, 1.3
-create, 2, 94, 0.8
-remember, 7, 62, 4.1
-understand, 6, 73, 3.2
-apply, 5, 69, 2.5
-analyze, 8, 77, 2.9
-evaluate, 6, 83, 2.0
-create, 7, 90, 1.4
-remember, 5, 58, 3.9
-understand, 4, 67, 3.1
-apply, 3, 74, 2.3
-analyze, 2, 88, 1.2
-evaluate, 4, 92, 1.0
-create, 3, 98, 0.7
-remember, 10, 43, 5.0
-understand, 9, 55, 4.3
-apply, 8, 63, 3.6
-analyze, 7, 71, 2.8
-evaluate, 5, 79, 1.7
-create, 4, 87, 1.2
-remember, 8, 54, 4.5
-understand, 7, 63, 3.8
-apply, 9, 61, 3.9
-analyze, 6, 69, 2.5
-evaluate, 7, 82, 2.1
-create, 5, 91, 1.3
-remember, 6, 60, 4.0
-understand, 5, 68, 3.4
-apply, 4, 73, 2.8
-analyze, 3, 85, 1.5
-evaluate, 2, 93, 1.0
-create, 3, 97, 0.8
-remember, 9, 48, 4.8
-understand, 6, 57, 3.5
-apply, 5, 64, 3.1
-analyze, 4, 79, 1.9
-evaluate, 3, 84, 1.2
-create, 2, 95, 0.9
-remember, 7, 56, 4.2
-understand, 8, 62, 4.0
-apply, 9, 69, 3.7
-analyze, 6, 73, 2.7
-evaluate, 5, 80, 2.0
-create, 4, 88, 1.3
-remember, 1, 85, 1.3
-remember, 2, 72, 2.4
-remember, 8, 83, 2.4
-create, 5, 73, 0.7
-remember, 9, 88, 2.3
-remember, 7, 53, 4.4
-evaluate, 10, 91, 1.4
-remember, 6, 88, 1.9
-evaluate, 3, 49, 0.9
-apply, 8, 74, 3.3
-understand, 6, 62, 3.3
-analyze, 5, 85, 2.1
-apply, 4, 57, 3.0
-understand, 2, 66, 2.8
-remember, 5, 80, 2.7
-create, 4, 90, 1.0
-evaluate, 6, 79, 2.0
-apply, 9, 65, 3.9
-understand, 7, 59, 3.7
-analyze, 8, 84, 2.9
-remember, 3, 70, 3.3
-create, 2, 95, 0.7
-evaluate, 5, 72, 1.9
-apply, 6, 60, 3.4
-understand, 3, 68, 2.9
-remember, 8, 51, 4.3
-analyze, 7, 75, 2.5
-evaluate, 4, 88, 1.3
-remember, 10, 61, 4.7
-create, 6, 85, 1.5
-apply, 5, 73, 2.8
-understand, 8, 66, 3.6
-remember, 4, 93, 1.6
-evaluate, 7, 81, 2.3
-analyze, 6, 79, 2.6
-apply, 2, 57, 3.2
-understand, 5, 69, 2.7
-remember, 9, 48, 4.8
-create, 3, 97, 0.8
-evaluate, 8, 90, 1.9
-remember, 7, 68, 3.6
-understand, 4, 82, 2.4
-apply, 6, 77, 2.7
-analyze, 5, 70, 2.3
-create, 2, 91, 0.9
-evaluate, 4, 79, 1.7
-remember, 6, 59, 3.9
-understand, 6, 63, 3.2
-apply, 8, 71, 3.5
-analyze, 9, 87, 2.7
-remember, 3, 76, 2.9
-evaluate, 5, 68, 2.0
-create, 1, 93, 0.7
-apply, 7, 64, 3.2
-understand, 9, 54, 4.1
-remember, 4, 89, 1.9
-analyze, 7, 78, 2.6
-evaluate, 6, 73, 2.1
-create, 5, 95, 1.0
-remember, 8, 60, 4.1
-understand, 5, 61, 3.3
-apply, 6, 58, 3.4
-analyze, 8, 69, 3.0
-evaluate, 9, 83, 2.3
-create, 7, 85, 1.6
-remember, 2, 67, 2.6
-understand, 4, 70, 2.5
-apply, 5, 63, 2.9
-analyze, 3, 91, 1.4
-evaluate, 7, 86, 2.2
-create, 6, 94, 1.1
-remember, 5, 74, 3.1
-understand, 3, 60, 3.0
-apply, 4, 76, 2.6
-analyze, 6, 82, 2.5
-evaluate, 2, 89, 1.1
-create, 4, 97, 0.9
-remember, 9, 45, 4.9
-understand, 8, 56, 4.0
-apply, 7, 64, 3.7
-analyze, 5, 77, 2.2
-evaluate, 6, 80, 1.8
-create, 5, 92, 1.2
-remember, 6, 69, 3.5
-understand, 7, 74, 3.1
-apply, 9, 70, 3.6
-analyze, 6, 78, 2.6
-evaluate, 4, 91, 1.4
-create, 3, 98, 0.8
-remember, 8, 53, 4.4
-understand, 5, 60, 3.4
-apply, 6, 65, 3.1
-analyze, 5, 79, 2.4
-evaluate, 3, 84, 1.5
-create, 2, 96, 1.0
-remember, 10, 44, 5.0
-understand, 9, 53, 4.3
-apply, 8, 61, 3.7
-analyze, 7, 66, 2.9
-evaluate, 6, 72, 2.1
-create, 5, 85, 1.3
-remember, 8, 62, 4.2
-understand, 7, 64, 3.4
-apply, 6, 70, 3.0
-analyze, 5, 77, 2.3
-evaluate, 4, 81, 1.5
-create, 3, 94, 0.9
-remember, 9, 49, 4.8
-understand, 8, 59, 3.9
-apply, 7, 67, 3.4
-analyze, 6, 73, 2.7
-evaluate, 5, 79, 1.9
-create, 4, 90, 1.1
-remember, 7, 54, 4.3
-understand, 6, 60, 3.5
-apply, 5, 68, 2.8
-analyze, 4, 75, 2.1
-evaluate, 3, 84, 1.2
-create, 2, 97, 0.7
-remember, 6, 69, 3.7
-understand, 5, 71, 3.1
-apply, 4, 76, 2.6
-analyze, 3, 82, 1.9
-evaluate, 2, 89, 1.0
-create, 1, 95, 0.8
-remember, 8, 50, 4.6
-understand, 7, 63, 3.6
-apply, 6, 70, 3.2
-analyze, 5, 78, 2.4
-evaluate, 4, 86, 1.6
-create, 3, 93, 1.0
-remember, 9, 46, 4.9
-understand, 8, 58, 4.0
-apply, 7, 65, 3.6
-analyze, 6, 74, 2.8
-evaluate, 5, 80, 1.9
-create, 4, 92, 1.1
-remember, 5, 68, 3.3
-understand, 4, 72, 2.8
-apply, 3, 78, 2.1
-analyze, 2, 85, 1.5
-evaluate, 1, 91, 1.0
-create, 2, 96, 0.7
-remember, 7, 55, 4.1
-understand, 6, 61, 3.3
-apply, 5, 69, 2.9
-analyze, 4, 77, 2.2
-evaluate, 3, 84, 1.4
-create, 2, 94, 0.9
-remember, 9, 48, 4.7
-understand, 8, 57, 3.8
-apply, 7, 66, 3.3
-analyze, 6, 73, 2.5
-evaluate, 5, 82, 1.7
-create, 4, 91, 1.1
-remember, 6, 60, 3.8
-understand, 5, 68, 3.0
-apply, 4, 75, 2.5
-analyze, 3, 81, 1.8
-evaluate, 2, 88, 1.1
-create, 1, 97, 0.7
-remember, 10, 47, 5.0
-understand, 9, 56, 4.1
-apply, 8, 64, 3.5
-analyze, 7, 72, 2.8
-evaluate, 6, 79, 2.0
-create, 5, 86, 1.2
-remember, 8, 52, 4.4
-understand, 7, 61, 3.7
-apply, 6, 69, 3.1
-analyze, 5, 76, 2.3
-evaluate, 4, 83, 1.6
-create, 3, 92, 1.0
-remember, 9, 45, 4.9
-understand, 8, 54, 4.0
-apply, 7, 63, 3.4
-analyze, 6, 71, 2.7
-evaluate, 5, 78, 1.8
-create, 4, 89, 1.0
-remember, 7, 58, 4.0
-understand, 6, 66, 3.2
-apply, 5, 74, 2.6
-analyze, 4, 80, 1.9
-evaluate, 3, 87, 1.2
-create, 2, 95, 0.8
-remember, 6, 64, 3.6
-understand, 5, 69, 3.0
-apply, 4, 73, 2.6
-analyze, 3, 80, 1.8
-evaluate, 2, 88, 1.0
-create, 1, 95, 0.8
-remember, 8, 55, 4.2
-understand, 7, 61, 3.4
-apply, 6, 68, 3.0
-analyze, 5, 76, 2.3
-evaluate, 4, 82, 1.5
-create, 3, 91, 1.0
-remember, 9, 49, 4.8
-understand, 8, 58, 3.8
-apply, 7, 65, 3.3
-analyze, 6, 74, 2.7
-evaluate, 5, 80, 1.8
-create, 4, 90, 1.2
-remember, 7, 54, 4.0
-understand, 6, 63, 3.2
-apply, 5, 71, 2.7
-analyze, 4, 78, 2.1
-evaluate, 3, 85, 1.3
-create, 2, 94, 0.9
-remember, 5, 66, 3.5
-understand, 4, 71, 2.9
-apply, 3, 77, 2.2
-analyze, 2, 84, 1.6
-evaluate, 1, 91, 1.1
-create, 1, 96, 0.8
-remember, 10, 45, 5.0
-understand, 9, 54, 4.1
-apply, 8, 62, 3.5
-analyze, 7, 70, 2.7
-evaluate, 6, 77, 1.9
-create, 5, 85, 1.3
-remember, 9, 50, 4.7
-understand, 8, 59, 3.9
-apply, 7, 66, 3.2
-analyze, 6, 75, 2.5
-evaluate, 5, 81, 1.7
-create, 4, 89, 1.1
-remember, 8, 53, 4.3
-understand, 7, 60, 3.5
-apply, 6, 67, 3.0
-analyze, 5, 74, 2.3
-evaluate, 4, 82, 1.6
-create, 3, 91, 0.9
-remember, 7, 56, 4.1
-understand, 6, 63, 3.3
-apply, 5, 71, 2.8
-analyze, 4, 78, 2.0
-evaluate, 3, 86, 1.3
-create, 2, 94, 0.8
-remember, 6, 65, 3.7
-understand, 5, 70, 3.1
-apply, 4, 76, 2.5
-analyze, 3, 83, 1.8
-evaluate, 2, 90, 1.0
-create, 1, 96, 0.7
-remember, 9, 47, 4.9
-understand, 8, 56, 4.0
-apply, 7, 63, 3.4
-analyze, 6, 72, 2.6
-evaluate, 5, 79, 1.8
-create, 4, 88, 1.2
-remember, 8, 52, 4.4
-understand, 7, 60, 3.6
-apply, 6, 68, 3.0
-analyze, 5, 75, 2.2
-evaluate, 4, 83, 1.4
-create, 3, 92, 1.0
-remember, 7, 55, 4.0
-understand, 6, 64, 3.2
-apply, 5, 70, 2.7
-analyze, 4, 78, 2.0
-evaluate, 3, 85, 1.3
-create, 2, 93, 0.9
-remember, 6, 67, 3.6
-understand, 5, 72, 2.9
-apply, 4, 77, 2.4
-analyze, 3, 84, 1.7
-evaluate, 2, 91, 1.0
-create, 1, 97, 0.7
-remember, 10, 46, 5.0
-understand, 9, 55, 4.2
-apply, 8, 63, 3.6
-analyze, 7, 71, 2.8
-evaluate, 6, 78, 2.0
-create, 5, 86, 1.3
-remember, 8, 54, 4.2
-understand, 7, 61, 3.5
-apply, 6, 69, 3.0
-analyze, 5, 76, 2.3
-evaluate, 4, 83, 1.5
-create, 3, 91, 1.0
-remember, 9, 48, 4.8
-understand, 8, 56, 3.9
-apply, 7, 65, 3.3
-analyze, 6, 73, 2.6
-evaluate, 5, 80, 1.8
-create, 4, 89, 1.2
-remember, 7, 57, 4.1
-understand, 6, 63, 3.3
-apply, 5, 71, 2.7
-analyze, 4, 78, 2.0
-evaluate, 3, 85, 1.2
-create, 2, 93, 0.9
-remember, 6, 66, 3.7
-understand, 5, 70, 3.1
-apply, 4, 75, 2.6
-analyze, 3, 83, 1.8
-evaluate, 2, 90, 1.0
-create, 1, 96, 0.7
-remember, 10, 45, 5.0
-understand, 9, 54, 4.1
-apply, 8, 62, 3.5
-analyze, 7, 70, 2.8
-evaluate, 6, 77, 1.9
-create, 5, 85, 1.3
-remember, 9, 50, 4.7
-understand, 8, 59, 3.9
-apply, 7, 66, 3.2
-analyze, 6, 75, 2.5
-evaluate, 5, 81, 1.7
-create, 4, 90, 1.1
-remember, 8, 53, 4.3
-understand, 7, 60, 3.5
-apply, 6, 67, 3.0
-analyze, 5, 74, 2.3
-evaluate, 4, 82, 1.6
-create, 3, 91, 0.9
-remember, 7, 56, 4.0
-understand, 6, 63, 3.2
-apply, 5, 71, 2.8
-analyze, 4, 78, 2.0
-evaluate, 3, 86, 1.3
-create, 2, 94, 0.8
-remember, 6, 65, 3.6
-understand, 5, 70, 3.0
-apply, 4, 76, 2.5
-analyze, 3, 84, 1.8
-evaluate, 2, 91, 1.0
-create, 1, 97, 0.7
-remember, 10, 46, 5.0
-understand, 9, 55, 4.2
-apply, 8, 63, 3.6
-analyze, 7, 71, 2.8
-evaluate, 6, 78, 2.0
-create, 5, 86, 1.3
-remember, 8, 52, 4.4
-understand, 7, 60, 3.6
-apply, 6, 68, 3.0
-analyze, 5, 75, 2.2
-evaluate, 4, 83, 1.4
-create, 3, 92, 1.0
-remember, 7, 55, 4.0
-understand, 6, 64, 3.2
-apply, 5, 70, 2.7
-analyze, 4, 78, 2.0
-evaluate, 3, 85, 1.3
-create, 2, 93, 0.9
-remember, 6, 67, 3.6
-understand, 5, 72, 2.9
-apply, 4, 77, 2.4
-analyze, 3, 84, 1.7
-evaluate, 2, 91, 1.0
-create, 1, 97, 0.7
-remember, 9, 47, 4.9
-understand, 8, 56, 4.0
-apply, 7, 63, 3.4
-analyze, 6, 72, 2.6
-evaluate, 5, 79, 1.8
-create, 4, 88, 1.2
-remember, 8, 51, 4.5
-understand, 7, 60, 3.6
-apply, 6, 68, 3.0
-analyze, 5, 75, 2.2
-evaluate, 4, 83, 1.4
-create, 3, 91, 1.0
-remember, 7, 56, 4.0
-understand, 6, 65, 3.2
-apply, 5, 70, 2.7
-analyze, 4, 78, 2.0
-evaluate, 3, 85, 1.3
-create, 2, 94, 0.8
-remember, 6, 66, 3.7
-understand, 5, 71, 3.0
-apply, 4, 76, 2.5
-analyze, 3, 84, 1.8
-evaluate, 2, 91, 1.0
-create, 1, 97, 0.7
-remember, 10, 46, 5.0
-understand, 9, 55, 4.2
-apply, 8, 63, 3.6
-analyze, 7, 71, 2.8
-evaluate, 6, 78, 2.0
-create, 5, 86, 1.3
-remember, 8, 52, 4.4
-understand, 7, 60, 3.6
-apply, 6, 68, 3.0
-analyze, 5, 75, 2.2
-evaluate, 4, 83, 1.4
-create, 3, 92, 1.0
-remember, 7, 55, 4.0
-understand, 6, 64, 3.2
-apply, 5, 70, 2.7
-analyze, 4, 78, 2.0
-evaluate, 3, 85, 1.3
-create, 2, 93, 0.9
-remember, 6, 67, 3.6
-understand, 5, 72, 2.9
-apply, 4, 77, 2.4
-analyze, 3, 84, 1.7
-evaluate, 2, 91, 1.0
-create, 1, 97, 0.7
-remember, 9, 47, 4.9
-understand, 8, 56, 4.0
-apply, 7, 63, 3.4
-analyze, 6, 72, 2.6
-evaluate, 5, 79, 1.8
-create, 4, 88, 1.2
-remember, 8, 51, 4.5
-understand, 7, 60, 3.6
-apply, 6, 68, 3.0
-analyze, 5, 75, 2.2
-evaluate, 4, 83, 1.4
-create, 3, 91, 1.0
-remember, 7, 56, 4.0
-understand, 6, 65, 3.2
-apply, 5, 70, 2.7
-analyze, 4, 78, 2.0
-evaluate, 3, 85, 1.3
-create, 2, 94, 0.8
-remember, 6, 66, 3.7
-understand, 5, 71, 3.0
-apply, 4, 76, 2.5
-analyze, 3, 84, 1.8
-evaluate, 2, 91, 1.0
-create, 1, 97, 0.7
-remember, 10, 46, 5.0
-understand, 9, 55, 4.2
-apply, 8, 63, 3.6
-analyze, 7, 71, 2.8
-evaluate, 6, 78, 2.0
-create, 5, 86, 1.3
-remember, 8, 52, 4.4
-understand, 7, 60, 3.6
-apply, 6, 68, 3.0
-analyze, 5, 75, 2.2
-evaluate, 4, 83, 1.4
-create, 3, 92, 1.0
-remember, 7, 55, 4.0
-understand, 6, 64, 3.2
-apply, 5, 70, 2.7
-analyze, 4, 78, 2.0
-evaluate, 3, 85, 1.3
-create, 2, 93, 0.9
-remember, 6, 67, 3.6
-understand, 5, 72, 2.9
-apply, 4, 77, 2.4
-analyze, 3, 84, 1.7
-evaluate, 2, 91, 1.0
-create, 1, 97, 0.7
-remember, 9, 47, 4.9
-understand, 8, 56, 4.0
-apply, 7, 63, 3.4
-analyze, 6, 72, 2.6
-evaluate, 5, 79, 1.8
-create, 4, 88, 1.2
-analyze, 5, 80, 2.3
-evaluate, 5, 87, 2.4
-analyze, 9, 46, 5.0
-remember, 6, 70, 2.7
-apply, 4, 75, 3.8
-remember, 5, 60, 2.1
-understand, 5, 90, 1.9
-create, 7, 61, 3.4
-create, 5, 53, 2.4
-understand, 8, 46, 4.6
-apply, 6, 58, 3.3
-analyze, 3, 79, 2.1
-evaluate, 4, 85, 1.5
-remember, 8, 69, 3.9
-understand, 7, 55, 3.7
-create, 6, 76, 2.2
-apply, 9, 43, 4.8
-remember, 3, 95, 1.2
-evaluate, 7, 62, 2.7
-apply, 2, 88, 1.5
-understand, 1, 90, 2.3
-analyze, 10, 59, 4.3
-remember, 9, 78, 3.5
-create, 8, 52, 3.0
-understand, 4, 84, 1.9
-apply, 3, 73, 2.8
-evaluate, 2, 91, 1.3
-remember, 6, 64, 3.2
-create, 1, 97, 1.1
-understand, 6, 47, 4.1
-analyze, 5, 66, 2.7
-remember, 4, 82, 2.4
-apply, 10, 42, 5.0
-evaluate, 8, 54, 3.1
-remember, 7, 68, 3.8
-create, 4, 60, 2.6
-analyze, 6, 83, 2.0
-apply, 5, 79, 2.1
-understand, 3, 87, 1.5
-remember, 2, 92, 1.4
-evaluate, 6, 67, 2.4
-create, 9, 45, 4.2
-understand, 7, 51, 3.9
-remember, 10, 48, 5.0
-apply, 7, 63, 3.3
-analyze, 8, 70, 2.6
-evaluate, 5, 76, 1.9
-create, 6, 80, 1.6
-remember, 5, 66, 3.4
-understand, 6, 58, 3.5
-apply, 4, 71, 2.7
-create, 2, 89, 0.9
-remember, 8, 61, 4.0
-evaluate, 3, 83, 1.2
-analyze, 7, 73, 2.3
-apply, 5, 77, 2.5
-understand, 4, 81, 1.7
-create, 3, 93, 0.8
-remember, 7, 54, 4.2
-understand, 9, 49, 4.5
-apply, 6, 69, 3.1
-analyze, 8, 57, 3.5
-evaluate, 4, 90, 1.3
-create, 5, 92, 1.1
-remember, 3, 86, 1.9
-understand, 5, 60, 3.1
-apply, 7, 65, 3.2
-analyze, 6, 72, 2.4
-evaluate, 7, 56, 2.9
-create, 8, 44, 4.1
-remember, 4, 79, 2.8
-understand, 6, 67, 3.0
-apply, 3, 83, 1.7
-analyze, 9, 50, 4.4
-evaluate, 10, 48, 4.7
-create, 7, 63, 3.0
-remember, 6, 74, 2.5
-apply, 9, 58, 3.9
-understand, 8, 62, 3.7
-analyze, 7, 55, 3.0
-evaluate, 6, 77, 1.8
-create, 3, 96, 0.9
-remember, 8, 46, 4.6
-understand, 5, 88, 1.5
-apply, 2, 84, 1.3
-analyze, 4, 79, 2.2
-evaluate, 3, 86, 1.4
-create, 1, 99, 0.7
-remember, 5, 70, 2.9
-understand, 7, 61, 3.4
-apply, 6, 67, 2.8
-analyze, 8, 64, 3.1
-evaluate, 5, 82, 1.6
-create, 4, 88, 1.2
-remember, 9, 55, 4.3
-understand, 8, 60, 3.6
-apply, 7, 68, 3.0
-analyze, 6, 75, 2.5
-evaluate, 5, 80, 1.8
-create, 4, 90, 1.1
-remember, 8, 47, 4.6
-understand, 7, 59, 3.8
-apply, 6, 65, 2.9
-analyze, 5, 72, 2.2
-evaluate, 4, 86, 1.3
-create, 3, 93, 0.9
-remember, 6, 66, 3.4
-understand, 5, 74, 2.7
-apply, 4, 78, 2.4
-analyze, 3, 85, 1.7
-evaluate, 2, 89, 1.0
-create, 1, 97, 0.6
-remember, 10, 50, 5.0
-understand, 9, 56, 4.2
-apply, 8, 62, 3.6
-analyze, 7, 70, 2.8
-evaluate, 6, 77, 2.0
-create, 5, 84, 1.3
-remember, 7, 53, 4.1
-understand, 6, 65, 3.2
-apply, 5, 71, 2.6
-analyze, 4, 79, 2.0
-evaluate, 3, 87, 1.3
-create, 2, 95, 0.8
-remember, 8, 60, 4.0
-understand, 7, 67, 3.1
-apply, 6, 73, 2.5
-analyze, 5, 81, 1.9
-evaluate, 4, 88, 1.1
-create, 3, 96, 0.7
-remember, 9, 52, 4.7
-understand, 8, 58, 3.9
-apply, 7, 64, 3.3
-analyze, 6, 71, 2.6
-evaluate, 5, 83, 1.6
-create, 4, 91, 1.0
-remember, 6, 69, 3.2
-understand, 5, 73, 2.8
-apply, 4, 77, 2.2
-analyze, 3, 84, 1.6
-evaluate, 2, 90, 1.0
-create, 1, 98, 0.7
-remember, 10, 44, 5.0
-understand, 9, 53, 4.2
-apply, 8, 61, 3.5
-analyze, 7, 69, 2.7
-evaluate, 6, 76, 2.0
-create, 5, 85, 1.4
-remember, 8, 50, 4.5
-understand, 7, 62, 3.4
-apply, 6, 68, 3.0
-analyze, 5, 74, 2.3
-evaluate, 4, 89, 1.2
-create, 3, 94, 0.9
-remember, 7, 56, 4.0
-understand, 6, 64, 3.1
-apply, 5, 70, 2.6
-analyze, 4, 78, 2.0
-evaluate, 3, 86, 1.3
-create, 2, 92, 0.8
-remember, 6, 67, 3.5
-understand, 5, 72, 2.9
-apply, 4, 76, 2.3
-analyze, 3, 83, 1.7
-evaluate, 2, 91, 1.0
-create, 1, 96, 0.6
-remember, 9, 48, 4.8
-understand, 8, 59, 3.8
-apply, 7, 66, 3.2
-analyze, 6, 73, 2.5
-evaluate, 5, 82, 1.7
-create, 4, 90, 1.0
-remember, 8, 54, 4.3
-understand, 7, 63, 3.5
-apply, 6, 70, 2.9
-analyze, 5, 77, 2.2
-evaluate, 4, 85, 1.4
-create, 3, 93, 0.9
-remember, 7, 57, 4.1
-understand, 6, 65, 3.2
-apply, 5, 72, 2.7
-analyze, 4, 80, 2.0
-evaluate, 3, 87, 1.2
-create, 2, 95, 0.7
-remember, 10, 47, 5.0
-understand, 9, 55, 4.2
-apply, 8, 62, 3.6
-analyze, 7, 70, 2.8
-evaluate, 6, 78, 2.0
-create, 5, 87, 1.3
-remember, 9, 49, 4.7
-understand, 8, 58, 3.9
-apply, 7, 65, 3.3
-analyze, 6, 72, 2.6
-evaluate, 5, 80, 1.8
-create, 4, 91, 1.1
-remember, 8, 52, 4.4
-understand, 7, 61, 3.5
-apply, 6, 67, 3.0
-analyze, 5, 75, 2.3
-evaluate, 4, 84, 1.5
-create, 3, 92, 1.0
-remember, 7, 54, 4.1
-understand, 6, 63, 3.3
-apply, 5, 70, 2.7
-analyze, 4, 78, 2.0
-evaluate, 3, 86, 1.3
-create, 2, 95, 0.8
-remember, 6, 66, 3.6
-understand, 5, 71, 2.9
-apply, 4, 76, 2.4
-analyze, 3, 83, 1.7
-evaluate, 2, 91, 1.0
-create, 1, 97, 0.7
-remember, 10, 45, 5.0
-understand, 9, 53, 4.1
-apply, 8, 60, 3.5
-analyze, 7, 68, 2.8
-evaluate, 6, 76, 2.0
-create, 5, 85, 1.3
-remember, 8, 50, 4.5
-understand, 7, 59, 3.6
-apply, 6, 66, 3.0
-analyze, 5, 73, 2.3
-evaluate, 4, 82, 1.6
-create, 3, 91, 1.0
-remember, 7, 56, 4.0
-understand, 6, 64, 3.2
-apply, 5, 70, 2.7
-analyze, 4, 78, 2.0
-evaluate, 3, 85, 1.3
-create, 2, 94, 0.8
-remember, 6, 67, 3.5
-understand, 5, 72, 2.9
-apply, 4, 77, 2.4
-analyze, 3, 84, 1.7
-evaluate, 2, 91, 1.0
-create, 1, 96, 0.7
-remember, 9, 48, 4.8
-understand, 8, 57, 3.8
-apply, 7, 64, 3.2
-analyze, 6, 71, 2.5
-evaluate, 5, 79, 1.7
-create, 4, 89, 1.1
-remember, 8, 54, 4.3
-understand, 7, 62, 3.5
-apply, 6, 69, 2.9
-analyze, 5, 76, 2.2
-evaluate, 4, 84, 1.4
-create, 3, 93, 1.0
-remember, 7, 57, 4.1
-understand, 6, 65, 3.2
-apply, 5, 71, 2.6
-analyze, 4, 79, 2.0
-evaluate, 3, 86, 1.2
-create, 2, 95, 0.7
-remember, 6, 68, 3.6
-understand, 5, 73, 2.8
-apply, 4, 78, 2.3
-analyze, 3, 85, 1.7
-evaluate, 2, 92, 1.0
-create, 1, 98, 0.7
-remember, 10, 46, 5.0
-understand, 9, 55, 4.2
-apply, 8, 63, 3.6
-analyze, 7, 70, 2.7
-evaluate, 6, 78, 2.0
-create, 5, 86, 1.3
-remember, 9, 51, 4.6
-understand, 8, 60, 3.7
-apply, 7, 67, 3.1
-analyze, 6, 74, 2.4
-evaluate, 5, 83, 1.6
-create, 4, 92, 1.0
-remember, 8, 53, 4.2
-understand, 7, 61, 3.4
-apply, 6, 68, 3.0
-analyze, 5, 75, 2.2
-evaluate, 4, 82, 1.4
-create, 3, 91, 1.0
-remember, 7, 55, 4.0
-understand, 6, 63, 3.2
-apply, 5, 70, 2.7
-analyze, 4, 78, 2.0
-evaluate, 3, 86, 1.3
-create, 2, 94, 0.8
-remember, 6, 67, 3.6
-understand, 5, 72, 2.9
-apply, 4, 76, 2.4
-analyze, 3, 84, 1.6
-evaluate, 2, 91, 1.0
-create, 1, 98, 0.7
-remember, 9, 48, 4.8
-understand, 8, 57, 3.8
-apply, 7, 64, 3.3
-analyze, 6, 71, 2.6
-evaluate, 5, 80, 1.9
-create, 4, 89, 1.1
-remember, 8, 52, 4.4
-understand, 7, 60, 3.6
-apply, 6, 67, 3.0
-analyze, 5, 74, 2.3
-evaluate, 4, 83, 1.5
-create, 3, 92, 1.0
-remember, 7, 56, 4.1
-understand, 6, 64, 3.2
-apply, 5, 71, 2.7
-analyze, 4, 78, 2.0
-evaluate, 3, 85, 1.2
-create, 2, 95, 0.8
-remember, 6, 66, 3.5
-understand, 5, 73, 2.8
-apply, 4, 77, 2.3
-analyze, 3, 85, 1.7
-evaluate, 2, 92, 1.0
-create, 1, 97, 0.6
-remember, 10, 44, 5.0
-understand, 9, 54, 4.1
-apply, 8, 62, 3.5
-analyze, 7, 69, 2.7
-evaluate, 6, 76, 2.0
-create, 5, 85, 1.3
-remember, 9, 49, 4.7
-understand, 8, 58, 3.9
-apply, 7, 65, 3.3
-analyze, 6, 72, 2.5
-evaluate, 5, 81, 1.7
-create, 4, 90, 1.1
-remember, 8, 54, 4.3
-understand, 7, 62, 3.5
-apply, 6, 69, 2.9
-analyze, 5, 76, 2.2
-evaluate, 4, 84, 1.4
-create, 3, 93, 1.0
-remember, 7, 57, 4.0
-understand, 6, 65, 3.2
-apply, 5, 71, 2.6
-analyze, 4, 79, 2.0
-evaluate, 3, 86, 1.3
-create, 2, 94, 0.8
-remember, 6, 68, 3.6
-understand, 5, 74, 2.8
-apply, 4, 78, 2.3
-analyze, 3, 84, 1.6
-evaluate, 2, 91, 1.0
-create, 1, 96, 0.7
-remember, 10, 46, 5.0
-understand, 9, 55, 4.2
-apply, 8, 63, 3.6
-analyze, 7, 70, 2.8
-evaluate, 6, 77, 2.0
-create, 5, 86, 1.3
-remember, 9, 50, 4.6
-understand, 8, 59, 3.7
-apply, 7, 66, 3.1
-analyze, 6, 73, 2.4
-evaluate, 5, 82, 1.6
-create, 4, 92, 1.0
-remember, 8, 53, 4.2
-understand, 7, 61, 3.4
-apply, 6, 68, 3.0
-analyze, 5, 75, 2.2
-evaluate, 4, 82, 1.5
-create, 3, 91, 1.0
-remember, 9, 48, 4.8
-understand, 8, 56, 3.9
-apply, 7, 64, 3.2
-analyze, 6, 71, 2.6
-evaluate, 5, 79, 1.8
-create, 4, 88, 1.1
-remember, 8, 51, 4.4
-understand, 7, 59, 3.5
-apply, 6, 67, 3.0
-analyze, 5, 74, 2.3
-evaluate, 4, 83, 1.5
-create, 3, 91, 1.0
-remember, 7, 55, 4.0
-understand, 6, 63, 3.2
-apply, 5, 70, 2.7
-analyze, 4, 78, 2.0
-evaluate, 3, 86, 1.3
-create, 2, 94, 0.8
-remember, 6, 66, 3.5
-understand, 5, 72, 2.9
-apply, 4, 76, 2.4
-analyze, 3, 83, 1.7
-evaluate, 2, 90, 1.0
-create, 1, 97, 0.7
-remember, 10, 45, 5.0
-understand, 9, 54, 4.1
-apply, 8, 62, 3.5
-analyze, 7, 69, 2.7
-evaluate, 6, 76, 2.0
-create, 5, 85, 1.3
-remember, 9, 49, 4.7
-understand, 8, 58, 3.8
-apply, 7, 65, 3.2
-analyze, 6, 72, 2.5
-evaluate, 5, 81, 1.7
-create, 4, 90, 1.0
-remember, 8, 53, 4.3
-understand, 7, 61, 3.4
-apply, 6, 68, 3.0
-analyze, 5, 75, 2.2
-evaluate, 4, 83, 1.5
-create, 3, 92, 1.0
-remember, 7, 56, 4.0
-understand, 6, 64, 3.2
-apply, 5, 71, 2.6
-analyze, 4, 79, 2.0
-evaluate, 3, 86, 1.3
-create, 2, 95, 0.8
-remember, 6, 67, 3.6
-understand, 5, 73, 2.9
-apply, 4, 77, 2.3
-analyze, 3, 84, 1.6
-evaluate, 2, 91, 1.0
-create, 1, 96, 0.6
-remember, 10, 46, 5.0
-understand, 9, 55, 4.2
-apply, 8, 63, 3.6
-analyze, 7, 70, 2.8
-evaluate, 6, 77, 2.0
-create, 5, 86, 1.3
-remember, 9, 50, 4.6
-understand, 8, 59, 3.7
-apply, 7, 66, 3.1
-analyze, 6, 73, 2.4
-evaluate, 5, 82, 1.6
-create, 4, 92, 1.0
-remember, 8, 54, 4.2
-understand, 7, 62, 3.4
-apply, 6, 69, 2.9
-analyze, 5, 76, 2.2
-evaluate, 4, 84, 1.4
-create, 3, 93, 1.0
-remember, 7, 57, 4.1
-understand, 6, 65, 3.2
-apply, 5, 72, 2.6
-analyze, 4, 80, 2.0
-evaluate, 3, 87, 1.2
-create, 2, 94, 0.8
+remember,9,50,2.4
+understand,8,58,2.1
+apply,7,65,1.7
+analyze,6,75,1.3
+evaluate,5,82,1.0
+create,4,88,0.6
+remember,6,68,1.8
+understand,5,80,1.3
+apply,9,60,2.0
+analyze,3,93,0.5
+evaluate,7,77,1.2
+create,2,95,0.4
+remember,8,59,2.1
+understand,7,64,1.8
+apply,5,72,1.2
+analyze,4,86,0.8
+evaluate,3,90,0.6
+create,6,83,0.8
+remember,10,52,2.5
+understand,9,58,2.2
+apply,6,61,1.5
+analyze,7,69,1.4
+evaluate,5,74,0.9
+create,4,91,0.6
+remember,7,63,2.0
+understand,6,79,1.5
+apply,8,67,1.8
+analyze,5,76,1.1
+evaluate,2,89,0.5
+create,1,97,0.3
+remember,4,70,1.8
+understand,3,66,1.8
+apply,4,59,1.6
+analyze,6,80,1.2
+evaluate,8,73,1.2
+create,7,87,0.7
+remember,6,55,2.2
+understand,5,61,1.7
+apply,7,66,1.6
+analyze,9,70,1.5
+evaluate,7,78,1.1
+create,5,89,0.7
+remember,3,49,2.3
+understand,4,52,2.0
+apply,5,63,1.5
+analyze,6,67,1.3
+evaluate,5,85,0.8
+create,6,92,0.6
+remember,9,46,2.5
+understand,8,60,2.1
+apply,7,68,1.8
+analyze,4,83,0.9
+evaluate,6,75,1.0
+create,5,96,0.5
+remember,8,59,2.2
+understand,7,66,1.9
+apply,6,72,1.5
+analyze,5,78,1.1
+evaluate,3,81,0.7
+create,2,94,0.4
+remember,7,62,2.1
+understand,6,73,1.6
+apply,5,69,1.3
+analyze,8,77,1.5
+evaluate,6,83,1.0
+create,7,90,0.7
+remember,5,58,2.0
+understand,4,67,1.6
+apply,3,74,1.2
+analyze,2,88,0.6
+evaluate,4,92,0.5
+create,3,98,0.4
+remember,10,43,2.5
+understand,9,55,2.2
+apply,8,63,1.8
+analyze,7,71,1.4
+evaluate,5,79,0.9
+create,4,87,0.6
+remember,8,54,2.2
+understand,7,63,1.9
+apply,9,61,2.0
+analyze,6,69,1.3
+evaluate,7,82,1.1
+create,5,91,0.7
+remember,6,60,2.0
+understand,5,68,1.7
+apply,4,73,1.4
+analyze,3,85,0.8
+evaluate,2,93,0.5
+create,3,97,0.4
+remember,9,48,2.4
+understand,6,57,1.8
+apply,5,64,1.6
+analyze,4,79,1.0
+evaluate,3,84,0.6
+create,2,95,0.5
+remember,7,56,2.1
+understand,8,62,2.0
+apply,9,69,1.9
+analyze,6,73,1.4
+evaluate,5,80,1.0
+create,4,88,0.7
+remember,1,85,0.7
+remember,2,72,1.2
+remember,8,83,1.2
+create,5,73,0.4
+remember,9,88,1.2
+remember,7,53,2.2
+evaluate,10,91,0.7
+remember,6,88,1.0
+evaluate,3,49,0.5
+apply,8,74,1.7
+understand,6,62,1.7
+analyze,5,85,1.1
+apply,4,57,1.5
+understand,2,66,1.4
+remember,5,80,1.4
+create,4,90,0.5
+evaluate,6,79,1.0
+apply,9,65,2.0
+understand,7,59,1.9
+analyze,8,84,1.5
+remember,3,70,1.7
+create,2,95,0.4
+evaluate,5,72,1.0
+apply,6,60,1.7
+understand,3,68,1.4
+remember,8,51,2.2
+analyze,7,75,1.3
+evaluate,4,88,0.7
+remember,10,61,2.4
+create,6,85,0.8
+apply,5,73,1.4
+understand,8,66,1.8
+remember,4,93,0.8
+evaluate,7,81,1.2
+analyze,6,79,1.3
+apply,2,57,1.6
+understand,5,69,1.4
+remember,9,48,2.4
+create,3,97,0.4
+evaluate,8,90,1.0
+remember,7,68,1.8
+understand,4,82,1.2
+apply,6,77,1.4
+analyze,5,70,1.2
+create,2,91,0.5
+evaluate,4,79,0.9
+remember,6,59,2.0
+understand,6,63,1.6
+apply,8,71,1.8
+analyze,9,87,1.4
+remember,3,76,1.5
+evaluate,5,68,1.0
+create,1,93,0.4
+apply,7,64,1.6
+understand,9,54,2.1
+remember,4,89,1.0
+analyze,7,78,1.3
+evaluate,6,73,1.1
+create,5,95,0.5
+remember,8,60,2.1
+understand,5,61,1.7
+apply,6,58,1.7
+analyze,8,69,1.5
+evaluate,9,83,1.2
+create,7,85,0.8
+remember,2,67,1.3
+understand,4,70,1.2
+apply,5,63,1.5
+analyze,3,91,0.7
+evaluate,7,86,1.1
+create,6,94,0.6
+remember,5,74,1.6
+understand,3,60,1.5
+apply,4,76,1.3
+analyze,6,82,1.2
+evaluate,2,89,0.6
+create,4,97,0.5
+remember,9,45,2.5
+understand,8,56,2.0
+apply,7,64,1.9
+analyze,5,77,1.1
+evaluate,6,80,0.9
+create,5,92,0.6
+remember,6,69,1.8
+understand,7,74,1.6
+apply,9,70,1.8
+analyze,6,78,1.3
+evaluate,4,91,0.7
+create,3,98,0.4
+remember,8,53,2.2
+understand,5,60,1.7
+apply,6,65,1.6
+analyze,5,79,1.2
+evaluate,3,84,0.8
+create,2,96,0.5
+remember,10,44,2.5
+understand,9,53,2.1
+apply,8,61,1.9
+analyze,7,66,1.5
+evaluate,6,72,1.1
+create,5,85,0.7
+remember,8,62,2.1
+understand,7,64,1.7
+apply,6,70,1.5
+analyze,5,77,1.2
+evaluate,4,81,0.8
+create,3,94,0.5
+remember,9,49,2.4
+understand,8,59,2.0
+apply,7,67,1.7
+analyze,6,73,1.4
+evaluate,5,79,1.0
+create,4,90,0.6
+remember,7,54,2.2
+understand,6,60,1.8
+apply,5,68,1.4
+analyze,4,75,1.1
+evaluate,3,84,0.6
+create,2,97,0.4
+remember,6,69,1.9
+understand,5,71,1.6
+apply,4,76,1.3
+analyze,3,82,1.0
+evaluate,2,89,0.5
+create,1,95,0.4
+remember,8,50,2.3
+understand,7,63,1.8
+apply,6,70,1.6
+analyze,5,78,1.2
+evaluate,4,86,0.8
+create,3,93,0.5
+remember,9,46,2.5
+understand,8,58,2.0
+apply,7,65,1.8
+analyze,6,74,1.4
+evaluate,5,80,1.0
+create,4,92,0.6
+remember,5,68,1.7
+understand,4,72,1.4
+apply,3,78,1.1
+analyze,2,85,0.8
+evaluate,1,91,0.5
+create,2,96,0.4
+remember,7,55,2.1
+understand,6,61,1.7
+apply,5,69,1.5
+analyze,4,77,1.1
+evaluate,3,84,0.7
+create,2,94,0.5
+remember,9,48,2.4
+understand,8,57,1.9
+apply,7,66,1.7
+analyze,6,73,1.3
+evaluate,5,82,0.9
+create,4,91,0.6
+remember,6,60,1.9
+understand,5,68,1.5
+apply,4,75,1.3
+analyze,3,81,0.9
+evaluate,2,88,0.6
+create,1,97,0.4
+remember,10,47,2.5
+understand,9,56,2.1
+apply,8,64,1.8
+analyze,7,72,1.4
+evaluate,6,79,1.0
+create,5,86,0.6
+remember,8,52,2.2
+understand,7,61,1.9
+apply,6,69,1.5
+analyze,5,76,1.2
+evaluate,4,83,0.8
+create,3,92,0.5
+remember,9,45,2.5
+understand,8,54,2.0
+apply,7,63,1.7
+analyze,6,71,1.4
+evaluate,5,78,0.9
+create,4,89,0.5
+remember,7,58,2.0
+understand,6,66,1.6
+apply,5,74,1.3
+analyze,4,80,1.0
+evaluate,3,87,0.6
+create,2,95,0.4
+remember,6,64,1.8
+understand,5,69,1.5
+apply,4,73,1.3
+analyze,3,80,0.9
+evaluate,2,88,0.5
+create,1,95,0.4
+remember,8,55,2.1
+understand,7,61,1.7
+apply,6,68,1.5
+analyze,5,76,1.2
+evaluate,4,82,0.8
+create,3,91,0.5
+remember,9,49,2.4
+understand,8,58,1.9
+apply,7,65,1.7
+analyze,6,74,1.4
+evaluate,5,80,0.9
+create,4,90,0.6
+remember,7,54,2.0
+understand,6,63,1.6
+apply,5,71,1.4
+analyze,4,78,1.1
+evaluate,3,85,0.6
+create,2,94,0.5
+remember,5,66,1.8
+understand,4,71,1.4
+apply,3,77,1.1
+analyze,2,84,0.8
+evaluate,1,91,0.6
+create,1,96,0.4
+remember,10,45,2.5
+understand,9,54,2.1
+apply,8,62,1.8
+analyze,7,70,1.4
+evaluate,6,77,1.0
+create,5,85,0.7
+remember,9,50,2.4
+understand,8,59,2.0
+apply,7,66,1.6
+analyze,6,75,1.3
+evaluate,5,81,0.9
+create,4,89,0.6
+remember,8,53,2.2
+understand,7,60,1.8
+apply,6,67,1.5
+analyze,5,74,1.2
+evaluate,4,82,0.8
+create,3,91,0.5
+remember,7,56,2.0
+understand,6,63,1.7
+apply,5,71,1.4
+analyze,4,78,1.0
+evaluate,3,86,0.6
+create,2,94,0.4
+remember,6,65,1.8
+understand,5,70,1.5
+apply,4,76,1.3
+analyze,3,83,0.9
+evaluate,2,90,0.5
+create,1,96,0.4
+remember,9,47,2.5
+understand,8,56,2.0
+apply,7,63,1.7
+analyze,6,72,1.3
+evaluate,5,79,0.9
+create,4,88,0.6
+remember,8,52,2.2
+understand,7,60,1.8
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.7
+create,3,92,0.5
+remember,7,55,2.0
+understand,6,64,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,93,0.5
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,10,46,2.5
+understand,9,55,2.1
+apply,8,63,1.8
+analyze,7,71,1.4
+evaluate,6,78,1.0
+create,5,86,0.7
+remember,8,54,2.1
+understand,7,61,1.8
+apply,6,69,1.5
+analyze,5,76,1.2
+evaluate,4,83,0.8
+create,3,91,0.5
+remember,9,48,2.4
+understand,8,56,2.0
+apply,7,65,1.7
+analyze,6,73,1.3
+evaluate,5,80,0.9
+create,4,89,0.6
+remember,7,57,2.0
+understand,6,63,1.7
+apply,5,71,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,93,0.5
+remember,6,66,1.8
+understand,5,70,1.5
+apply,4,75,1.3
+analyze,3,83,0.9
+evaluate,2,90,0.5
+create,1,96,0.4
+remember,10,45,2.5
+understand,9,54,2.1
+apply,8,62,1.8
+analyze,7,70,1.4
+evaluate,6,77,1.0
+create,5,85,0.7
+remember,9,50,2.3
+understand,8,59,1.9
+apply,7,66,1.6
+analyze,6,73,1.2
+evaluate,5,82,0.8
+create,4,92,0.5
+remember,8,53,2.1
+understand,7,61,1.7
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,82,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,63,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,86,0.6
+create,2,94,0.4
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.8
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,9,47,2.5
+understand,8,56,2.0
+apply,7,63,1.7
+analyze,6,72,1.3
+evaluate,5,79,0.9
+create,4,88,0.6
+remember,8,51,2.3
+understand,7,60,1.8
+apply,6,67,1.5
+analyze,5,74,1.2
+evaluate,4,83,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,65,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,94,0.4
+remember,6,66,1.9
+understand,5,71,1.5
+apply,4,76,1.2
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,10,46,2.5
+understand,9,55,2.1
+apply,8,63,1.8
+analyze,7,71,1.4
+evaluate,6,78,1.0
+create,5,86,0.7
+remember,8,52,2.2
+understand,7,60,1.8
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.7
+create,3,92,0.5
+remember,7,55,2.0
+understand,6,64,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,93,0.5
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,9,47,2.5
+understand,8,56,2.0
+apply,7,63,1.7
+analyze,6,72,1.3
+evaluate,5,79,0.9
+create,4,88,0.6
+remember,8,51,2.3
+understand,7,60,1.8
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,65,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,94,0.4
+remember,6,66,1.9
+understand,5,71,1.5
+apply,4,76,1.2
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,10,46,2.5
+understand,9,55,2.1
+apply,8,63,1.8
+analyze,7,71,1.4
+evaluate,6,78,1.0
+create,5,86,0.7
+remember,8,52,2.2
+understand,7,60,1.8
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.7
+create,3,92,0.5
+remember,7,55,2.0
+understand,6,64,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,93,0.5
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,9,47,2.5
+understand,8,56,2.0
+apply,7,63,1.7
+analyze,6,72,1.3
+evaluate,5,79,0.9
+create,4,88,0.6
+analyze,5,80,1.2
+evaluate,5,87,1.2
+analyze,9,46,2.5
+remember,6,70,1.4
+apply,4,75,1.9
+remember,5,60,1.1
+understand,5,90,1.0
+create,7,61,1.7
+create,5,53,1.2
+understand,8,46,2.3
+apply,6,58,1.7
+analyze,3,79,1.1
+evaluate,4,85,0.8
+remember,8,69,2.0
+understand,7,55,1.9
+create,6,76,1.1
+apply,9,43,2.4
+remember,3,95,0.6
+evaluate,7,62,1.4
+apply,2,88,0.8
+understand,1,90,1.2
+analyze,10,59,2.2
+remember,9,78,1.8
+create,8,52,1.5
+understand,4,84,1.0
+apply,3,73,1.4
+evaluate,2,91,0.7
+remember,6,64,1.6
+create,1,97,0.6
+understand,6,47,2.1
+analyze,5,66,1.4
+remember,4,82,1.2
+apply,10,42,2.5
+evaluate,8,54,1.6
+remember,7,68,1.9
+create,4,60,1.3
+analyze,6,83,1.0
+apply,5,79,1.1
+understand,3,87,0.8
+remember,2,92,0.7
+evaluate,6,67,1.2
+create,9,45,2.1
+understand,7,51,2.0
+remember,10,48,2.5
+apply,7,63,1.7
+analyze,8,70,1.3
+evaluate,5,76,1.0
+create,6,80,0.8
+remember,5,66,1.7
+understand,6,58,1.8
+apply,4,71,1.4
+create,2,89,0.5
+remember,8,61,2.0
+evaluate,3,83,0.6
+analyze,7,73,1.2
+apply,5,77,1.2
+understand,4,81,0.9
+create,3,93,0.4
+remember,7,54,2.1
+understand,9,49,2.2
+apply,6,69,1.6
+analyze,8,57,1.8
+evaluate,4,90,0.7
+create,5,92,0.6
+remember,3,86,1.0
+understand,5,60,1.6
+apply,7,65,1.6
+analyze,6,72,1.2
+evaluate,7,56,1.4
+create,8,44,2.1
+remember,4,79,1.4
+understand,6,67,1.5
+apply,3,83,0.9
+analyze,9,50,2.2
+evaluate,10,48,2.4
+create,7,63,1.5
+remember,6,74,1.2
+apply,9,58,2.0
+understand,8,62,1.9
+analyze,7,55,1.5
+evaluate,6,77,0.9
+create,3,96,0.5
+remember,8,46,2.3
+understand,5,88,0.8
+apply,2,84,0.7
+analyze,4,79,1.1
+evaluate,3,86,0.7
+create,1,99,0.4
+remember,5,70,1.4
+understand,7,61,1.7
+apply,6,67,1.4
+analyze,8,64,1.6
+evaluate,5,82,0.8
+create,4,88,0.6
+remember,9,55,2.2
+understand,8,60,1.8
+apply,7,68,1.5
+analyze,6,75,1.2
+evaluate,5,80,0.9
+create,4,90,0.6
+remember,8,47,2.3
+understand,7,59,1.9
+apply,6,65,1.5
+analyze,5,72,1.1
+evaluate,4,86,0.7
+create,3,93,0.5
+remember,6,66,1.7
+understand,5,74,1.4
+apply,4,78,1.2
+analyze,3,85,0.9
+evaluate,2,89,0.5
+create,1,97,0.3
+remember,10,50,2.5
+understand,9,56,2.1
+apply,8,62,1.8
+analyze,7,70,1.4
+evaluate,6,77,1.0
+create,5,84,0.7
+remember,7,53,2.1
+understand,6,65,1.6
+apply,5,71,1.3
+analyze,4,79,1.0
+evaluate,3,87,0.7
+create,2,95,0.4
+remember,8,60,2.0
+understand,7,67,1.6
+apply,6,73,1.2
+analyze,5,81,1.0
+evaluate,4,88,0.6
+create,3,96,0.4
+remember,9,52,2.4
+understand,8,58,2.0
+apply,7,64,1.7
+analyze,6,71,1.3
+evaluate,5,83,0.8
+create,4,91,0.5
+remember,6,69,1.6
+understand,5,73,1.4
+apply,4,77,1.1
+analyze,3,84,0.8
+evaluate,2,90,0.5
+create,1,98,0.4
+remember,10,44,2.5
+understand,9,53,2.1
+apply,8,61,1.8
+analyze,7,69,1.4
+evaluate,6,76,1.0
+create,5,85,0.7
+remember,8,50,2.3
+understand,7,62,1.7
+apply,6,68,1.5
+analyze,5,74,1.2
+evaluate,4,89,0.6
+create,3,94,0.5
+remember,7,56,2.0
+understand,6,64,1.6
+apply,5,70,1.3
+analyze,4,78,1.0
+evaluate,3,86,0.6
+create,2,92,0.4
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,76,1.2
+analyze,3,83,0.9
+evaluate,2,91,0.5
+create,1,96,0.3
+remember,9,48,2.4
+understand,8,59,1.9
+apply,7,66,1.6
+analyze,6,73,1.2
+evaluate,5,82,0.9
+create,4,90,0.5
+remember,8,54,2.2
+understand,7,63,1.8
+apply,6,70,1.5
+analyze,5,77,1.1
+evaluate,4,85,0.7
+create,3,93,0.5
+remember,7,57,2.1
+understand,6,65,1.6
+apply,5,72,1.4
+analyze,4,80,1.0
+evaluate,3,87,0.6
+create,2,95,0.4
+remember,10,47,2.5
+understand,9,55,2.1
+apply,8,62,1.8
+analyze,7,70,1.4
+evaluate,6,78,1.0
+create,5,87,0.7
+remember,9,49,2.4
+understand,8,58,2.0
+apply,7,65,1.7
+analyze,6,72,1.3
+evaluate,5,80,0.9
+create,4,91,0.6
+remember,8,52,2.2
+understand,7,61,1.8
+apply,6,67,1.5
+analyze,5,75,1.2
+evaluate,4,84,0.8
+create,3,92,0.5
+remember,7,54,2.0
+understand,6,63,1.7
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,86,0.6
+create,2,95,0.4
+remember,6,66,1.8
+understand,5,71,1.5
+apply,4,75,1.3
+analyze,3,83,0.9
+evaluate,2,90,0.5
+create,1,96,0.4
+remember,10,45,2.5
+understand,9,54,2.1
+apply,8,62,1.8
+analyze,7,70,1.4
+evaluate,6,77,1.0
+create,5,85,0.7
+remember,9,49,2.4
+understand,8,58,1.9
+apply,7,65,1.6
+analyze,6,72,1.2
+evaluate,5,81,0.9
+create,4,90,0.6
+remember,8,53,2.2
+understand,7,61,1.7
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.8
+create,3,92,0.5
+remember,7,56,2.0
+understand,6,63,1.7
+apply,5,71,1.3
+analyze,4,79,1.0
+evaluate,3,86,0.6
+create,2,94,0.4
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.8
+evaluate,2,91,0.5
+create,1,96,0.4
+remember,9,47,2.5
+understand,8,56,2.0
+apply,7,63,1.7
+analyze,6,72,1.3
+evaluate,5,79,0.9
+create,4,88,0.6
+remember,8,51,2.2
+understand,7,60,1.8
+apply,6,67,1.5
+analyze,5,74,1.2
+evaluate,4,83,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,64,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,94,0.4
+remember,6,66,1.8
+understand,5,72,1.5
+apply,4,76,1.2
+analyze,3,83,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,10,46,2.5
+understand,9,55,2.1
+apply,8,63,1.8
+analyze,7,71,1.4
+evaluate,6,78,1.0
+create,5,86,0.7
+remember,9,51,2.3
+understand,8,60,1.9
+apply,7,67,1.6
+analyze,6,74,1.2
+evaluate,5,83,0.8
+create,4,92,0.5
+remember,8,53,2.1
+understand,7,61,1.7
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,82,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,63,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,86,0.6
+create,2,94,0.4
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.8
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,9,48,2.4
+understand,8,57,1.9
+apply,7,64,1.6
+analyze,6,71,1.3
+evaluate,5,79,0.9
+create,4,89,0.6
+remember,8,54,2.2
+understand,7,62,1.8
+apply,6,69,1.5
+analyze,5,76,1.1
+evaluate,4,84,0.7
+create,3,93,0.5
+remember,7,57,2.0
+understand,6,65,1.6
+apply,5,71,1.3
+analyze,4,79,1.0
+evaluate,3,86,0.6
+create,2,95,0.4
+remember,10,47,2.5
+understand,9,55,2.1
+apply,8,62,1.8
+analyze,7,70,1.4
+evaluate,6,78,1.0
+create,5,87,0.7
+remember,9,49,2.4
+understand,8,58,2.0
+apply,7,65,1.7
+analyze,6,72,1.3
+evaluate,5,80,0.9
+create,4,91,0.6
+remember,8,52,2.2
+understand,7,61,1.8
+apply,6,67,1.5
+analyze,5,75,1.2
+evaluate,4,84,0.8
+create,3,92,0.5
+remember,7,54,2.0
+understand,6,63,1.7
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,86,0.6
+create,2,95,0.4
+remember,6,66,1.8
+understand,5,71,1.5
+apply,4,75,1.3
+analyze,3,83,0.9
+evaluate,2,90,0.5
+create,1,96,0.4
+remember,10,45,2.5
+understand,9,54,2.1
+apply,8,62,1.8
+analyze,7,70,1.4
+evaluate,6,77,1.0
+create,5,85,0.7
+remember,9,49,2.4
+understand,8,58,1.9
+apply,7,65,1.6
+analyze,6,72,1.2
+evaluate,5,81,0.9
+create,4,90,0.6
+remember,8,53,2.2
+understand,7,61,1.7
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.8
+create,3,92,0.5
+remember,7,56,2.0
+understand,6,64,1.6
+apply,5,71,1.3
+analyze,4,79,1.0
+evaluate,3,86,0.6
+create,2,94,0.4
+remember,6,67,1.8
+understand,5,73,1.5
+apply,4,77,1.2
+analyze,3,84,0.8
+evaluate,2,91,0.5
+create,1,96,0.4
+remember,9,48,2.4
+understand,8,57,1.9
+apply,7,64,1.7
+analyze,6,71,1.3
+evaluate,5,80,0.9
+create,4,89,0.6
+remember,8,54,2.2
+understand,7,62,1.8
+apply,6,69,1.5
+analyze,5,76,1.1
+evaluate,4,84,0.7
+create,3,93,0.5
+remember,7,57,2.0
+understand,6,65,1.6
+apply,5,71,1.3
+analyze,4,79,1.0
+evaluate,3,86,0.6
+create,2,95,0.4
+remember,6,68,1.8
+understand,5,73,1.4
+apply,4,78,1.2
+analyze,3,85,0.9
+evaluate,2,92,0.5
+create,1,98,0.4
+remember,10,46,2.5
+understand,9,55,2.1
+apply,8,63,1.8
+analyze,7,70,1.4
+evaluate,6,77,1.0
+create,5,86,0.7
+remember,9,51,2.3
+understand,8,60,1.9
+apply,7,67,1.6
+analyze,6,74,1.2
+evaluate,5,83,0.8
+create,4,92,0.5
+remember,8,53,2.1
+understand,7,61,1.7
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,82,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,63,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,86,0.6
+create,2,94,0.4
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.8
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,9,48,2.4
+understand,8,57,1.9
+apply,7,64,1.7
+analyze,6,71,1.3
+evaluate,5,79,0.9
+create,4,89,0.6
+remember,8,52,2.2
+understand,7,60,1.8
+apply,6,67,1.5
+analyze,5,74,1.2
+evaluate,4,83,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,64,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,94,0.4
+remember,6,66,1.8
+understand,5,72,1.5
+apply,4,76,1.2
+analyze,3,83,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,10,46,2.5
+understand,9,55,2.1
+apply,8,63,1.8
+analyze,7,71,1.4
+evaluate,6,78,1.0
+create,5,86,0.7
+remember,9,51,2.3
+understand,8,60,1.9
+apply,7,67,1.6
+analyze,6,74,1.2
+evaluate,5,83,0.8
+create,4,92,0.5
+remember,8,53,2.1
+understand,7,61,1.7
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,82,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,63,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,86,0.6
+create,2,94,0.4
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.8
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,9,48,2.4
+understand,8,57,1.9
+apply,7,64,1.7
+analyze,6,71,1.3
+evaluate,5,80,0.9
+create,4,89,0.6
+remember,8,52,2.2
+understand,7,60,1.8
+apply,6,67,1.5
+analyze,5,74,1.2
+evaluate,4,83,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,64,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,93,0.5
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,10,46,2.5
+understand,9,55,2.1
+apply,8,63,1.8
+analyze,7,71,1.4
+evaluate,6,78,1.0
+create,5,86,0.7
+remember,9,51,2.3
+understand,8,60,1.9
+apply,7,67,1.6
+analyze,6,74,1.2
+evaluate,5,83,0.8
+create,4,92,0.5
+remember,8,53,2.1
+understand,7,61,1.7
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,82,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,63,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,86,0.6
+create,2,94,0.4
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.8
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,9,47,2.5
+understand,8,56,2.0
+apply,7,63,1.7
+analyze,6,72,1.3
+evaluate,5,79,0.9
+create,4,88,0.6
+remember,8,51,2.3
+understand,7,60,1.8
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,65,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,94,0.4
+remember,6,66,1.8
+understand,5,71,1.5
+apply,4,76,1.3
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,10,46,2.5
+understand,9,55,2.1
+apply,8,63,1.8
+analyze,7,71,1.4
+evaluate,6,78,1.0
+create,5,86,0.7
+remember,8,52,2.2
+understand,7,60,1.8
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.7
+create,3,92,0.5
+remember,7,55,2.0
+understand,6,64,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,93,0.5
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,9,47,2.5
+understand,8,56,2.0
+apply,7,63,1.7
+analyze,6,72,1.3
+evaluate,5,79,0.9
+create,4,88,0.6
+remember,8,51,2.3
+understand,7,60,1.8
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,65,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,94,0.4
+remember,6,66,1.8
+understand,5,71,1.5
+apply,4,76,1.3
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,10,46,2.5
+understand,9,55,2.1
+apply,8,63,1.8
+analyze,7,71,1.4
+evaluate,6,78,1.0
+create,5,86,0.7
+remember,8,52,2.2
+understand,7,60,1.8
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.7
+create,3,92,0.5
+remember,7,55,2.0
+understand,6,64,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,93,0.5
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,9,47,2.5
+understand,8,56,2.0
+apply,7,63,1.7
+analyze,6,72,1.3
+evaluate,5,79,0.9
+create,4,88,0.6
+analyze,5,80,1.2
+evaluate,5,87,1.2
+analyze,9,46,2.5
+remember,6,70,1.4
+apply,4,75,1.9
+remember,5,60,1.1
+understand,5,90,1.0
+create,7,61,1.7
+create,5,53,1.2
+understand,8,46,2.3
+apply,6,58,1.7
+analyze,3,79,1.1
+evaluate,4,85,0.8
+remember,8,69,2.0
+understand,7,55,1.9
+create,6,76,1.1
+apply,9,43,2.4
+remember,3,95,0.6
+evaluate,7,62,1.4
+apply,2,88,0.8
+understand,1,90,1.2
+analyze,10,59,2.2
+remember,9,78,1.8
+create,8,52,1.5
+understand,4,84,1.0
+apply,3,73,1.4
+evaluate,2,91,0.7
+remember,6,64,1.6
+create,1,97,0.6
+understand,6,47,2.1
+analyze,5,66,1.4
+remember,4,82,1.2
+apply,10,42,2.5
+evaluate,8,54,1.6
+remember,7,68,1.9
+create,4,60,1.3
+analyze,6,83,1.0
+apply,5,79,1.1
+understand,3,87,0.8
+remember,2,92,0.7
+evaluate,6,67,1.2
+create,9,45,2.1
+understand,7,51,2.0
+remember,10,48,2.5
+apply,7,63,1.7
+analyze,8,70,1.3
+evaluate,5,76,1.0
+create,6,80,0.8
+remember,5,66,1.7
+understand,6,58,1.8
+apply,4,71,1.4
+create,2,89,0.5
+remember,8,61,2.0
+evaluate,3,83,0.6
+analyze,7,73,1.2
+apply,5,77,1.2
+understand,4,81,0.9
+create,3,93,0.4
+remember,7,54,2.1
+understand,9,49,2.2
+apply,6,69,1.6
+analyze,8,57,1.8
+evaluate,4,90,0.7
+create,5,92,0.6
+remember,3,86,1.0
+understand,5,60,1.6
+apply,7,65,1.6
+analyze,6,72,1.2
+evaluate,7,56,1.4
+create,8,44,2.1
+remember,4,79,1.4
+understand,6,67,1.5
+apply,3,83,0.9
+analyze,9,50,2.2
+evaluate,10,48,2.4
+create,7,63,1.5
+remember,6,74,1.2
+apply,9,58,2.0
+understand,8,62,1.9
+analyze,7,55,1.5
+evaluate,6,77,0.9
+create,3,96,0.5
+remember,8,46,2.3
+understand,5,88,0.8
+apply,2,84,0.7
+analyze,4,79,1.1
+evaluate,3,86,0.7
+create,1,99,0.4
+remember,5,70,1.4
+understand,7,61,1.7
+apply,6,67,1.4
+analyze,8,64,1.6
+evaluate,5,82,0.8
+create,4,88,0.6
+remember,9,55,2.2
+understand,8,60,1.8
+apply,7,68,1.5
+analyze,6,75,1.2
+evaluate,5,80,0.9
+create,4,90,0.6
+remember,8,47,2.3
+understand,7,59,1.9
+apply,6,65,1.5
+analyze,5,72,1.1
+evaluate,4,86,0.7
+create,3,93,0.5
+remember,6,66,1.7
+understand,5,74,1.4
+apply,4,78,1.2
+analyze,3,85,0.9
+evaluate,2,89,0.5
+create,1,97,0.3
+remember,10,50,2.5
+understand,9,56,2.1
+apply,8,62,1.8
+analyze,7,70,1.4
+evaluate,6,77,1.0
+create,5,84,0.7
+remember,7,53,2.1
+understand,6,65,1.6
+apply,5,71,1.3
+analyze,4,79,1.0
+evaluate,3,87,0.7
+create,2,95,0.4
+remember,8,60,2.0
+understand,7,67,1.6
+apply,6,73,1.2
+analyze,5,81,1.0
+evaluate,4,88,0.6
+create,3,96,0.4
+remember,9,52,2.4
+understand,8,58,2.0
+apply,7,64,1.7
+analyze,6,71,1.3
+evaluate,5,83,0.8
+create,4,91,0.5
+remember,6,69,1.6
+understand,5,73,1.4
+apply,4,77,1.1
+analyze,3,84,0.8
+evaluate,2,90,0.5
+create,1,98,0.4
+remember,10,44,2.5
+understand,9,53,2.1
+apply,8,61,1.8
+analyze,7,69,1.4
+evaluate,6,76,1.0
+create,5,85,0.7
+remember,8,50,2.3
+understand,7,62,1.7
+apply,6,68,1.5
+analyze,5,74,1.2
+evaluate,4,89,0.6
+create,3,94,0.5
+remember,7,56,2.0
+understand,6,64,1.6
+apply,5,70,1.3
+analyze,4,78,1.0
+evaluate,3,86,0.6
+create,2,92,0.4
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,76,1.2
+analyze,3,83,0.9
+evaluate,2,91,0.5
+create,1,96,0.3
+remember,9,48,2.4
+understand,8,59,1.9
+apply,7,66,1.6
+analyze,6,73,1.2
+evaluate,5,82,0.9
+create,4,90,0.5
+remember,8,54,2.2
+understand,7,63,1.8
+apply,6,70,1.5
+analyze,5,77,1.1
+evaluate,4,85,0.7
+create,3,93,0.5
+remember,7,57,2.0
+understand,6,65,1.6
+apply,5,72,1.4
+analyze,4,80,1.0
+evaluate,3,87,0.6
+create,2,95,0.4
+remember,10,47,2.5
+understand,9,55,2.1
+apply,8,62,1.8
+analyze,7,70,1.4
+evaluate,6,78,1.0
+create,5,87,0.7
+remember,9,49,2.4
+understand,8,58,2.0
+apply,7,65,1.7
+analyze,6,72,1.3
+evaluate,5,80,0.9
+create,4,91,0.6
+remember,8,52,2.2
+understand,7,61,1.8
+apply,6,67,1.5
+analyze,5,75,1.2
+evaluate,4,84,0.8
+create,3,92,0.5
+remember,7,54,2.0
+understand,6,63,1.7
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,86,0.6
+create,2,95,0.4
+remember,6,66,1.8
+understand,5,71,1.5
+apply,4,75,1.3
+analyze,3,83,0.9
+evaluate,2,90,0.5
+create,1,96,0.4
+remember,10,45,2.5
+understand,9,54,2.1
+apply,8,62,1.8
+analyze,7,70,1.4
+evaluate,6,77,1.0
+create,5,85,0.7
+remember,9,49,2.4
+understand,8,58,1.9
+apply,7,65,1.6
+analyze,6,72,1.2
+evaluate,5,81,0.9
+create,4,90,0.6
+remember,8,53,2.2
+understand,7,61,1.7
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.8
+create,3,92,0.5
+remember,7,56,2.0
+understand,6,64,1.6
+apply,5,71,1.3
+analyze,4,79,1.0
+evaluate,3,86,0.6
+create,2,94,0.4
+remember,6,67,1.8
+understand,5,73,1.5
+apply,4,77,1.2
+analyze,3,84,0.8
+evaluate,2,91,0.5
+create,1,96,0.4
+remember,9,48,2.4
+understand,8,57,1.9
+apply,7,64,1.7
+analyze,6,71,1.3
+evaluate,5,80,0.9
+create,4,89,0.6
+remember,8,54,2.2
+understand,7,62,1.8
+apply,6,69,1.5
+analyze,5,76,1.1
+evaluate,4,84,0.7
+create,3,93,0.5
+remember,7,57,2.0
+understand,6,65,1.6
+apply,5,71,1.3
+analyze,4,79,1.0
+evaluate,3,86,0.6
+create,2,95,0.4
+remember,6,68,1.8
+understand,5,73,1.4
+apply,4,78,1.2
+analyze,3,85,0.9
+evaluate,2,92,0.5
+create,1,98,0.4
+remember,10,46,2.5
+understand,9,55,2.1
+apply,8,63,1.8
+analyze,7,70,1.4
+evaluate,6,77,1.0
+create,5,86,0.7
+remember,9,51,2.3
+understand,8,60,1.9
+apply,7,67,1.6
+analyze,6,74,1.2
+evaluate,5,83,0.8
+create,4,92,0.5
+remember,8,53,2.1
+understand,7,61,1.7
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,82,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,63,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,86,0.6
+create,2,94,0.4
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.8
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,9,48,2.4
+understand,8,57,1.9
+apply,7,64,1.7
+analyze,6,71,1.3
+evaluate,5,79,0.9
+create,4,89,0.6
+remember,8,52,2.2
+understand,7,60,1.8
+apply,6,67,1.5
+analyze,5,74,1.2
+evaluate,4,83,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,64,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,94,0.4
+remember,6,66,1.8
+understand,5,72,1.5
+apply,4,76,1.2
+analyze,3,83,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,10,46,2.5
+understand,9,55,2.1
+apply,8,63,1.8
+analyze,7,71,1.4
+evaluate,6,78,1.0
+create,5,86,0.7
+remember,8,52,2.2
+understand,7,60,1.8
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.7
+create,3,92,0.5
+remember,7,55,2.0
+understand,6,64,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,93,0.5
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,9,47,2.5
+understand,8,56,2.0
+apply,7,63,1.7
+analyze,6,72,1.3
+evaluate,5,79,0.9
+create,4,88,0.6
+remember,8,51,2.3
+understand,7,60,1.8
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,65,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,94,0.4
+remember,6,66,1.8
+understand,5,71,1.5
+apply,4,76,1.3
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,10,46,2.5
+understand,9,55,2.1
+apply,8,63,1.8
+analyze,7,71,1.4
+evaluate,6,78,1.0
+create,5,86,0.7
+remember,8,52,2.2
+understand,7,60,1.8
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.7
+create,3,92,0.5
+remember,7,55,2.0
+understand,6,64,1.6
+apply,5,70,1.4
+analyze,4,78,1.0
+evaluate,3,85,0.6
+create,2,93,0.5
+remember,6,67,1.8
+understand,5,72,1.5
+apply,4,77,1.2
+analyze,3,84,0.9
+evaluate,2,91,0.5
+create,1,97,0.4
+remember,9,47,2.5
+understand,8,56,2.0
+apply,7,63,1.7
+analyze,6,72,1.3
+evaluate,5,79,0.9
+create,4,88,0.6
+remember,8,51,2.3
+understand,7,60,1.8
+apply,6,68,1.5
+analyze,5,75,1.1
+evaluate,4,83,0.7
+create,3,91,0.5
+remember,7,55,2.0
+understand,6,65,1.6

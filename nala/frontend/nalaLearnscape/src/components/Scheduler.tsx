@@ -75,18 +75,6 @@ const snapToInterval = (minutes: number): number => {
         */
 
 const calculateUrgency = (topic: TopicData): number => {
-<<<<<<< HEAD
-  //Factors for urgency:
-  // 1. Topic difficulty (higher = more urgent)
-  // 2. Lower grade history (lower grade = more urgent)
-  // 3. Higher study hours needed (more time = more urgent)
-
-  const difficultyScore = topic.topic_difficulty * 20; // 0-100
-  const gradeScore = 100 - topic.student_grade_history; // Lower grade = higher urgency
-  const studyHoursScore = topic.actual_study_hours * 10; // 0-100+
-
-  return difficultyScore * 0.3 + gradeScore * 0.4 + studyHoursScore * 0.2;
-=======
   const today = new Date();
   const examDate = new Date(topic.exam_date);
   const daysUntilExam = Math.ceil((examDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -115,7 +103,6 @@ const calculateUrgency = (topic: TopicData): number => {
     difficultyScore * 0.15 +        
     studyHoursScore * 0.1          
   );
->>>>>>> 303bd005 (Scheduler)
 };
 
 // Select top 3 most urgent topics

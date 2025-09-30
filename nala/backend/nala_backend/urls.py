@@ -24,7 +24,7 @@ urlpatterns = [
     path('api/time-spent-per-topic/', views.time_spent_per_topic, name="time-spent-per-topic"),
     path('api/percentage-learning-style/', views.percentage_learning_style, name="percentage-learningstyle"),
     path('api/taxonomy-progression/', views.taxonomy_progression, name="taxonomy-progression"),
-    path('api/bloom-by-topic-classifier/', views.bloom_by_topic_classifier, name="bloom-by-topic-classifier"),
+    # path('api/bloom-by-topic-classifier/', views.bloom_by_topic_classifier, name="bloom-by-topic-classifier"),
 
     # Quiz
     path('api/module/<str:module_id>/quiz/weekly/', views.get_weekly_quiz, name='get_weekly_quiz'),

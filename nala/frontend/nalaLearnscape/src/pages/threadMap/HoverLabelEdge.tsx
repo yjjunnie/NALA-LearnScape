@@ -18,6 +18,7 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
     markerEnd,
     markerStart,
     data,
+    selected,
   } = props;
 
   const { getEdges, getNode } = useReactFlow<FlowNode, FlowEdge>();
@@ -146,6 +147,13 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
 
   const [isHovered, setIsHovered] = useState(false);
 
+  const showLabelFromNodeHover =
+    typeof data === "object" && data !== null
+      ? Boolean((data as { showLabel?: boolean }).showLabel)
+      : false;
+  const hasLabel = typeof data?.label === "string" && data.label.trim() !== "";
+  const shouldRenderLabel = hasLabel && (isHovered || showLabelFromNodeHover || Boolean(selected));
+
   return (
     <>
       <BaseEdge
@@ -157,9 +165,7 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       />
-      {isHovered &&
-        typeof data?.label === "string" &&
-        data.label.trim() !== "" && (
+      {shouldRenderLabel && (
           <EdgeLabelRenderer>
             <div
               style={{

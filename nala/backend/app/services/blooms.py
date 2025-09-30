@@ -279,11 +279,12 @@ def update_bloom_from_quiz(
     if not record.bloom_summary:
         record.bloom_summary = {}
 
-    questions = quiz_history.quiz_data.get('questions', [])
-    student_answers = quiz_history.student_answers
+    questions = quiz_history.get_questions()
+    student_answers = quiz_history.student_answers or {}
 
     for idx, question in enumerate(questions):
-        if student_answers.get(str(idx)) != question.get('correct_answer'):
+        correct_answer = question.get('answer') or question.get('correct_answer')
+        if student_answers.get(str(idx)) != correct_answer:
             continue
         topic_id = str(question.get('topic_id'))
         bloom_level = question.get('bloom_level')
@@ -346,7 +347,7 @@ def update_bloom_from_quiz(student, quiz_history):
     """
     from app.models import StudentBloomRecord, Topic
     
-    questions = quiz_history.quiz_data.get('questions', [])
+    questions = quiz_history.get_questions()
     student_answers = quiz_history.student_answers or {}
     module = quiz_history.module
     
@@ -364,7 +365,7 @@ def update_bloom_from_quiz(student, quiz_history):
     
     for idx, question in enumerate(questions):
         student_answer = student_answers.get(str(idx))
-        correct_answer = question.get('answer')
+        correct_answer = question.get('answer') or question.get('correct_answer')
         
         if student_answer != correct_answer:
             continue

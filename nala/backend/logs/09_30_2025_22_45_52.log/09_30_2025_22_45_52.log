@@ -1,0 +1,18 @@
+[ 2025-09-30 22:45:52,649 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-09-30 22:45:52,654 ] 97 werkzeug - INFO -  * Debugger PIN: 758-854-900
+[ 2025-09-30 22:47:11,810 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:47:11] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:47:11,851 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:47:11] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:47:19,672 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:47:19] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:47:19,721 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:47:19] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:47:22,094 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:47:22] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:47:22,878 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:47:22] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:47:23,505 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:47:23] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:47:24,069 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:47:24] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:48:45,402 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:48:45] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:48:46,027 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:48:46] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:48:46,209 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:48:46] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:48:49,253 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:48:49] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:48:49,300 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:48:49] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:48:49,874 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:48:49] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:48:49,931 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 22:48:49] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-09-30 22:49:33,398 ] 97 werkzeug - INFO -  * Detected change in '/Users/yvonne/User Github/NALA-LearnScape/nala/backend/app.py', reloading

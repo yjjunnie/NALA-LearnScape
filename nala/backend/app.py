@@ -67,6 +67,35 @@ def get_student_topics(student_id):
     ]
     return dummy_topics
 
+def get_exam_date(student_id, topic_id):
+    dummy_exam_dates = {
+        ("student123", "1"): "2025-10-01", # exam #1 to focus on
+        ("student123", "2"): "2025-09-15", # exam already passed
+        ("student123", "3"): "2025-10-03", # exam #2 to focus on
+        ("student123", "4"): "2025-12-01",
+        ("student123", "5"): "2025-12-15",
+        ("student456", "1"): "2025-10-01", # exam #1 to focus on
+        ("student456", "2"): "2025-09-15", # exam already passed
+        ("student456", "3"): "2025-10-03", # exam #2 to focus on
+        ("student456", "4"): "2025-12-01",
+        ("student456", "5"): "2025-12-15"
+    }
+    return dummy_exam_dates.get((student_id, topic_id), "2024-02-01")
+
+def get_preferred_study_start_time(student_id):
+    dummy_study_times = {
+        "student123": "08:30",  
+        "student456": "18:33"  
+    }
+    return dummy_study_times.get(student_id, 9)  # default to 9 AM
+
+def get_preffered_break_time_between_studying(student_id):
+    dummy_break_times = {
+        "student123": 30,  
+        "student456": 10  
+    }
+    return dummy_break_times.get(student_id, 10)  # default to 10 minutes
+
 def prepare_prediction_dataframe(blooms_level, topic_difficulty, previous_grade):
     data = {
         'blooms_level': [blooms_level],
@@ -101,6 +130,8 @@ def get_topics_with_predictions(student_id):
             blooms_level = get_blooms_level(student_id, topic_id)
             topic_difficulty = get_topic_difficulty(topic_id)
             previous_grade = get_previous_grades(student_id, topic_id)
+            exam_date = get_exam_date(student_id, topic_id)  # Not used in prediction
+            preferred_study_time = get_preferred_study_start_time(student_id)  # Not used in prediction
             
             # Handle case where Bloom's level is not found
             if blooms_level is None:
@@ -138,7 +169,10 @@ def get_topics_with_predictions(student_id):
                 'actual_study_hours': round(predicted_hours, 2),  # Changed from predicted_hours
                 'student_grade_history': previous_grade,
                 'blooms_level': blooms_level,
-                'topic_difficulty': topic_difficulty
+                'topic_difficulty': topic_difficulty,
+                'exam_date': exam_date,
+                'preferred_study_time': preferred_study_time,
+                'break_time_between_studying': get_preffered_break_time_between_studying(student_id)
             })
         
         return jsonify({

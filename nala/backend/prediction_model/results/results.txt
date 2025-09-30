@@ -1,14 +1,14 @@
 
 *Training*
 
-Mean Absolute Error: 0.12732026689991152
-Root Mean Squared Error: 0.22115488881818687
-Model Accuracy: 0.9663347416782424
+Mean Absolute Error: 0.04082705035698642
+Root Mean Squared Error: 0.07033562395532714
+Model Accuracy: 0.9862765603357824
 
 ------------------------------------------------------------------------------
 *New Unseen Data, Another set of 200 rows of unseen data*
 
-Unseen Data Mean Absolute Error: 0.1279668435876066
-Unseen Data Root Mean Squared Error: 0.1577847492100525
+Unseen Data Mean Absolute Error: 0.04481787818924003
+Unseen Data Root Mean Squared Error: 0.06963365085601331
 
 ------------------------------------------------------------------------------

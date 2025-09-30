@@ -265,39 +265,6 @@ def update_bloom_from_messages(
     record.save()
 
 
-@transaction.atomic
-def update_bloom_from_quiz(
-    student: Student,
-    quiz_history: StudentQuizHistory
-):
-    """Update Bloom levels based on correctly answered quiz questions."""
-    if not quiz_history.completed or not quiz_history.module:
-        return
-
-    module = quiz_history.module
-    record, _ = StudentBloomRecord.objects.get_or_create(student=student, module=module)
-    if not record.bloom_summary:
-        record.bloom_summary = {}
-
-    questions = quiz_history.get_questions()
-    student_answers = quiz_history.student_answers or {}
-
-    for idx, question in enumerate(questions):
-        correct_answer = question.get('answer') or question.get('correct_answer')
-        if student_answers.get(str(idx)) != correct_answer:
-            continue
-        topic_id = str(question.get('topic_id'))
-        bloom_level = question.get('bloom_level')
-        if not topic_id or not bloom_level:
-            continue
-        if topic_id not in record.bloom_summary:
-            record.bloom_summary[topic_id] = {lvl: 0 for lvl in ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]}
-        if bloom_level in record.bloom_summary[topic_id]:
-            record.bloom_summary[topic_id][bloom_level] += 1
-
-    record.save()
-
-
 def get_student_bloom_summary(student: Student, module_id: str) -> Dict:
     """
     Get the complete Bloom summary for a student in a module.
@@ -340,50 +307,65 @@ def get_student_bloom_for_topic(student: Student, module_id: str, topic_id: str)
         return {lvl: 0 for lvl in ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]}
 
 
+@transaction.atomic
 def update_bloom_from_quiz(student, quiz_history):
     """
     Update student's Bloom taxonomy levels based on quiz performance.
     Only updates for CORRECT answers.
+
+    The Bloom record is retrieved directly from the database using the
+    student's ID to ensure we always update the same persisted entry.
     """
-    from app.models import StudentBloomRecord, Topic
-    
+
+    # Accept either a Student instance or a raw ID to make the helper flexible.
+    student_id = getattr(student, "id", student)
+    if not student_id:
+        return None
+
+    module = quiz_history.module
+    if not module:
+        return None
+
+    # Lock the Bloom record row so concurrent quiz submissions do not create
+    # duplicate records or overwrite each other's updates.
+    bloom_record = (
+        StudentBloomRecord.objects.select_for_update()
+        .filter(student_id=str(student_id), module=module)
+        .first()
+    )
+
+    if not bloom_record:
+        bloom_record = StudentBloomRecord(
+            student_id=str(student_id),
+            module=module,
+            bloom_summary={}
+        )
+
+    bloom_summary = bloom_record.bloom_summary or {}
+
     questions = quiz_history.get_questions()
     student_answers = quiz_history.student_answers or {}
-    module = quiz_history.module
-    
-    if not module:
-        return
-    
-    bloom_record, created = StudentBloomRecord.objects.get_or_create(
-        student=student,
-        module=module,
-        defaults={'bloom_summary': {}}
-    )
-    
-    if not bloom_record.bloom_summary:
-        bloom_record.bloom_summary = {}
-    
+
     for idx, question in enumerate(questions):
         student_answer = student_answers.get(str(idx))
         correct_answer = question.get('answer') or question.get('correct_answer')
-        
+
         if student_answer != correct_answer:
             continue
-        
-        topic_id = str(question.get('topic_id'))  # 🔑 ensure string
+
+        topic_id = str(question.get('topic_id'))
         bloom_level = question.get('bloom_level')
-        
+
         if not topic_id or not bloom_level:
             continue
-        
-        # Verify topic exists
+
         try:
             topic = Topic.objects.get(id=topic_id)
         except Topic.DoesNotExist:
             continue
-        
-        if topic_id not in bloom_record.bloom_summary:
-            bloom_record.bloom_summary[topic_id] = {
+
+        if topic_id not in bloom_summary:
+            bloom_summary[topic_id] = {
                 'topic_name': topic.name,
                 'bloom_levels': {
                     'Remember': 0,
@@ -394,10 +376,11 @@ def update_bloom_from_quiz(student, quiz_history):
                     'Create': 0
                 }
             }
-        
-        if bloom_level in bloom_record.bloom_summary[topic_id]['bloom_levels']:
-            bloom_record.bloom_summary[topic_id]['bloom_levels'][bloom_level] += 1
-        
+
+        if bloom_level in bloom_summary[topic_id]['bloom_levels']:
+            bloom_summary[topic_id]['bloom_levels'][bloom_level] += 1
+
+    bloom_record.bloom_summary = bloom_summary
     bloom_record.save()
     return bloom_record
 

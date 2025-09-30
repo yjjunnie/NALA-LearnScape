@@ -265,48 +265,6 @@ def update_bloom_from_messages(
     record.save()
 
 
-def get_student_bloom_summary(student: Student, module_id: str) -> Dict:
-    """
-    Get the complete Bloom summary for a student in a module.
-    Returns the bloom_summary JSON field which contains all topics and their counts.
-    """
-    try:
-        module = Module.objects.get(id=module_id)
-        record = StudentBloomRecord.objects.filter(student=student, module=module).first()
-        
-        if not record or not record.bloom_summary:
-            # Return empty structure with all topics initialized
-            topics = load_topics_from_db(module_id)
-            return {
-                t['id']: {lvl: 0 for lvl in ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]}
-                for t in topics
-            }
-        
-        return record.bloom_summary
-    except Module.DoesNotExist:
-        return {}
-
-
-def get_student_bloom_for_topic(student: Student, module_id: str, topic_id: str) -> Dict:
-    """
-    Get Bloom level counts for a specific topic.
-    Returns a dictionary of bloom levels and their counts.
-    """
-    try:
-        module = Module.objects.get(id=module_id)
-        record = StudentBloomRecord.objects.filter(student=student, module=module).first()
-        
-        if not record or not record.bloom_summary:
-            return {lvl: 0 for lvl in ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]}
-        
-        topic_id_str = str(topic_id)
-        return record.bloom_summary.get(topic_id_str, {
-            lvl: 0 for lvl in ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]
-        })
-    except Module.DoesNotExist:
-        return {lvl: 0 for lvl in ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]}
-
-
 @transaction.atomic
 def update_bloom_from_quiz(student, quiz_history):
     """
@@ -359,26 +317,20 @@ def update_bloom_from_quiz(student, quiz_history):
         if not topic_id or not bloom_level:
             continue
 
-        try:
-            topic = Topic.objects.get(id=topic_id)
-        except Topic.DoesNotExist:
-            continue
-
+        # Initialize topic if it doesn't exist (use same structure as chat history)
         if topic_id not in bloom_summary:
             bloom_summary[topic_id] = {
-                'topic_name': topic.name,
-                'bloom_levels': {
-                    'Remember': 0,
-                    'Understand': 0,
-                    'Apply': 0,
-                    'Analyze': 0,
-                    'Evaluate': 0,
-                    'Create': 0
-                }
+                'Remember': 0,
+                'Understand': 0,
+                'Apply': 0,
+                'Analyze': 0,
+                'Evaluate': 0,
+                'Create': 0
             }
 
-        if bloom_level in bloom_summary[topic_id]['bloom_levels']:
-            bloom_summary[topic_id]['bloom_levels'][bloom_level] += 1
+        # Increment the bloom level count
+        if bloom_level in bloom_summary[topic_id]:
+            bloom_summary[topic_id][bloom_level] += 1
 
     bloom_record.bloom_summary = bloom_summary
     bloom_record.save()
@@ -390,8 +342,6 @@ def get_student_bloom_summary(student, module_id):
     Get bloom summary for a student in a module.
     Returns aggregated data across all topics.
     """
-    from app.models import StudentBloomRecord
-    
     try:
         bloom_record = StudentBloomRecord.objects.get(
             student=student,
@@ -406,8 +356,6 @@ def get_student_bloom_for_topic(student, module_id, topic_id):
     """
     Get bloom summary for a specific topic.
     """
-    from app.models import StudentBloomRecord
-    
     try:
         bloom_record = StudentBloomRecord.objects.get(
             student=student,

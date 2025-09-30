@@ -254,7 +254,8 @@ def load_data(apps, schema_editor):
                         "D": row["option_D"].strip(),
                     },
                     "answer": row["answer"].strip(),
-                    "bloom_level": row["bloom_level"].strip()
+                    "bloom_level": row["bloom_level"].strip(),
+                    "topic_id": topic_id
                 }
                 grouped_quizzes[key].append(question_dict)
 

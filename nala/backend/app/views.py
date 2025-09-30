@@ -977,3 +977,55 @@ def get_bloom_progression(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+    
+
+@api_view(['POST'])
+def initialize_bloom_from_scenario(request):
+    """
+    Initialize Bloom records from a chat history scenario file.
+    Used when loading conversation scenarios in the demo.
+    
+    Expected payload:
+    {
+        "student_id": "student_123",
+        "module_id": "module_456",
+        "chat_filepath": "app/services/chat_history/newconvohistoryposted.json"
+    }
+    """
+    try:
+        data = request.data
+        student_id = data.get('student_id')
+        module_id = data.get('module_id')
+        chat_filepath = data.get('chat_filepath')
+        
+        if not student_id or not module_id or not chat_filepath:
+            return Response(
+                {'error': 'student_id, module_id, and chat_filepath are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get student
+        try:
+            student = Student.objects.get(id=student_id)
+        except Student.DoesNotExist:
+            return Response(
+                {'error': 'Student not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Process messages from file using blooms.py function
+        update_bloom_from_messages(student, module_id, chat_filepath)
+        
+        # Return updated summary
+        bloom_summary = get_student_bloom_summary(student, module_id)
+        
+        return Response({
+            'message': 'Scenario processed successfully',
+            'bloom_summary': bloom_summary
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

@@ -1,0 +1,3 @@
+[ 2025-10-01 06:23:53,323 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-10-01 06:23:53,328 ] 97 werkzeug - INFO -  * Debugger PIN: 758-854-900
+[ 2025-10-01 06:24:02,599 ] 97 werkzeug - INFO -  * Detected change in '/Users/yvonne/User Github/NALA-LearnScape/nala/backend/nala_backend/urls.py', reloading

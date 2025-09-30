@@ -1496,7 +1496,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, [activeModuleId, isStandaloneView, navigate]);
 
   const handleCloseThreadmap = useCallback(() => {
-    navigate("/");
+    navigate(-1);
   }, [navigate]);
 
   // Handle mouse move for hover node

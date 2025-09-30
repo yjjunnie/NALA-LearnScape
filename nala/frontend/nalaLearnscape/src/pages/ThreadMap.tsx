@@ -70,7 +70,10 @@ import {
 } from "./threadMap/constants";
 import EdgeInputModal from "./threadMap/EdgeInputModal";
 import KnowledgePanel from "./threadMap/KnowledgePanel";
-import { adjustNodePositions, getNodeLayoutRadius } from "./threadMap/layoutUtils";
+import {
+  adjustNodePositions,
+  getNodeLayoutRadius,
+} from "./threadMap/layoutUtils";
 
 type RawDatabaseNode = {
   id: number | string;
@@ -437,7 +440,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     () =>
       activePopup
         ? nodes.find((node) => node.id === activePopup.nodeId) ?? null
-      : null,
+        : null,
     [activePopup, nodes]
   );
 
@@ -2208,12 +2211,12 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                 height: controlButtonSize,
                 borderRadius: "50%",
                 border: "none",
-                background: "#0f172a",
+                background: "#1d4ed8",
                 color: "#fff",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 16px 30px rgba(15, 23, 42, 0.45)",
+                boxShadow: "0 5px 20px rgba(15, 23, 42, 0.45)",
                 cursor: isDraggingControl ? "grabbing" : "grab",
                 transition: "transform 0.2s ease, box-shadow 0.2s ease",
                 transform: isDraggingControl ? "scale(0.98)" : "scale(1)",
@@ -2226,10 +2229,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                 display: "flex",
                 alignItems: "center",
                 gap: 12,
-                padding: "8px 12px",
-                background: "rgba(15, 23, 42, 0.78)",
+                padding: "6px 8px",
+                background: "rgba(101, 119, 181, 0.78)",
                 borderRadius: "9999px",
-                boxShadow: "0 18px 35px rgba(15, 23, 42, 0.45)",
+                boxShadow: "0 5px 20px rgba(15, 23, 42, 0.45)",
               }}
             >
               <button
@@ -2252,8 +2255,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                   alignItems: "center",
                   justifyContent: "center",
                   boxShadow: isEditMode
-                    ? "0 12px 26px rgba(220, 38, 38, 0.45)"
-                    : "0 12px 26px rgba(29, 78, 216, 0.45)",
+                    ? "0 5px 20px rgba(220, 38, 38, 0.45)"
+                    : "0 5px 20px rgba(126, 168, 255, 0.45)",
                   cursor: "pointer",
                   transition: "background 0.2s ease, box-shadow 0.2s ease",
                 }}
@@ -2295,8 +2298,12 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                       event.stopPropagation();
                       handleDeleteSelection();
                     }}
-                    onMouseEnter={() => hasSelection && setIsDeleteHovered(true)}
-                    onMouseLeave={() => hasSelection && setIsDeleteHovered(false)}
+                    onMouseEnter={() =>
+                      hasSelection && setIsDeleteHovered(true)
+                    }
+                    onMouseLeave={() =>
+                      hasSelection && setIsDeleteHovered(false)
+                    }
                     style={{
                       width: controlButtonSize - 6,
                       height: controlButtonSize - 6,
@@ -2353,8 +2360,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                 gap: "12px",
               }}
             >
-              <div style={{ fontWeight: 700, fontSize: "15px" }}>
-                ThreadMap quick tips
+              <div
+                style={{ fontWeight: 700, fontSize: "15px", color: "#4C73FF" }}
+              >
+                THREADMAP QUICK GUIDE
               </div>
               <button
                 onClick={() => setShowInfoTooltip(false)}
@@ -2512,7 +2521,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: "12px 16px",
-                background: "#0f172a",
+                background: "#1d4ed8",
                 color: "#fff",
                 cursor: isDraggingTaxonomy ? "grabbing" : "grab",
                 userSelect: "none",
@@ -2524,7 +2533,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                   fontFamily: "Fredoka, sans-serif",
                   fontWeight: 600,
                   fontSize: "17px",
-                  color: "4C73FF",
+                  color: "#ffffff",
                 }}
               >
                 Topic taxonomy
@@ -2680,7 +2689,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              background: "#334155",
+              background: "#1d4ed8",
               color: "#fff",
               fontFamily: '"GlacialIndifference", sans-serif',
               fontSize: "12.5px",

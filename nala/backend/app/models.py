@@ -130,4 +130,99 @@ class StudentNote(models.Model):
         ordering = ['-updated_at']
     
     def __str__(self):
+<<<<<<< HEAD
         return f"{self.student.name} - {self.topic.name}"
+
+
+class StudentQuizHistory(models.Model):
+    id = models.AutoField(primary_key=True)
+    
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='quiz_histories')
+    module = models.ForeignKey(Module, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # The generated quiz (questions, options, correct answers, Bloom levels)
+    quiz_data = models.JSONField(default=dict)  
+    
+    # The student's submitted answers, stored as {"question_index": "selected_option", ...}
+    student_answers = models.JSONField(default=dict, blank=True)
+    
+    # Track score and completion status
+    score = models.FloatField(null=True, blank=True)
+    completed = models.BooleanField(default=False)
+
+    # Quiz Type (Weekly vs Custom)
+    quiz_type = models.CharField(
+        max_length=20, 
+        choices=[("weekly", "Weekly"), ("custom", "Custom")], 
+        default="weekly"
+    )
+
+    # Topics
+    topics_covered = models.ManyToManyField(Topic, related_name="quizzes", blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return (
+            f"QuizHistory: {self.student.name} - Module: "
+            f"{self.module.name if self.module else 'N/A'} ({self.quiz_type})"
+        )
+
+
+class StudentBloomRecord(models.Model):
+    """
+    Stores cumulative Bloom counts per student per module.
+    Format example:
+    {
+        "topic_id_1": {"Remember": 3, "Understand": 2, "Apply": 5, ...},
+        "topic_id_2": {"Remember": 1, "Understand": 4, ...}
+    }
+    """
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="bloom_records")
+    module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name="bloom_records")
+    
+    bloom_summary = models.JSONField(default=dict, blank=True)  # cumulative per-topic Bloom counts
+    last_processed_msg_id = models.CharField(max_length=255, null=True, blank=True) # Track the last processed message ID per module
+    
+    class Meta:
+        unique_together = ("student", "module")
+
+    def __str__(self):
+        return f"BloomRecord: {self.student.name} - {self.module.name}"
+
+class Conversation(models.Model):
+    convo_id = models.AutoField(primary_key=True)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='conversations')
+    module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name='conversations')  # chatbot_id maps to module
+    convo_title = models.CharField(max_length=500)
+    convo_created_date = models.DateTimeField(auto_now_add=True)
+    convo_duration = models.IntegerField(null=True, blank=True)  # Duration in seconds
+    
+    class Meta:
+        db_table = 'conversation'
+        ordering = ['-convo_created_date']
+
+class Message(models.Model):
+    msg_id = models.AutoField(primary_key=True)
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='messages')
+    module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name='messages')
+    
+    msg_sender = models.CharField(max_length=20)  # 'user' or 'assistant'
+    msg_text = models.TextField()  # JSON string for user, plain text for assistant
+    msg_timestamp = models.DateTimeField(auto_now_add=True)
+    msg_context = models.JSONField(null=True, blank=True)  # Stores llm_model, tokens, etc.
+    msg_evaluation = models.CharField(max_length=255, null=True, blank=True)
+    msg_user_feedback = models.TextField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'message'
+        ordering = ['msg_timestamp']
+        indexes = [
+            models.Index(fields=['student', 'module']),
+            models.Index(fields=['conversation', 'msg_timestamp']),
+        ]
+=======
+        return f"{self.student.name} - {self.topic.name}"
+>>>>>>> origin

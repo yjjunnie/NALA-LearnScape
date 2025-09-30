@@ -110,6 +110,12 @@ const BLOOM_LEVEL_MAP = BLOOM_LEVEL_ORDER.reduce<Record<string, number>>(
   {}
 );
 
+type TopicBloomSummary = {
+  label: string | null;
+  value: number | null;
+  counts: Record<string, number> | null;
+};
+
 const getHighestBloomLevel = (
   counts?: Record<string, number> | null
 ): { label: string | null; value: number | null } => {
@@ -232,14 +238,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     visible: false,
   });
   const [topicBloomLevels, setTopicBloomLevels] = useState<
-    Record<
-      string,
-      {
-        label: string | null;
-        value: number | null;
-        counts: Record<string, number> | null;
-      }
-    >
+    Record<string, TopicBloomSummary>
   >({});
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -373,18 +372,33 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       return true;
     });
   }, [edgeTypeFilter, edges, nodes, showConceptParentEdges]);
-  const bloomModuleIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (activeModuleId && activeModuleId.trim().length > 0) {
-      ids.add(String(activeModuleId));
-    }
+  const topicBloomRequests = useMemo(() => {
+    const seen = new Set<string>();
+    const requests: { moduleId: string; topicId: string }[] = [];
+
     dbNodes.forEach((node) => {
-      if (node.module_id) {
-        ids.add(String(node.module_id));
+      if (node.type !== "topic") {
+        return;
       }
+
+      const moduleId = String(node.module_id ?? "").trim();
+      const topicId = String(node.id ?? "").trim();
+
+      if (!moduleId || !topicId) {
+        return;
+      }
+
+      const key = `${moduleId}::${topicId}`;
+      if (seen.has(key)) {
+        return;
+      }
+
+      seen.add(key);
+      requests.push({ moduleId, topicId });
     });
-    return Array.from(ids).sort((a, b) => a.localeCompare(b));
-  }, [activeModuleId, dbNodes]);
+
+    return requests;
+  }, [dbNodes]);
   const activeModuleInfo = activeModuleId
     ? moduleLookup[activeModuleId]
     : undefined;
@@ -488,7 +502,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     originY: number;
   } | null>(null);
   const controlDraggedRef = useRef<boolean>(false);
-  const lastControlDragTimeRef = useRef<number>(0);
   const dragContextRef = useRef<{
     nodeId: string;
     offsets: Map<string, { dx: number; dy: number }>;
@@ -707,31 +720,26 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, [popupSizing]);
 
   useEffect(() => {
-    if (bloomModuleIds.length === 0) {
+    if (topicBloomRequests.length === 0) {
       setTopicBloomLevels({});
       return;
     }
 
     let isMounted = true;
-    const controllers = bloomModuleIds.map(() => new AbortController());
+    const controllers = topicBloomRequests.map(() => new AbortController());
 
     const fetchSummaries = async () => {
-      const combined: Record<
-        string,
-        {
-          label: string | null;
-          value: number | null;
-          counts: Record<string, number> | null;
-        }
-      > = {};
+      const combined: Record<string, TopicBloomSummary> = {};
 
       await Promise.all(
-        bloomModuleIds.map(async (moduleId, index) => {
+        topicBloomRequests.map(async ({ moduleId, topicId }, index) => {
           const controller = controllers[index];
+
           try {
             const params = new URLSearchParams({
               student_id: STUDENT_ID,
               module_id: moduleId,
+              topic_id: topicId,
             });
             const response = await fetch(
               `/api/bloom/summary/?${params.toString()}`,
@@ -740,7 +748,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
             if (!response.ok) {
               throw new Error(
-                `Failed to fetch Bloom summary for module ${moduleId}`
+                `Failed to fetch Bloom summary for topic ${topicId} in module ${moduleId}`
               );
             }
 
@@ -748,21 +756,22 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               bloom_summary?: Record<string, unknown>;
             };
 
-            const summary = payload?.bloom_summary ?? {};
-            Object.entries(summary).forEach(([topicId, rawCounts]) => {
-              const safeCounts = normalizeBloomCounts(rawCounts);
-              const { label, value } = getHighestBloomLevel(safeCounts);
-              combined[String(topicId)] = {
-                label,
-                value,
-                counts: safeCounts,
-              };
-            });
+            const safeCounts = normalizeBloomCounts(payload?.bloom_summary);
+            const { label, value } = getHighestBloomLevel(safeCounts);
+
+            combined[String(topicId)] = {
+              label,
+              value,
+              counts: safeCounts,
+            };
           } catch (error) {
             if (error instanceof DOMException && error.name === "AbortError") {
               return;
             }
-            console.error("Failed to load Bloom summary for thread map", error);
+            console.error(
+              `Failed to load Bloom summary for topic ${topicId} in module ${moduleId}`,
+              error
+            );
           }
         })
       );
@@ -771,7 +780,17 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         return;
       }
 
-      setTopicBloomLevels(combined);
+      setTopicBloomLevels(() => {
+        const next: Record<string, TopicBloomSummary> = {};
+        topicBloomRequests.forEach(({ topicId }) => {
+          next[String(topicId)] = combined[String(topicId)] ?? {
+            label: null,
+            value: null,
+            counts: null,
+          };
+        });
+        return next;
+      });
     };
 
     fetchSummaries();
@@ -780,7 +799,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       isMounted = false;
       controllers.forEach((controller) => controller.abort());
     };
-  }, [bloomModuleIds]);
+  }, [topicBloomRequests]);
 
   useEffect(() => {
     if (interactionMode !== "cursor") {
@@ -1997,9 +2016,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
       event.stopPropagation();
+      setShowInfoTooltip(false);
 
       controlDraggedRef.current = false;
-      lastControlDragTimeRef.current = 0;
       controlDragStartRef.current = {
         startX: event.clientX,
         startY: event.clientY,
@@ -2029,7 +2048,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       Math.sqrt(deltaX * deltaX + deltaY * deltaY) > 4
     ) {
       controlDraggedRef.current = true;
-      setShowInfoTooltip(false);
     }
 
     const nextX = Math.max(12, Math.min(maxX, dragState.originX + deltaX));
@@ -2039,29 +2057,11 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, []);
 
   const handleControlDragEnd = useCallback(() => {
-    if (controlDraggedRef.current) {
-      lastControlDragTimeRef.current = Date.now();
-    }
-    controlDraggedRef.current = false;
     setIsDraggingControl(false);
     controlDragStartRef.current = null;
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
   }, []);
-
-  const handleInfoButtonClick = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (Date.now() - lastControlDragTimeRef.current < 200) {
-        return;
-      }
-
-      setShowInfoTooltip((prev) => !prev);
-    },
-    [setShowInfoTooltip]
-  );
 
   const handleToggleEditMode = useCallback(() => {
     setIsEditMode((prev) => {
@@ -2168,6 +2168,17 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     clearEdgeSelection();
     shouldRunSimulationRef.current = true;
   }, [clearEdgeSelection, isEditMode, selectedEdge]);
+
+  const handleInfoMouseEnter = useCallback(() => {
+    if (isDraggingControl) {
+      return;
+    }
+    setShowInfoTooltip(true);
+  }, [isDraggingControl]);
+
+  const handleInfoMouseLeave = useCallback(() => {
+    setShowInfoTooltip(false);
+  }, []);
 
   const handleDeleteSelection = useCallback(() => {
     if (!isEditMode) {
@@ -2643,6 +2654,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             }}
           >
             <div
+              onMouseEnter={handleInfoMouseEnter}
+              onMouseLeave={handleInfoMouseLeave}
               style={{
                 position: "relative",
                 display: "inline-flex",
@@ -2651,7 +2664,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               <button
                 type="button"
                 onMouseDown={handleControlMouseDown}
-                onClick={handleInfoButtonClick}
                 aria-label="Threadmap information"
                 title="Threadmap information"
                 style={{
@@ -2723,32 +2735,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                     >
                       ×
                     </button>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                      fontSize: "12.5px",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    <div>
-                      • Drag the blue handle to move the control panel.
-                      <br />• Switch between cursor and edit modes to explore or
-                      modify the map.
-                    </div>
-                    <div>
-                      • Hover nodes in cursor mode to view their relationships.
-                      <br />• Click a node to open its knowledge capsule
-                      preview.
-                    </div>
-                    <div>
-                      • In edit mode, select nodes or edges to delete or
-                      reconnect them.
-                      <br />• Use the taxonomy widget to filter by Bloom’s
-                      levels.
-                    </div>
                   </div>
                   <div
                     style={{

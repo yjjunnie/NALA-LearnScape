@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import sys
 import pandas as pd
 
@@ -7,14 +8,17 @@ from src.utils import load_object
 
 class PredictPipeline:
     def __init__(self):
-        pass
+        self.artifacts_dir = Path(__file__).resolve().parents[2] / "artifacts"
+
 
     def predict(self,features):
         try:
             print("here")
             print("Before Loading")
-            model_path = "/Users/School/Desktop/Repos/NALA-LearnScape/nala/backend/prediction_model/artifacts/model.pkl"
-            preprocessor_path = "/Users/School/Desktop/Repos/NALA-LearnScape/nala/backend/prediction_model/artifacts/preprocessor.pkl"
+            # Build dynamic file paths
+            model_path = self.artifacts_dir / "model.pkl"
+            preprocessor_path = self.artifacts_dir / "preprocessor.pkl"
+            
             model=load_object(model_path)
             preprocessor=load_object(preprocessor_path)
             print("After Loading")

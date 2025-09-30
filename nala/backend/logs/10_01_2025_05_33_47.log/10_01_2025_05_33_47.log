@@ -1,0 +1,9 @@
+[ 2025-10-01 05:33:47,339 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-10-01 05:33:47,346 ] 97 werkzeug - INFO -  * Debugger PIN: 758-854-900
+[ 2025-10-01 05:33:53,752 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:33:53] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:33:53,754 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:33:53] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:33:56,373 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:33:56] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:33:56,376 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:33:56] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:33:57,245 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:33:57] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:33:57,248 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:33:57] "[35m[1mGET /student/student456/topics HTTP/1.1[0m" 500 -
+[ 2025-10-01 05:35:32,991 ] 97 werkzeug - INFO -  * Detected change in '/Users/yvonne/User Github/NALA-LearnScape/nala/backend/prediction_model/src/pipeline/predict_pipeline.py', reloading

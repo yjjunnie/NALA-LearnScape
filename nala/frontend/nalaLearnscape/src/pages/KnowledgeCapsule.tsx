@@ -168,6 +168,7 @@ export default function KnowledgeCapsule({
 
     if (!topic || !normalizedFocusedConcept) {
       container.scrollTo({ top: 0, behavior: "auto" });
+      containerRef.current?.scrollTo({ top: 0, behavior: "auto" });
       return;
     }
 
@@ -190,6 +191,10 @@ export default function KnowledgeCapsule({
             const offset =
               targetRect.top - containerRect.top + container.scrollTop - 24;
             container.scrollTo({
+              top: Math.max(offset, 0),
+              behavior: "auto",
+            });
+            containerRef.current?.scrollTo({
               top: Math.max(offset, 0),
               behavior: "auto",
             });
@@ -247,8 +252,8 @@ export default function KnowledgeCapsule({
   if (!topic) return <p className="p-4">Topic not found.</p>;
 
   const containerClass = hideBackButton
-    ? "h-full bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8 overflow-y-auto"
-    : "min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8";
+    ? "h-full bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8"
+    : "min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8 overflow-y-auto";
   const headerClass = hideBackButton
     ? "bg-primary-dark rounded-xl shadow-lg mb-4 p-4 md:p-6 flex items-center gap-6"
     : "bg-primary-dark rounded-xl shadow-lg mb-8 p-4 md:p-6 flex items-center gap-8";

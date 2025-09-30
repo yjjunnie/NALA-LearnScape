@@ -1,3 +1,2 @@
 __pycache__/
 *.pyc
-nala/backend/prediction_model/src/pipeline/predict_pipeline.py

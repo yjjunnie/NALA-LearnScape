@@ -32,4 +32,7 @@ urlpatterns = [
     path('api/quiz/<int:quiz_history_id>/answer/', views.save_quiz_answer, name='save_quiz_answer'),
     path('api/quiz/<int:quiz_history_id>/submit/', views.submit_quiz, name='submit_quiz'),
     path('api/student/<str:student_id>/quiz-history/', views.get_quiz_history, name='get_quiz_history'),
+
+    # Bloom's Taxonomy Levels
+    path('api/bloom-summary/', views.get_bloom_summary, name='get_bloom_summary')
 ]

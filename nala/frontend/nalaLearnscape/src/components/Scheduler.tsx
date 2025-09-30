@@ -17,6 +17,7 @@ interface TopicData {
   blooms_level: string;
   student_grade_history: number;
   topic_difficulty: number;
+  exam_date: string; 
 }
 
 interface ApiResponse {
@@ -66,17 +67,42 @@ const snapToInterval = (minutes: number): number => {
 };
 
 // Urgency calculation function
+        /*Factors for urgency:
+        1. days until exam (closer = more urgent) - HIGHEST WEIGHT
+        2. topic difficulty (higher = more urgent)
+        3. lower grade history (lower grade = more urgent)
+        4. higher study hours needed (more time = scheduled sooner)
+        */
+
 const calculateUrgency = (topic: TopicData): number => {
-  //Factors for urgency:
-  // 1. Topic difficulty (higher = more urgent)
-  // 2. Lower grade history (lower grade = more urgent)
-  // 3. Higher study hours needed (more time = more urgent)
+  const today = new Date();
+  const examDate = new Date(topic.exam_date);
+  const daysUntilExam = Math.ceil((examDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-  const difficultyScore = topic.topic_difficulty * 20; // 0-100
-  const gradeScore = 100 - topic.student_grade_history; // Lower grade = higher urgency
+  let examProximityScore = 0;
+  if (daysUntilExam < 0) { // exam passed so not important, but this will not happen because system should update new exam date. so it's just the urgency function just measures the proximity to the nearest exam for the student.
+    examProximityScore = 0;
+  } else if (daysUntilExam <= 7) {
+    examProximityScore = 100 - (daysUntilExam * 4);
+  } else if (daysUntilExam <= 30) {
+    examProximityScore = 70 - ((daysUntilExam - 7) * 1.7);
+  } else if (daysUntilExam <= 90) {
+    examProximityScore = 30 - ((daysUntilExam - 30) * 0.33);
+  } else {
+    examProximityScore = Math.max(0, 10 - ((daysUntilExam - 90) * 0.05));
+  }
+  
+  const difficultyScore = topic.topic_difficulty * 20; // 0-120
+  const gradeScore = (100 - topic.student_grade_history); // 0-100
   const studyHoursScore = topic.actual_study_hours * 10; // 0-100+
-
-  return difficultyScore * 0.3 + gradeScore * 0.4 + studyHoursScore * 0.2;
+  
+  // Weighted calculation with exam proximity having the highest weight
+  return (
+    examProximityScore * 0.5 +     
+    gradeScore * 0.25 +            
+    difficultyScore * 0.15 +        
+    studyHoursScore * 0.1          
+  );
 };
 
 // Select top 3 most urgent topics
@@ -92,6 +118,8 @@ const selectTopUrgentTopics = (topics: TopicData[]): TopicData[] => {
     .slice(0, 3)
     .map(({ urgency, ...topic }) => topic);
 };
+
+const currentStartTime = "08:30"; // 8:30 AM
 
 // Drop preview component
 interface DropPreviewProps {

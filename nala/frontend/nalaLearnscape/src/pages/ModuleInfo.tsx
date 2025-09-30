@@ -129,94 +129,94 @@ export default function ModuleInfo() {
         </div>
 
         {/* ThreadMap Column */}
-        <div className="flex-1 p-4 w-full md:w-1/2">
-          <h2 className="font-['Fredoka'] font-bold text-[#004aad] text-3xl mb-4">
-            ThreadMap
-          </h2>
-          <div
-            style={{
-              transform: "scale(0.5)", // adjust scaling
-              transformOrigin: "top left",
-              width: "200%", // inverse of scale
-              height: "200%",
-              border: "1px solid #ddd",
-              borderRadius: "12px",
-              overflow: "hidden",
-            }}
-          >
-            <ThreadMap module_id={moduleId!} />
-            <div />
+        <div className="flex flex-col gap-6 w-full md:w-1/2 p-4">
+          <div>
+            <h2 className="font-['Fredoka'] font-bold text-[#004aad] text-3xl mb-4 text-center">
+              ThreadMap
+            </h2>
+            <div
+              style={{
+                transform: "scale(0.75)",
+                transformOrigin: "top left",
+                width: "60vw",
+                height: "70vh",
+                overflow: "hidden",
+                boxShadow: "0 10px 12px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <ThreadMap module_id={moduleId!} />
+            </div>
           </div>
         </div>
-
-        {/* Learning Tools Section */}
-        <div className="mt-8 max-w-4xl mx-auto">
-          <h2 className="font-['Fredoka'] font-bold text-[#004aad] text-3xl mb-6 text-center">
-            Learning Tools
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Talk to Chatbot Button */}
-            <button
-              onClick={() => navigate(`/Modules/${moduleId}/chatbot`)}
-              className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all flex flex-col items-center gap-3 border-2 border-transparent hover:border-[#004aad]"
-            >
-              <div className="bg-[#cddcf7] rounded-full p-3">
-                <ChatIcon sx={{ fontSize: 32, color: "#004aad" }} />
-              </div>
-              <div className="text-center">
-                <h3 className="font-bold text-lg text-[#004aad]">
-                  Talk to Chatbot
-                </h3>
-                <p className="text-sm text-gray-600">Get instant help</p>
-              </div>
-            </button>
-
-            {/* Weekly Review Quiz Button */}
-            <button
-              onClick={() => navigate(`/Modules/${moduleId}/quiz?type=weekly`)}
-              className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all flex flex-col items-center gap-3 border-2 border-transparent hover:border-[#004aad]"
-            >
-              <div className="bg-[#cddcf7] rounded-full p-3">
-                <AssignmentIcon sx={{ fontSize: 32, color: "#004aad" }} />
-              </div>
-              <div className="text-center">
-                <h3 className="font-bold text-lg text-[#004aad]">
-                  Weekly Review Quiz
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Test your weekly knowledge
-                </p>
-              </div>
-            </button>
-
-            {/* Quiz Yourself Button */}
-            <button
-              onClick={() => setQuizModalOpen(true)}
-              className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all flex flex-col items-center gap-3 border-2 border-transparent hover:border-[#004aad]"
-            >
-              <div className="bg-[#cddcf7] rounded-full p-3">
-                <QuizIcon sx={{ fontSize: 32, color: "#004aad" }} />
-              </div>
-              <div className="text-center">
-                <h3 className="font-bold text-lg text-[#004aad]">
-                  Quiz Yourself
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Customize your practice quiz
-                </p>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Quiz Customization Modal */}
-        <QuizCustomizationModal
-          open={quizModalOpen}
-          onClose={() => setQuizModalOpen(false)}
-          onStartQuiz={handleStartQuiz}
-        />
       </div>
+
+      {/* Learning Tools Section */}
+      <div className="max-w-4xl mx-auto">
+        <h2 className="font-['Fredoka'] font-bold text-[#004aad] text-3xl mb-6 text-center">
+          Learning Tools
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Talk to Chatbot Button */}
+          <button
+            onClick={() => navigate(`/Modules/${moduleId}/chatbot`)}
+            className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all flex flex-col items-center gap-3 border-2 border-transparent hover:border-[#004aad]"
+          >
+            <div className="bg-[#cddcf7] rounded-full p-3">
+              <ChatIcon sx={{ fontSize: 32, color: "#004aad" }} />
+            </div>
+            <div className="text-center">
+              <h3 className="font-bold text-lg text-[#004aad]">
+                Talk to Chatbot
+              </h3>
+              <p className="text-sm text-gray-600">Get instant help</p>
+            </div>
+          </button>
+
+          {/* Weekly Review Quiz Button */}
+          <button
+            onClick={() => navigate(`/Modules/${moduleId}/quiz?type=weekly`)}
+            className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all flex flex-col items-center gap-3 border-2 border-transparent hover:border-[#004aad]"
+          >
+            <div className="bg-[#cddcf7] rounded-full p-3">
+              <AssignmentIcon sx={{ fontSize: 32, color: "#004aad" }} />
+            </div>
+            <div className="text-center">
+              <h3 className="font-bold text-lg text-[#004aad]">
+                Weekly Review Quiz
+              </h3>
+              <p className="text-sm text-gray-600">
+                Test your weekly knowledge
+              </p>
+            </div>
+          </button>
+
+          {/* Quiz Yourself Button */}
+          <button
+            onClick={() => setQuizModalOpen(true)}
+            className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all flex flex-col items-center gap-3 border-2 border-transparent hover:border-[#004aad]"
+          >
+            <div className="bg-[#cddcf7] rounded-full p-3">
+              <QuizIcon sx={{ fontSize: 32, color: "#004aad" }} />
+            </div>
+            <div className="text-center">
+              <h3 className="font-bold text-lg text-[#004aad]">
+                Quiz Yourself
+              </h3>
+              <p className="text-sm text-gray-600">
+                Customize your practice quiz
+              </p>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Quiz Customization Modal */}
+      <QuizCustomizationModal
+        open={quizModalOpen}
+        onClose={() => setQuizModalOpen(false)}
+        onStartQuiz={handleStartQuiz}
+      />
     </div>
   );
 }

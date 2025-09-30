@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { IconButton } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
-import SmartToyIcon from "@mui/icons-material/SmartToy";
 import { calculateOverallBloomLevel } from "../utils/bloom";
 
 type Message = {
@@ -34,7 +33,7 @@ const CHAT_SCENARIOS = {
       "Introductory exchange covering the basics of matrices and transformations.",
     file: "app/services/chat_history/newconvohistoryposted.json",
     introMessage:
-      "Replaying the Matrix Foundations chat history to mimic an early tutoring session.",
+      "Replaying the Matrix Foundations chat history to mimic an early conversation exchange.",
   },
   progression: {
     label: "Advanced Progression",
@@ -157,15 +156,18 @@ export default function ChatbotDemo() {
       timestamp: new Date(),
     },
   ]);
-  const [activeScenario, setActiveScenario] = useState<ScenarioKey | null>(null);
+  const [activeScenario, setActiveScenario] = useState<ScenarioKey | null>(
+    null
+  );
   const [isLoadingScenario, setIsLoadingScenario] = useState(false);
-  const [scenarioStatus, setScenarioStatus] = useState<
-    | { type: "success" | "error"; message: string }
-    | null
-  >(null);
-  const [bloomSummary, setBloomSummary] = useState<
-    Record<string, Record<string, number>> | null
-  >(null);
+  const [scenarioStatus, setScenarioStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const [bloomSummary, setBloomSummary] = useState<Record<
+    string,
+    Record<string, number>
+  > | null>(null);
 
   const moduleForSummary = moduleId ?? "1";
 
@@ -261,8 +263,7 @@ export default function ChatbotDemo() {
         };
         const botMessage: Message = {
           id: lastId + 2,
-          text:
-            botResponses[Math.floor(Math.random() * botResponses.length)],
+          text: botResponses[Math.floor(Math.random() * botResponses.length)],
           sender: "bot",
           timestamp: new Date(),
         };
@@ -377,11 +378,8 @@ export default function ChatbotDemo() {
           </IconButton>
 
           <div className="flex items-center gap-3 flex-1">
-            <SmartToyIcon
-              sx={{ fontSize: { xs: 28, sm: 32 }, color: "white" }}
-            />
-            <h1 className="text-2xl md:text-3xl font-bold text-white font-family-display">
-              Learning Assistant
+            <h1 className="text-2xl md:text-3xl font-bold text-white flex-1 font-family-display">
+              NALA Chatbot
             </h1>
           </div>
         </div>
@@ -395,15 +393,16 @@ export default function ChatbotDemo() {
               Conversation Scenarios
             </h2>
             <p className="text-sm text-gray-600">
-              Load a stored chat session to review past discussions and trigger a
-              Bloom's taxonomy recalculation that mimics the passage of time.
+              Load a stored chat session to review past discussions and trigger
+              a Bloom's taxonomy recalculation that mimics the passage of time.
             </p>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            {(Object.entries(CHAT_SCENARIOS) as Array<[
-              ScenarioKey,
-              (typeof CHAT_SCENARIOS)[ScenarioKey]
-            ]>).map(([key, scenario]) => {
+            {(
+              Object.entries(CHAT_SCENARIOS) as Array<
+                [ScenarioKey, (typeof CHAT_SCENARIOS)[ScenarioKey]]
+              >
+            ).map(([key, scenario]) => {
               const isActive = activeScenario === key;
               return (
                 <button
@@ -415,7 +414,9 @@ export default function ChatbotDemo() {
                     isActive
                       ? "border-[#004aad] bg-[#e8efff] shadow-md"
                       : "border-transparent bg-gray-50 hover:border-[#004aad] hover:shadow"
-                  } ${isLoadingScenario ? "opacity-70 cursor-not-allowed" : ""}`}
+                  } ${
+                    isLoadingScenario ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
                 >
                   <div className="text-sm font-semibold text-[#004aad] uppercase tracking-wide">
                     {scenario.label}
@@ -451,81 +452,11 @@ export default function ChatbotDemo() {
         </div>
       </div>
 
-      {/* Bloom Summary */}
-      <div className="max-w-4xl mx-auto mb-6">
-        <div className="bg-white rounded-xl shadow-md p-4 md:p-6 flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-xl font-semibold text-[#004aad]">
-              Bloom's Taxonomy Snapshot
-            </h2>
-            <p className="text-sm text-gray-600">
-              Monitor how the student's mastery evolves as conversations unfold.
-            </p>
-          </div>
-          {overallBloom ? (
-            <>
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div>
-                  <p className="text-sm text-gray-600">Overall Bloom Level</p>
-                  <p className="text-2xl font-bold text-[#004aad]">
-                    {overallBloom.level}
-                    {overallBloom.level !== "N/A" && overallBloom.dots.length > 0
-                      ? ` (${overallBloom.dots.filter(Boolean).length})`
-                      : ""}
-                  </p>
-                  <p className="text-xs text-gray-500 max-w-xl">
-                    {overallBloom.description}
-                  </p>
-                </div>
-                {overallBloom.dots.length > 0 && (
-                  <div className="flex items-center gap-1">
-                    {overallBloom.dots.map((filled, index) => (
-                      <span
-                        key={index}
-                        className={`w-3 h-3 rounded-full ${
-                          filled ? "bg-[#004aad]" : "bg-gray-300"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-              {topicBloomDetails.length > 0 ? (
-                <div className="grid gap-3 md:grid-cols-2">
-                  {topicBloomDetails.map((topic) => (
-                    <div
-                      key={topic.topicId}
-                      className="border border-gray-200 rounded-lg p-3 bg-slate-50"
-                    >
-                      <div className="text-xs uppercase text-gray-500 font-semibold">
-                        Topic {topic.topicId}
-                      </div>
-                      <div className="text-lg font-bold text-[#004aad]">
-                        {topic.label}
-                        {topic.value ? ` (${topic.value})` : ""}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">
-                  No Bloom data recorded yet for this module.
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-gray-500">
-              Bloom data could not be retrieved at the moment.
-            </p>
-          )}
-        </div>
-      </div>
-
       {/* Chat Container */}
       <div className="max-w-4xl mx-auto">
         <div
           className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
-          style={{ height: "calc(100vh - 260px)" }}
+          style={{ height: "calc(100vh - 120px)" }}
         >
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-[#004aad] scrollbar-track-gray-200">
@@ -564,7 +495,7 @@ export default function ChatbotDemo() {
           </div>
 
           {/* Sample Questions */}
-          <div className="border-t border-gray-200 bg-gray-50 p-4">
+          <div className="border-t border-gray-200 bg-gray-50 p-2">
             <p className="text-sm font-semibold text-gray-600 mb-3">
               Try asking:
             </p>
@@ -583,8 +514,8 @@ export default function ChatbotDemo() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-gray-200 p-4 bg-white">
-            <div className="flex gap-2">
+          <div className="border-t border-gray-200 p-2 bg-white">
+            <div className="flex gap-1">
               <input
                 type="text"
                 placeholder="Type your question here..."

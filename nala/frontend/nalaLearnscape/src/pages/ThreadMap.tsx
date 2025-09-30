@@ -139,10 +139,7 @@ const normalizeBloomCounts = (
 
   const record = value as Record<string, unknown>;
 
-  if (
-    typeof record.bloom_levels === "object" &&
-    record.bloom_levels !== null
-  ) {
+  if (typeof record.bloom_levels === "object" && record.bloom_levels !== null) {
     return normalizeBloomCounts(record.bloom_levels);
   }
 
@@ -244,6 +241,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       }
     >
   >({});
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [interactionMode, setInteractionMode] = useState<"cursor" | "add-node">(
     "cursor"
@@ -375,6 +373,18 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       return true;
     });
   }, [edgeTypeFilter, edges, nodes, showConceptParentEdges]);
+  const bloomModuleIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (activeModuleId && activeModuleId.trim().length > 0) {
+      ids.add(String(activeModuleId));
+    }
+    dbNodes.forEach((node) => {
+      if (node.module_id) {
+        ids.add(String(node.module_id));
+      }
+    });
+    return Array.from(ids).sort((a, b) => a.localeCompare(b));
+  }, [activeModuleId, dbNodes]);
   const activeModuleInfo = activeModuleId
     ? moduleLookup[activeModuleId]
     : undefined;
@@ -696,30 +706,42 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, [popupSizing]);
 
   useEffect(() => {
-    if (!activeModuleId) {
+    if (bloomModuleIds.length === 0) {
       setTopicBloomLevels({});
       return;
     }
 
-    const controller = new AbortController();
     let isMounted = true;
+    const controllers = bloomModuleIds.map(() => new AbortController());
 
-    const fetchBloomLevels = async () => {
-      try {
-        const params = new URLSearchParams({
-          student_id: STUDENT_ID,
-          module_id: String(activeModuleId),
-        });
-        const response = await fetch(
-          `/api/bloom/summary/?${params.toString()}`,
-          { signal: controller.signal }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch Bloom summary for module ${activeModuleId}`
-          );
+    const fetchSummaries = async () => {
+      const combined: Record<
+        string,
+        {
+          label: string | null;
+          value: number | null;
+          counts: Record<string, number> | null;
         }
+      > = {};
+
+      await Promise.all(
+        bloomModuleIds.map(async (moduleId, index) => {
+          const controller = controllers[index];
+          try {
+            const params = new URLSearchParams({
+              student_id: STUDENT_ID,
+              module_id: moduleId,
+            });
+            const response = await fetch(
+              `/api/bloom/summary/?${params.toString()}`,
+              { signal: controller.signal }
+            );
+
+            if (!response.ok) {
+              throw new Error(
+                `Failed to fetch Bloom summary for module ${moduleId}`
+              );
+            }
 
             const payload = (await response.json()) as {
               bloom_summary?: Record<string, unknown>;
@@ -736,10 +758,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               };
             });
           } catch (error) {
-            if (
-              error instanceof DOMException &&
-              error.name === "AbortError"
-            ) {
+            if (error instanceof DOMException && error.name === "AbortError") {
               return;
             }
             console.error("Failed to load Bloom summary for thread map", error);
@@ -754,13 +773,19 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       setTopicBloomLevels(combined);
     };
 
-    fetchBloomLevels();
+    fetchSummaries();
 
     return () => {
       isMounted = false;
-      controller.abort();
+      controllers.forEach((controller) => controller.abort());
     };
-  }, [activeModuleId, dbNodes.length]);
+  }, [bloomModuleIds]);
+
+  useEffect(() => {
+    if (interactionMode !== "cursor") {
+      setHoveredNodeId(null);
+    }
+  }, [interactionMode]);
 
   useEffect(() => {
     if (!activePopup) {
@@ -1001,7 +1026,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         animated: false,
         selected: isSelected,
         selectable: true,
-        data: { label: rsType, rsType },
+        data: { label: rsType, rsType, showLabel: false },
       };
     });
 
@@ -1030,7 +1055,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         style: createEdgeStyle(false),
         animated: false,
         selectable: false,
-        data: { label: "" },
+        data: { label: "", showLabel: false },
       });
     });
 
@@ -1042,6 +1067,33 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       shouldRunSimulationRef.current = true;
     }
   }, [createEdgeStyle, dbNodes, dbRelationships, selectedEdge, setEdges]);
+
+  useEffect(() => {
+    setEdges((prevEdges) =>
+      prevEdges.map((edge) => {
+        const dataObject =
+          typeof edge.data === "object" && edge.data !== null
+            ? (edge.data as Record<string, unknown>)
+            : {};
+        const dataWithFlag = dataObject as { showLabel?: boolean };
+        const prevShow = Boolean(dataWithFlag.showLabel);
+        const hasExplicitFlag = typeof dataWithFlag.showLabel === "boolean";
+        const shouldShow =
+          interactionMode === "cursor" &&
+          hoveredNodeId !== null &&
+          (edge.source === hoveredNodeId || edge.target === hoveredNodeId);
+
+        if (prevShow === shouldShow && hasExplicitFlag) {
+          return edge;
+        }
+
+        return {
+          ...edge,
+          data: { ...dataObject, showLabel: shouldShow },
+        };
+      })
+    );
+  }, [hoveredNodeId, interactionMode, setEdges]);
 
   // Clean up active popup if node is deleted
   useEffect(() => {
@@ -1619,6 +1671,23 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     [isEditMode, setEdgeSelection]
   );
 
+  const handleNodeMouseEnter = useCallback<NodeMouseHandler<FlowNode>>(
+    (_, node) => {
+      if (interactionMode !== "cursor") {
+        return;
+      }
+      setHoveredNodeId(node.id);
+    },
+    [interactionMode]
+  );
+
+  const handleNodeMouseLeave = useCallback<NodeMouseHandler<FlowNode>>(
+    (_, node) => {
+      setHoveredNodeId((prev) => (prev === node.id ? null : prev));
+    },
+    []
+  );
+
   // Handle node click - only select, don't trigger layout
   const handleNodeClick: NodeMouseHandler<FlowNode> = useCallback(
     (event, node) => {
@@ -1685,6 +1754,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     setIsAddingEdge(false);
     setIsEdgeModalOpen(false);
     setPendingEdge(null);
+    setHoveredNodeId(null);
     clearEdgeSelection();
   }, [clearEdgeSelection]);
 
@@ -1926,6 +1996,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
       event.stopPropagation();
+      setShowInfoTooltip(false);
 
       controlDraggedRef.current = false;
       controlDragStartRef.current = {
@@ -2078,17 +2149,16 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     shouldRunSimulationRef.current = true;
   }, [clearEdgeSelection, isEditMode, selectedEdge]);
 
-  const handleInfoToggle = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
-      event.stopPropagation();
-      if (controlDraggedRef.current) {
-        controlDraggedRef.current = false;
-        return;
-      }
-      setShowInfoTooltip((prev) => !prev);
-    },
-    []
-  );
+  const handleInfoMouseEnter = useCallback(() => {
+    if (isDraggingControl) {
+      return;
+    }
+    setShowInfoTooltip(true);
+  }, [isDraggingControl]);
+
+  const handleInfoMouseLeave = useCallback(() => {
+    setShowInfoTooltip(false);
+  }, []);
 
   const handleDeleteSelection = useCallback(() => {
     if (!isEditMode) {
@@ -2620,7 +2690,11 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                     }}
                   >
                     <div
-                      style={{ fontWeight: 700, fontSize: "15px", color: "#4C73FF" }}
+                      style={{
+                        fontWeight: 700,
+                        fontSize: "15px",
+                        color: "#4C73FF",
+                      }}
                     >
                       THREADMAP QUICK GUIDE
                     </div>
@@ -2652,16 +2726,20 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                     }}
                   >
                     <div>
-                      • Drag the blue handle to move the control panel.<br />• Switch
-                      between cursor and edit modes to explore or modify the map.
+                      • Drag the blue handle to move the control panel.
+                      <br />• Switch between cursor and edit modes to explore or
+                      modify the map.
                     </div>
                     <div>
-                      • Hover nodes in cursor mode to view their relationships.<br />•
-                      Click a node to open its knowledge capsule preview.
+                      • Hover nodes in cursor mode to view their relationships.
+                      <br />• Click a node to open its knowledge capsule
+                      preview.
                     </div>
                     <div>
-                      • In edit mode, select nodes or edges to delete or reconnect
-                      them.<br />• Use the taxonomy widget to filter by Bloom’s levels.
+                      • In edit mode, select nodes or edges to delete or
+                      reconnect them.
+                      <br />• Use the taxonomy widget to filter by Bloom’s
+                      levels.
                     </div>
                   </div>
                   <div
@@ -2673,10 +2751,13 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                     }}
                   >
                     • Numbers represent Bloom's Taxonomy levels (1=Remember,
-                    6=Create).<br />• Toggle between cursor and edit mode to explore or
-                    edit relationships.<br />• Use node handles to connect concepts or
-                    restructure relationships.<br />• Click nodes in cursor mode to view
-                    details and in edit mode to modify them.
+                    6=Create).
+                    <br />• Toggle between cursor and edit mode to explore or
+                    edit relationships.
+                    <br />• Use node handles to connect concepts or restructure
+                    relationships.
+                    <br />• Click nodes in cursor mode to view details and in
+                    edit mode to modify them.
                   </div>
                   <div
                     style={{
@@ -2990,6 +3071,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           onConnectStart={handleConnectStart}
           onConnectEnd={handleConnectEnd}
           onNodeClick={handleNodeClick}
+          onNodeMouseEnter={handleNodeMouseEnter}
+          onNodeMouseLeave={handleNodeMouseLeave}
           onEdgeClick={handleEdgeClick}
           onInit={handleInit}
           onMove={handleMove}
@@ -3046,6 +3129,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             onResizeMouseDown={handleResizeMouseDown}
           >
             <KnowledgePanel
+              key={`${popupTopicId ?? "topic"}-${popupConceptName ?? "all"}`}
               topicId={popupTopicId}
               conceptName={popupConceptName}
             />

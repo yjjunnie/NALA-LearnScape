@@ -294,7 +294,11 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
       const target = blockRefs.current[focusBlockIndex];
       if (target) {
         const top = target.offsetTop;
-        container.scrollTo({ top: Math.max(top - 12, 0), left: 0, behavior: "auto" });
+        container.scrollTo({
+          top: Math.max(top - 12, 0),
+          left: 0,
+          behavior: "auto",
+        });
         return;
       }
     }
@@ -397,7 +401,9 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
         >
           Knowledge Capsule
         </div>
-        <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 700 }}>{panelTitle}</h3>
+        <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 700 }}>
+          {panelTitle}
+        </h3>
       </div>
 
       {showConceptView && (
@@ -470,7 +476,9 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
                   padding: isFocus ? "14px 12px" : "0",
                   borderRadius: isFocus ? "10px" : undefined,
                   background: isFocus ? "rgba(191, 219, 254, 0.35)" : undefined,
-                  border: isFocus ? "1px solid rgba(59, 130, 246, 0.35)" : undefined,
+                  border: isFocus
+                    ? "1px solid rgba(59, 130, 246, 0.35)"
+                    : undefined,
                   scrollMarginTop: "12px",
                 }}
               >

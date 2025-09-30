@@ -145,6 +145,7 @@ const KnowledgePopup: React.FC<KnowledgePopupProps> = ({
       >
         <div
           ref={scrollContainerRef}
+          data-knowledge-popup-scroll-container
           style={{ height: "100%", overflow: "auto" }}
         >
           {children}

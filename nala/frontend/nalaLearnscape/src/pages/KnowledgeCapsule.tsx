@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import IconButton from "@mui/material/IconButton";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import NotesEditor from "../components/editor/NotesEditor";
@@ -13,6 +13,8 @@ type Topic = {
   notes?: string;
   concepts?: Concept[];
 };
+
+const normalize = (value?: string | null) => value?.trim().toLowerCase() ?? "";
 
 function convertTextToLexicalState(text: string): string {
     const lines = text.split("\n");
@@ -65,12 +67,14 @@ interface KnowledgeCapsuleProps {
   topicIdOverride?: string;
   weekOverride?: string | null;
   hideBackButton?: boolean;
+  focusedConceptName?: string;
 }
 
 export default function KnowledgeCapsule({
   topicIdOverride,
   weekOverride,
   hideBackButton = false,
+  focusedConceptName,
 }: KnowledgeCapsuleProps = {}) {
   const params = useParams<{ topicId: string }>();
   const [searchParams] = useSearchParams();
@@ -89,6 +93,12 @@ export default function KnowledgeCapsule({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const contentEditableRef = useRef<HTMLDivElement | null>(null);
+  const normalizedFocusedConcept = useMemo(
+    () => normalize(focusedConceptName),
+    [focusedConceptName]
+  );
 
   const handleBackClick = () => navigate(-1);
 
@@ -131,6 +141,103 @@ export default function KnowledgeCapsule({
     fetchTopic();
   }, [topicId]);
 
+  const findScrollContainer = useCallback(() => {
+    const attribute = "[data-knowledge-popup-scroll-container]";
+    const fromContent = contentEditableRef.current?.closest(attribute);
+    if (fromContent instanceof HTMLDivElement) {
+      return fromContent;
+    }
+
+    const fromRoot = containerRef.current?.closest(attribute);
+    if (fromRoot instanceof HTMLDivElement) {
+      return fromRoot;
+    }
+
+    return containerRef.current;
+  }, []);
+
+  useEffect(() => {
+    if (!hideBackButton) {
+      return;
+    }
+
+    const container = findScrollContainer();
+    if (!container) {
+      return;
+    }
+
+    if (!topic || !normalizedFocusedConcept) {
+      container.scrollTo({ top: 0, behavior: "auto" });
+      return;
+    }
+
+    let found = false;
+
+    const attemptScroll = () => {
+      if (found) {
+        return;
+      }
+
+      const tryMatch = (elements?: NodeListOf<HTMLElement>) => {
+        elements?.forEach((element) => {
+          if (found) {
+            return;
+          }
+          const text = normalize(element.textContent);
+          if (text && text === normalizedFocusedConcept) {
+            const containerRect = container.getBoundingClientRect();
+            const targetRect = element.getBoundingClientRect();
+            const offset =
+              targetRect.top - containerRect.top + container.scrollTop - 24;
+            container.scrollTo({
+              top: Math.max(offset, 0),
+              behavior: "auto",
+            });
+            found = true;
+          }
+        });
+      };
+
+      const headings = contentEditableRef.current?.querySelectorAll<HTMLElement>(
+        "h1, h2, h3, h4, h5, h6"
+      );
+      tryMatch(headings);
+
+      if (!found) {
+        const paragraphs = contentEditableRef.current?.querySelectorAll<HTMLElement>(
+          "p"
+        );
+        tryMatch(paragraphs);
+      }
+    };
+
+    const frameId = window.requestAnimationFrame(() => {
+      attemptScroll();
+    });
+
+    const timeouts: number[] = [
+      window.setTimeout(attemptScroll, 150),
+      window.setTimeout(attemptScroll, 350),
+      window.setTimeout(attemptScroll, 600),
+      window.setTimeout(() => {
+        if (!found) {
+          container.scrollTo({ top: 0, behavior: "auto" });
+        }
+      }, 750),
+    ];
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    };
+  }, [
+    findScrollContainer,
+    hideBackButton,
+    normalizedFocusedConcept,
+    topic,
+    topic?.notes,
+  ]);
+
   if (!topicId) {
     return <p className="p-4">Topic not found.</p>;
   }
@@ -147,7 +254,7 @@ export default function KnowledgeCapsule({
     : "bg-primary-dark rounded-xl shadow-lg mb-8 p-4 md:p-6 flex items-center gap-8";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} ref={containerRef}>
       <div className={headerClass}>
         {!hideBackButton && (
           <IconButton
@@ -181,6 +288,7 @@ export default function KnowledgeCapsule({
           initialContent={convertTextToLexicalState(topic.notes || '')}
           onSave={handleSaveNotes}
           placeholder="Start taking notes..."
+          contentEditableRef={contentEditableRef}
         />
       </div>
     </div>

@@ -1,0 +1,3 @@
+[ 2025-10-01 05:35:57,328 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-10-01 05:35:57,333 ] 97 werkzeug - INFO -  * Debugger PIN: 758-854-900
+[ 2025-10-01 05:35:58,375 ] 97 werkzeug - INFO -  * Detected change in '/Users/yvonne/User Github/NALA-LearnScape/nala/backend/prediction_model/src/pipeline/predict_pipeline.py', reloading

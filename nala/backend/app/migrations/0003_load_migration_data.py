@@ -2,6 +2,7 @@
 from django.db import migrations
 import csv
 import os
+from collections import defaultdict
 
 def load_data(apps, schema_editor):
     # Get models from Django app
@@ -79,19 +80,39 @@ def load_data(apps, schema_editor):
                 defaults={"first_node": first_node, "second_node": second_node, "rs_type": rs_type}
             )
 
+    # === Load Students ===
+    students_path = os.path.join(base_dir, "students.csv")
+    if os.path.exists(students_path):
+        with open(students_path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                student, created = Student.objects.update_or_create(
+                    id=row["id"],
+                    defaults={
+                        "name": row["name"],
+                        "email": row["email"],
+                        "learningStyle": row.get("learningStyle", "RETRIEVAL"),
+                        "learningStyleBreakdown": {}
+                    }
+                )
+                
+                # === Enroll student in module(s) ===
+                module_ids = row.get("enrolled_modules", "").split(",")  # CSV column can list module IDs
+                for mid in module_ids:
+                    if mid:
+                        module = Module.objects.get(id=mid)
+                        student.enrolled_modules.add(module)
+
+
     # === Load Quiz Questions ===
     quiz_path = os.path.join(base_dir, "weeklyquizzes.csv")
     if os.path.exists(quiz_path):
+        # Step 1: Group questions by module_id + topic_id
+        grouped_quizzes = defaultdict(list)
         with open(quiz_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # Get module and topics
-                module = Module.objects.get(id=row["module_id"])
-                topic_ids = [int(tid.strip()) for tid in row["topic_id"].split(",")]
-                topics = Topic.objects.filter(id__in=topic_ids)
-                quiz_type = row.get("quiz_type", "weekly")
-
-                # Build question dict
+                key = (row["module_id"], row["topic_id"], row.get("quiz_type", "weekly"))
                 question_dict = {
                     "question": row["question"],
                     "options": {
@@ -103,25 +124,44 @@ def load_data(apps, schema_editor):
                     "answer": row["answer"],
                     "bloom_level": row["bloom_level"]
                 }
+                grouped_quizzes[key].append(question_dict)
 
-                # Assign quiz to all students
-                for student in Student.objects.all():
-                    history = StudentQuizHistory.objects.create(
-                        student=student,
-                        module=module,
-                        quiz_data=[question_dict],
-                        student_answers={},
-                        score=None,
-                        completed=False,
-                        quiz_type=quiz_type
-                    )
-                    history.topics_covered.set(topics)
+        # Step 2: Create one quiz per topic per student in that module
+        for (module_id, topic_id, quiz_type), questions in grouped_quizzes.items():
+            module = Module.objects.get(id=module_id)
+            topic = Topic.objects.get(id=topic_id)
+
+            # Get students enrolled in this module
+            students = Student.objects.filter(enrolled_modules=module)
+
+            for student in students:
+                history = StudentQuizHistory.objects.create(
+                    student=student,
+                    module=module,
+                    quiz_data=questions,
+                    student_answers={},
+                    score=None,
+                    completed=False,
+                    quiz_type=quiz_type
+                )
+                history.topics_covered.set([topic])
 
 
 def unload_data(apps, schema_editor):
-    Node = apps.get_model("app", "Node")
+    StudentQuizHistory = apps.get_model("app", "StudentQuizHistory")
+    Student = apps.get_model("app", "Student")
     Relationship = apps.get_model("app", "Relationship")
+    Node = apps.get_model("app", "Node")
+    Concept = apps.get_model("app", "Concept")
+    Topic = apps.get_model("app", "Topic")
+    Module = apps.get_model("app", "Module")
+
+    # Delete dependent objects first
+    StudentQuizHistory.objects.all().delete()
+    Student.objects.all().delete()
     Relationship.objects.all().delete()
+    Concept.objects.all().delete()
+    Topic.objects.all().delete()
     Node.objects.all().delete()
 
 

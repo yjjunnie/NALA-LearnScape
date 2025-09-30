@@ -1,0 +1,13 @@
+[ 2025-09-30 17:27:56,247 ] 97 werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.91.91.189:5000
+[ 2025-09-30 17:27:56,247 ] 97 werkzeug - INFO - [33mPress CTRL+C to quit[0m
+[ 2025-09-30 17:27:56,248 ] 97 werkzeug - INFO -  * Restarting with stat
+[ 2025-09-30 17:27:56,960 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-09-30 17:27:56,965 ] 97 werkzeug - INFO -  * Debugger PIN: 758-854-900
+[ 2025-09-30 17:27:59,734 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 17:27:59] "[35m[1mGET /student/student123/topics HTTP/1.1[0m" 500 -
+[ 2025-09-30 17:28:40,834 ] 97 werkzeug - INFO -  * Detected change in '/Users/yvonne/User Github/NALA-LearnScape/nala/backend/prediction_model/src/pipeline/predict_pipeline.py', reloading
+[ 2025-09-30 17:28:40,910 ] 97 werkzeug - INFO -  * Restarting with stat
+[ 2025-09-30 17:28:45,043 ] 97 werkzeug - INFO -  * Restarting with stat
+[ 2025-09-30 17:28:47,928 ] 97 werkzeug - INFO -  * Restarting with stat

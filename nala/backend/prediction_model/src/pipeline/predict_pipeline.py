@@ -9,26 +9,14 @@ class PredictPipeline:
     def __init__(self):
         pass
 
-    def predict(self,features,topic):
+    def predict(self,features):
         try:
             print("here")
-            model_path = os.path.join("artifacts","model.pkl")
-            preprocessor_path=os.path.join('artifacts','preprocessor.pkl')
-
             print("Before Loading")
-            model=load_object(file_path=model_path)
-            preprocessor=load_object(file_path=preprocessor_path)
-
-            filtered_features = features[features["topic"] == topic]
-            if filtered_features.empty:
-                raise ValueError(f"No data found for topic: {topic}")
-            
-            # drop topic column as not needed for prediction, as filtering = all topics are the same
-            filtered_features = filtered_features.drop(columns=["topic"], axis=1)
-
+            model=load_object(file_path="/Users/yvonne/User Github/NALA-LearnScape/nala/backend/prediction_model/artifacts/model.pkl")
+            preprocessor=load_object(file_path="/Users/yvonne/User Github/NALA-LearnScape/nala/backend/prediction_model/artifacts/preprocessor.pkl")
             print("After Loading")
-            data_scaled=preprocessor.transform(filtered_features)
-
+            data_scaled=preprocessor.transform(features)
             preds=model.predict(data_scaled)
             print("Predictions:", preds)
             return preds

@@ -1,5 +1,19 @@
 import React, { useState, useRef, useCallback } from "react";
 
+const fetchTopicsWithPredictions = async (studentId) => {
+  try {
+    const response = await fetch(`http://localhost:5000/student/${studentId}/topics`);
+    const data = await response.json();
+    
+    if (data.success) {
+      console.log(data.topics);
+      return data.topics; // Array of topics with predictions
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
+
 // Simple data structures
 interface ScheduleItem {
   id: string;

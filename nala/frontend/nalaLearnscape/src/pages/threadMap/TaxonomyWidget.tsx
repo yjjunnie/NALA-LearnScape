@@ -132,7 +132,7 @@ const TaxonomyWidget: React.FC<TaxonomyWidgetProps> = ({
                 </span>
               </div>
             )}
-            <TopicTaxonomyProgression passedModule={moduleFilter} />
+            <TopicTaxonomyProgression passedModule='1' studentId='1' />
           </div>
         )}
       </div>

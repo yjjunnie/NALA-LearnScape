@@ -36,7 +36,7 @@ const LearningStyleOverview = () => {
     "Retrieval Practice": "#13338C",
   };
 
-  // Descriptions for each learning preference
+  // Descriptions for each learning style
   const descriptions = {
     Elaboration:
       "Connecting new ideas to existing knowledge to deepen understanding.",

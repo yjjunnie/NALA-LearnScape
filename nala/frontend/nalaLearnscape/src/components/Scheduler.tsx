@@ -1,20 +1,38 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 
 // Simple data structures
 interface ScheduleItem {
   id: string;
   title: string;
   start: number; // minutes from midnight
-  duration: number; // minutes
+  duration: number;
   color: string;
+  predictedHours?: number;
+}
+
+interface TopicData {
+  topic_id: string;
+  topic_name: string;
+  actual_study_hours: number;
+  blooms_level: string;
+  student_grade_history: number;
+  topic_difficulty: number;
+}
+
+interface ApiResponse {
+  topics: TopicData[];
+  total_topics: number;
 }
 
 // Constants
 const MINUTES_PER_DAY = 24 * 60;
 const PIXELS_PER_HOUR = 120;
-const HOUR_MARKER_PADDING = 40; // Add padding for hour markers
+const HOUR_MARKER_PADDING = 40;
 const TIMELINE_WIDTH = 24 * PIXELS_PER_HOUR + HOUR_MARKER_PADDING;
-const SNAP_INTERVAL = 15; // Snap to 15-minute intervals
+const SNAP_INTERVAL = 15;
+
+// Color palette for different topics
+const TOPIC_COLORS = ["#7EA8FF", "#4C73FF", "#3D5BDB", "#6B5CE7", "#8B5CF6"];
 
 // Utility functions
 const timeToMinutes = (timeStr: string): number => {
@@ -31,8 +49,13 @@ const minutesToTime = (minutes: number): string => {
 const formatDuration = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins}m`;
+  if (hours > 0) return `${hours}h ${mins}min`;
+  return `${mins}min`;
+};
+
+// Convert hours to minutes
+const hoursToMinutes = (hours: number): number => {
+  return Math.round(hours * 60);
 };
 
 // Snap to 15-minute intervals
@@ -40,30 +63,36 @@ const snapToInterval = (minutes: number): number => {
   return Math.round(minutes / SNAP_INTERVAL) * SNAP_INTERVAL;
 };
 
-// Sample data
-const initialSchedule: ScheduleItem[] = [
-  {
-    id: "1",
-    title: "Linear Algebra - Vectors",
-    start: timeToMinutes("08:00"),
-    duration: 90,
-    color: "#7EA8FF"
-  },
-  {
-    id: "2", 
-    title: "Calculus - Integrals",
-    start: timeToMinutes("10:30"),
-    duration: 60,
-    color: "#4C73FF"
-  },
-  {
-    id: "3",
-    title: "Coding Practice", 
-    start: timeToMinutes("13:00"),
-    duration: 120,
-    color: "#3D5BDB"
-  }
-];
+// Urgency calculation function
+const calculateUrgency = (topic: TopicData): number => {
+  //Factors for urgency:
+  // 1. Topic difficulty (higher = more urgent)
+  // 2. Lower grade history (lower grade = more urgent)
+  // 3. Higher study hours needed (more time = more urgent)
+  
+  const difficultyScore = topic.topic_difficulty * 20; // 0-100
+  const gradeScore = (100 - topic.student_grade_history); // Lower grade = higher urgency
+  const studyHoursScore = topic.actual_study_hours * 10; // 0-100+
+  
+  return (
+    difficultyScore * 0.3 +
+    gradeScore * 0.4 +
+    studyHoursScore * 0.2);
+};
+
+// Select top 3 most urgent topics
+const selectTopUrgentTopics = (topics: TopicData[]): TopicData[] => {
+  const topicsWithUrgency = topics.map(topic => ({
+    ...topic,
+    urgency: calculateUrgency(topic)
+  }));
+  
+  // Sort by urgency (descending) and take top 3
+  return topicsWithUrgency
+    .sort((a, b) => b.urgency - a.urgency)
+    .slice(0, 3)
+    .map(({ urgency, ...topic }) => topic);
+};
 
 // Drop preview component
 interface DropPreviewProps {
@@ -125,7 +154,6 @@ const ScheduleBlock: React.FC<ScheduleBlockProps> = ({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
-    // Add a drag image
     const dragImg = document.createElement('div');
     dragImg.style.cssText = `
       position: absolute;
@@ -142,7 +170,6 @@ const ScheduleBlock: React.FC<ScheduleBlockProps> = ({
     document.body.appendChild(dragImg);
     e.dataTransfer.setDragImage(dragImg, 50, 20);
     
-    // Clean up drag image after a short delay
     setTimeout(() => document.body.removeChild(dragImg), 0);
     
     onDragStart(e, item.id);
@@ -207,7 +234,9 @@ const ScheduleBlock: React.FC<ScheduleBlockProps> = ({
 
 // Main scheduler component
 const Scheduler: React.FC = () => {
-  const [schedule, setSchedule] = useState<ScheduleItem[]>(initialSchedule);
+  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<{
     start: number;
@@ -222,20 +251,69 @@ const Scheduler: React.FC = () => {
   } | null>(null);
   
   const timelineRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch data from API
+  useEffect(() => {
+    const fetchTopics = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:5000/student/student456/topics');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch topics');
+        }
+        
+        const data: ApiResponse = await response.json();
+        
+        // Select top 3 urgent topics
+        const topUrgentTopics = selectTopUrgentTopics(data.topics);
+        
+        // Convert to schedule items
+        let currentStart = timeToMinutes("08:00");
+        const scheduleItems: ScheduleItem[] = topUrgentTopics.map((topic, index) => {
+          const duration = hoursToMinutes(topic.actual_study_hours);
+          const item = {
+            id: topic.topic_id,
+            title: topic.topic_name,
+            start: currentStart,
+            duration: duration,
+            color: TOPIC_COLORS[index % TOPIC_COLORS.length],
+            predictedHours: topic.actual_study_hours};
+          
+          // Add 30 min break between sessions
+          currentStart += duration + 30;
+          
+          return item;
+        });
+        
+        setSchedule(scheduleItems);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching topics:', err);
+        setError('Failed to load topics. Please ensure the backend is running.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTopics();
+  }, []);
+
+  // Auto-scroll to first item
+  useEffect(() => {
+    if (schedule.length > 0 && scrollContainerRef.current) {
+      const firstItem = schedule[0];
+      const scrollPos = (firstItem.start / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING);
+      scrollContainerRef.current.scrollLeft = Math.max(0, scrollPos - 100);
+    }
+  }, [schedule]);
 
   // Calculate total study time
   const totalMinutes = schedule.reduce((sum, item) => sum + item.duration, 0);
   const totalHours = Math.floor(totalMinutes / 60);
   const remainingMins = totalMinutes % 60;
-  const totalTimeText = totalHours > 0 ? `${totalHours}h ${remainingMins}m` : `${remainingMins}m`;
-
-  // Reset to initial state
-  const handleReset = () => {
-    setSchedule([...initialSchedule]);
-    setDraggedId(null);
-    setDragPreview(null);
-    setResizing(null);
-  };
+  const totalTimeText = totalHours > 0 ? `${totalHours}h ${remainingMins}min` : `${remainingMins}min`;
 
   // Check if a position is valid (no collisions)
   const isValidPosition = useCallback((start: number, duration: number, excludeId?: string) => {
@@ -251,7 +329,6 @@ const Scheduler: React.FC = () => {
 
   // Find the nearest valid position
   const findNearestValidPosition = useCallback((targetStart: number, duration: number, excludeId?: string) => {
-    // Try the target position first
     if (isValidPosition(targetStart, duration, excludeId)) {
       return targetStart;
     }
@@ -260,12 +337,10 @@ const Scheduler: React.FC = () => {
       .filter(item => item.id !== excludeId)
       .sort((a, b) => a.start - b.start);
 
-    // Try before first item
     if (otherItems.length === 0 || otherItems[0].start >= duration) {
       return Math.max(0, Math.min(targetStart, otherItems[0]?.start - duration || MINUTES_PER_DAY - duration));
     }
 
-    // Try gaps between items
     for (let i = 0; i < otherItems.length - 1; i++) {
       const gapStart = otherItems[i].start + otherItems[i].duration;
       const gapEnd = otherItems[i + 1].start;
@@ -276,14 +351,13 @@ const Scheduler: React.FC = () => {
       }
     }
 
-    // Try after last item
     const lastItem = otherItems[otherItems.length - 1];
     const afterLast = lastItem.start + lastItem.duration;
     if (afterLast + duration <= MINUTES_PER_DAY) {
       return Math.max(afterLast, Math.min(targetStart, MINUTES_PER_DAY - duration));
     }
 
-    return targetStart; // Fallback
+    return targetStart;
   }, [schedule, isValidPosition]);
 
   // Drag handlers
@@ -317,7 +391,6 @@ const Scheduler: React.FC = () => {
   }, [draggedId, schedule, findNearestValidPosition, isValidPosition]);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    // Only clear preview if we're leaving the timeline completely
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setDragPreview(null);
     }
@@ -401,23 +474,33 @@ const Scheduler: React.FC = () => {
     return { minutes, left, isHour };
   });
 
+  if (loading) {
+    return (
+      <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-3xl p-8">
+        <div className="text-center text-white font-bold">Loading study schedule...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-3xl p-8">
+        <div className="text-center text-red-300 font-bold">{error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-3xl p-4">
       {/* Header */}
       <div className="flex justify-between items-center mb-2">
         <div className="text-white/90 font-bold">
-          Total study time: {totalTimeText}
+          Total study time: {totalTimeText} (Top 3 urgent topics)
         </div>
-        <button
-          onClick={handleReset}
-          className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-bold transition-colors"
-        >
-          Reset
-        </button>
       </div>
 
       {/* Timeline */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" ref={scrollContainerRef}>
         <div
           ref={timelineRef}
           className="relative bg-white/95 rounded-3xl border border-white/60"

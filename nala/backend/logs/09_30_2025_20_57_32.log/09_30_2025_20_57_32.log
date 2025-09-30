@@ -1,0 +1,16 @@
+[ 2025-09-30 20:57:32,931 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-09-30 20:57:32,951 ] 97 werkzeug - INFO -  * Debugger PIN: 758-854-900
+[ 2025-09-30 20:57:34,066 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:57:34] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:57:34,080 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:57:34] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:58:13,362 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:58:13] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:58:13,380 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:58:13] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:58:14,028 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:58:14] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:58:14,049 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:58:14] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:58:39,199 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:58:39] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:58:39,219 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:58:39] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:58:39,826 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:58:39] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:58:39,846 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:58:39] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:58:40,303 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:58:40] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:58:40,319 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:58:40] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:58:54,137 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:58:54] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 20:58:54,154 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 20:58:54] "GET /student/student123/topics HTTP/1.1" 200 -

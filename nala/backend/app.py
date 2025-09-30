@@ -11,76 +11,53 @@ import pandas as pd
 
 from sklearn.preprocessing import StandardScaler
 from flask_cors import CORS
-#from app.models import StudentBloomLevel  
 from src.pipeline.predict_pipeline import PredictPipeline  
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
 
-"""# Bloom's level helper functions (your existing code)
-BLOOM_ORDER = ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]
-
-def get_highest_blooms_level(blooms_dict):
-    if not blooms_dict:
-        return None
-    for level in reversed(BLOOM_ORDER):
-        if blooms_dict.get(level, 0) > 0:
-            return level
-    return None
-
+# Dummy data functions
 def get_blooms_level(student_id, topic_id):
-    try:
-        entry = StudentBloomLevel.objects.get(student_id=student_id, node_id=topic_id)
-        return get_highest_blooms_level(entry.blooms_level)
-    except StudentBloomLevel.DoesNotExist:
-        return None
-"""
-
-# Dummy data functions (replace these with real DB queries later)
-def get_blooms_level(student_id, topic_id):
-    """Fetch Bloom's level for a given student + topic - DUMMY DATA for now"""
     dummy_blooms = {
-        ("student123", "1"): "Understand",
-        ("student123", "2"): "Apply",
-        ("student123", "3"): "Analyze",
-        ("student456", "1"): "Remember",
-        ("student456", "2"): "Understand"
+        ("student123", "1"): "understand",
+        ("student123", "2"): "apply",
+        ("student123", "3"): "analyze",
+        ("student456", "1"): "remember",
+        ("student456", "2"): "understand"
     }
-    return dummy_blooms.get((student_id, topic_id), "Analyze") # Default to "Analyze"
+    return dummy_blooms.get((student_id, topic_id), "analyze")
 
 def get_topic_difficulty(topic_id):
-    """Get topic difficulty - DUMMY DATA for now"""
     dummy_difficulties = {
-        "1": 4,
-        "2": 3,
-        "3": 5,
-        "4": 2,
-        "5": 4
+        "1": 5,
+        "2": 5,
+        "3": 2,
+        "4": 6,
+        "5": 2
     }
-    return dummy_difficulties.get(str(topic_id), 3)  # Default to 3
+    return dummy_difficulties.get(str(topic_id), 3)
 
 def get_previous_grades(student_id, topic_id):
     """Get student's previous grades for this topic - DUMMY DATA for now"""
     dummy_grades = {
         "student123": {
-            "1": 85,
-            "2": 90,
-            "3": 75,
-            "4": 88,
-            "5": 82
+            "1": 66,
+            "2": 99,
+            "3": 99,
+            "4": 99,
+            "5": 99
         },
         "student456": {
-            "1": 78,
-            "2": 85,
+            "1": 33,
+            "2": 32,
             "3": 80,
-            "4": 92,
+            "4": 22,
             "5": 87
         }
     }
-    return dummy_grades.get(student_id, {}).get(str(topic_id), 80)  # Default to 80
+    return dummy_grades.get(student_id, {}).get(str(topic_id), 80)
 
 def get_student_topics(student_id):
-    """Get all topics for a student - DUMMY DATA for now"""
     dummy_topics = [
         {"topic_id": "1", "topic_name": "Linear Algebra - Vectors"},
         {"topic_id": "2", "topic_name": "Calculus - Integrals"},
@@ -105,6 +82,7 @@ def prepare_prediction_dataframe(blooms_level, topic_difficulty, previous_grade)
 def get_topics_with_predictions(student_id):
     """
     Main endpoint: Get all topics for a student with AI predictions
+    Returns: JSON with predicted study hours for all topics
     """
     try:
         # 1. Get all topics for the student
@@ -135,51 +113,57 @@ def get_topics_with_predictions(student_id):
                 previous_grade
             )
             
-            print(f"Predicting for topic {topic_id}:")
-            print(pred_df)
-            print("Before Prediction")
+            print(f"\n=== Predicting for topic {topic_id}: {topic['topic_name']} ===")
+            print(f"Input features:\n{pred_df}")
             
             # Make prediction
             predicted_hours = predict_pipeline.predict(pred_df)
             
-            print("After prediction")
-            print(f"Predicted hours: {predicted_hours}")
+            print(f"Raw prediction output: {predicted_hours}")
             
-            # Extract the prediction value (adjust based on your pipeline output)
-            if isinstance(predicted_hours, list):
+            # Extract the prediction value
+            if isinstance(predicted_hours, (list, np.ndarray)):
                 predicted_hours = float(predicted_hours[0])
             elif hasattr(predicted_hours, 'item'):
                 predicted_hours = float(predicted_hours.item())
             else:
                 predicted_hours = float(predicted_hours)
             
+            print(f"Predicted study hours: {predicted_hours:.2f}\n")
+            
             # Add to results
             results.append({
                 'topic_id': topic_id,
                 'topic_name': topic['topic_name'],
-                'predicted_hours': round(predicted_hours, 2),
+                'actual_study_hours': round(predicted_hours, 2),  # Changed from predicted_hours
                 'student_grade_history': previous_grade,
                 'blooms_level': blooms_level,
                 'topic_difficulty': topic_difficulty
             })
         
         return jsonify({
-            'topics': results,
+            'success': True,
             'student_id': student_id,
-            'message': 'Predictions generated successfully'})
+            'topics': results,
+            'total_topics': len(results),
+            'message': 'Predictions generated successfully'
+        })
     
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"ERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
+            'success': False,
             'error': str(e),
             'message': 'Failed to get predictions'
         }), 500
 
-# Optional: Single topic prediction endpoint
+# Single topic prediction endpoint
 @app.route('/predict', methods=['POST'])
 def predict_single_topic():
     """
-    Optional endpoint for predicting a single topic
+    Endpoint for predicting a single topic
     Request body: {"student_id": "...", "topic_id": "..."}
     """
     try:
@@ -188,7 +172,10 @@ def predict_single_topic():
         topic_id = data.get('topic_id')
         
         if not student_id or not topic_id:
-            return jsonify({'error': 'Missing student_id or topic_id'}), 400
+            return jsonify({
+                'success': False,
+                'error': 'Missing student_id or topic_id'
+            }), 400
         
         # Get the three inputs
         blooms_level = get_blooms_level(student_id, topic_id)
@@ -198,42 +185,49 @@ def predict_single_topic():
         if blooms_level is None:
             blooms_level = "Remember"
         
-        # Prepare DataFrame
+        # Prepare DataFrame - FIXED: removed student_id and topic_id parameters
         pred_df = prepare_prediction_dataframe(
-            student_id, 
-            topic_id, 
             blooms_level, 
             topic_difficulty, 
             previous_grade
         )
         
-        print("Before Prediction")
-        print(pred_df)
+        print(f"\n=== Single Topic Prediction ===")
+        print(f"Student: {student_id}, Topic: {topic_id}")
+        print(f"Input features:\n{pred_df}")
         
         # Make prediction
         predict_pipeline = PredictPipeline()
         predicted_hours = predict_pipeline.predict(pred_df)
         
-        print("After prediction")
+        print(f"Raw prediction: {predicted_hours}")
         
         # Extract value
-        if isinstance(predicted_hours, list):
+        if isinstance(predicted_hours, (list, np.ndarray)):
             predicted_hours = float(predicted_hours[0])
         elif hasattr(predicted_hours, 'item'):
             predicted_hours = float(predicted_hours.item())
         else:
             predicted_hours = float(predicted_hours)
         
+        print(f"Predicted study hours: {predicted_hours:.2f}\n")
+        
         return jsonify({
-            'predicted_hours': round(predicted_hours, 2),
+            'success': True,
+            'actual_study_hours': round(predicted_hours, 2),  # Changed from predicted_hours
             'student_grade_history': previous_grade,
             'blooms_level': blooms_level,
-            'topic_difficulty': topic_difficulty
+            'topic_difficulty': topic_difficulty,
+            'student_id': student_id,
+            'topic_id': topic_id
         })
     
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"ERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
+            'success': False,
             'error': str(e),
             'message': 'Prediction failed'
         }), 500
@@ -241,7 +235,20 @@ def predict_single_topic():
 # Health check endpoint
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({'status': 'healthy', 'message': 'API is running'})
+    return jsonify({
+        'status': 'healthy',
+        'message': 'API is running',
+        'endpoints': {
+            'health': '/health',
+            'all_topics': '/student/<student_id>/topics',
+            'single_prediction': '/predict (POST)'
+        }
+    })
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0",debug=True)
+    print("Starting Flask API...")
+    print("Available endpoints:")
+    print("  GET  /health")
+    print("  GET  /student/<student_id>/topics")
+    print("  POST /predict")
+    app.run(host="0.0.0.0", port=5000, debug=True)

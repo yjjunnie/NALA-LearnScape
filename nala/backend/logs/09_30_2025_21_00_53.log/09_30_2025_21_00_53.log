@@ -1,0 +1,7 @@
+[ 2025-09-30 21:00:53,345 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-09-30 21:00:53,356 ] 97 werkzeug - INFO -  * Debugger PIN: 758-854-900
+[ 2025-09-30 21:01:18,525 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 21:01:18] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 21:01:23,785 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 21:01:23] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-09-30 21:01:31,157 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 21:01:31] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 21:01:38,085 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 21:01:38] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-09-30 21:01:58,745 ] 97 werkzeug - INFO -  * Detected change in '/Users/yvonne/User Github/NALA-LearnScape/nala/backend/app.py', reloading

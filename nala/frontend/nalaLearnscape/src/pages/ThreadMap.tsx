@@ -29,7 +29,15 @@ import type {
   OnNodeDrag,
 } from "@xyflow/react";
 import * as d3 from "d3";
-import { Maximize2, Minimize2 } from "lucide-react";
+import {
+  Info,
+  Pencil,
+  Hand,
+  Trash2,
+  Link2,
+  Maximize2,
+  Minimize2,
+} from "lucide-react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import "@xyflow/react/dist/style.css";
 import "../App.css";
@@ -107,8 +115,7 @@ const distancePointToSegment = (
   }
 
   const t =
-    ((point.x - start.x) * dx + (point.y - start.y) * dy) /
-    (dx * dx + dy * dy);
+    ((point.x - start.x) * dx + (point.y - start.y) * dy) / (dx * dx + dy * dy);
   const clampedT = Math.max(0, Math.min(1, t));
   const closestX = start.x + clampedT * dx;
   const closestY = start.y + clampedT * dy;
@@ -499,9 +506,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         return String(popupNode.data.parent_node_id);
       }
 
-      const conceptId = String(
-        popupNode.data.node_id ?? popupNode.id ?? ""
-      );
+      const conceptId = String(popupNode.data.node_id ?? popupNode.id ?? "");
       const conceptRecord = dbNodes.find(
         (node) => String(node.id) === conceptId
       );
@@ -527,9 +532,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     }
 
     const conceptId = String(popupNode.data.node_id ?? popupNode.id ?? "");
-    const conceptRecord = dbNodes.find(
-      (node) => String(node.id) === conceptId
-    );
+    const conceptRecord = dbNodes.find((node) => String(node.id) === conceptId);
     return conceptRecord?.name;
   }, [dbNodes, popupNode]);
 
@@ -892,13 +895,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     if (!hadEdges && newEdges.length > 0) {
       shouldRunSimulationRef.current = true;
     }
-  }, [
-    createEdgeStyle,
-    dbNodes,
-    dbRelationships,
-    selectedEdge,
-    setEdges,
-  ]);
+  }, [createEdgeStyle, dbNodes, dbRelationships, selectedEdge, setEdges]);
 
   // Clean up active popup if node is deleted
   useEffect(() => {
@@ -1601,17 +1598,19 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         const measured = node.measured;
         const width = (measured?.width ?? node.width ?? 0) as number;
         const height = (measured?.height ?? node.height ?? 0) as number;
-        const position = (node.positionAbsolute ?? node.position ?? {
-          x: 0,
-          y: 0,
-        }) as XYPosition;
+        const position = (node.positionAbsolute ??
+          node.position ?? {
+            x: 0,
+            y: 0,
+          }) as XYPosition;
         const centerX = position.x + width / 2;
         const centerY = position.y + height / 2;
         const nodeData = (node.data ?? null) as NodeData | null;
         const measuredRadius = Math.min(width, height) / 2;
-        const fallbackRadius = nodeData?.node_type === "topic"
-          ? TOPIC_BASE_RADIUS
-          : CONCEPT_BASE_RADIUS;
+        const fallbackRadius =
+          nodeData?.node_type === "topic"
+            ? TOPIC_BASE_RADIUS
+            : CONCEPT_BASE_RADIUS;
         const radius = Math.max(measuredRadius, fallbackRadius);
 
         return { centerX, centerY, width, height, position, radius };
@@ -1652,7 +1651,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
         return (
           flowPosition.x >= metrics.position.x - pointerPadding &&
-          flowPosition.x <= metrics.position.x + metrics.width + pointerPadding &&
+          flowPosition.x <=
+            metrics.position.x + metrics.width + pointerPadding &&
           flowPosition.y >= metrics.position.y - pointerPadding &&
           flowPosition.y <= metrics.position.y + metrics.height + pointerPadding
         );
@@ -1667,12 +1667,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           return false;
         }
 
-        const rawSource =
-          getCircleAnchor(sourceMetrics, targetMetrics) ??
-          { x: sourceMetrics.centerX, y: sourceMetrics.centerY };
-        const rawTarget =
-          getCircleAnchor(targetMetrics, sourceMetrics) ??
-          { x: targetMetrics.centerX, y: targetMetrics.centerY };
+        const rawSource = getCircleAnchor(sourceMetrics, targetMetrics) ?? {
+          x: sourceMetrics.centerX,
+          y: sourceMetrics.centerY,
+        };
+        const rawTarget = getCircleAnchor(targetMetrics, sourceMetrics) ?? {
+          x: targetMetrics.centerX,
+          y: targetMetrics.centerY,
+        };
 
         const parallelEdges = allEdges.filter(
           (candidate) =>
@@ -1705,7 +1707,11 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           y: rawTarget.y + offsetY,
         };
 
-        const distance = distancePointToSegment(flowPosition, startPoint, endPoint);
+        const distance = distancePointToSegment(
+          flowPosition,
+          startPoint,
+          endPoint
+        );
         const edgeBuffer = 32;
         return distance <= edgeBuffer;
       });
@@ -2316,7 +2322,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   );
 
   const togglePopupExpanded = useCallback(() => {
-    setActivePopup((prev) => (prev ? { ...prev, expanded: !prev.expanded } : prev));
+    setActivePopup((prev) =>
+      prev ? { ...prev, expanded: !prev.expanded } : prev
+    );
   }, []);
 
   const handleClosePopup = useCallback(() => {
@@ -2452,33 +2460,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               </button>
               {isEditMode && (
                 <>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleOpenEdgeModal(
-                        selectedNode ? { firstNodeId: selectedNode } : undefined
-                      );
-                    }}
-                    style={{
-                      width: controlButtonSize - 6,
-                      height: controlButtonSize - 6,
-                      borderRadius: "50%",
-                      border: "none",
-                      background: "#0f766e",
-                      color: "#fff",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 12px 26px rgba(15, 118, 110, 0.35)",
-                      cursor: "pointer",
-                      transition: "background 0.2s ease, box-shadow 0.2s ease",
-                    }}
-                    aria-label="Add new edge"
-                    title="Add new edge"
-                  >
-                    <Link2 size={18} />
-                  </button>
                   <button
                     type="button"
                     onClick={(event) => {

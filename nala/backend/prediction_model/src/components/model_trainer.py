@@ -28,16 +28,14 @@ class ModelTrainer:
     def __init__(self):
         self.model_trainer_config = ModelTrainerConfig()
 
-    def initiate_model_trainer(self,train_array,test_array, val_array):
+    def initiate_model_trainer(self,train_array,test_array):
         try:
             logging.info("Split training and test input data")
-            X_train,y_train,X_test,y_test,X_val, y_val =(
+            X_train,y_train,X_test,y_test =(
                 train_array[:,:-1],
                 train_array[:,-1],
                 test_array[:,:-1],
-                test_array[:,-1],
-                val_array[:,:-1],
-                val_array[:,-1]
+                test_array[:,-1]
                 )
             models = {
                 "Random Forest": (RandomForestRegressor()),
@@ -108,13 +106,10 @@ class ModelTrainer:
             )
 
             train_predictions = best_model.predict(X_train)
-            val_predictions = best_model.predict(X_val)
 
             train_r2 = r2_score(y_train, train_predictions)
-            val_r2 = r2_score(y_val, val_predictions)
 
             print(f"Training R²: {train_r2}")
-            print(f"Validation R²: {val_r2}")
 
             predicted = best_model.predict(X_test)
             print("Predicted values:", predicted)

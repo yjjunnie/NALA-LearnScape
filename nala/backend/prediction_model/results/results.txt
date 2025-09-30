@@ -1,19 +1,14 @@
 
-*Training and Validation*
+*Training*
 
-Training R²: 0.998597777500081
-Validation R²: 0.9903709379923191
-
-Mean Absolute Error: 0.12063115616209442
-Root Mean Squared Error: 0.15162937908597462
-Model Accuracy: 0.9903709379923191
+Mean Absolute Error: 0.12732026689991152
+Root Mean Squared Error: 0.22115488881818687
+Model Accuracy: 0.9663347416782424
 
 ------------------------------------------------------------------------------
-*New Unseen Data*
+*New Unseen Data, Another set of 200 rows of unseen data*
 
-Unseen Data R²: 0.9767727113418472
-Unseen Data Mean Absolute Error: 0.17783159289579753
-Unseen Data Root Mean Squared Error: 0.22036081719722017
+Unseen Data Mean Absolute Error: 0.1279668435876066
+Unseen Data Root Mean Squared Error: 0.1577847492100525
 
 ------------------------------------------------------------------------------
-

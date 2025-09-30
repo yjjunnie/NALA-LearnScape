@@ -190,8 +190,9 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           >
             <div
               style={{
-                fontSize: "24px",
+                fontSize: "50px",
                 fontWeight: 700,
+                fontFamily: 'glacialindifference, sans-serif',
               }}
             >
               {bloomLevelNumber ?? "?"}

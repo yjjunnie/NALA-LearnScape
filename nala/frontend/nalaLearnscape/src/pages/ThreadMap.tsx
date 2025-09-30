@@ -1252,7 +1252,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
           const sourceRoot = findRootTopicId(sourceNode);
           const targetRoot = findRootTopicId(targetNode);
-          if (sourceRoot && targetRoot && sourceRoot === targetRoot) return 0.45;
+          if (sourceRoot && targetRoot && sourceRoot === targetRoot)
+            return 0.45;
 
           return 0.12;
         })
@@ -2647,9 +2648,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                     </span>
                   </div>
                 )}
-                <TopicTaxonomyProgression
-                  passedModule={taxonomyModuleFilter}
-                />
+                <TopicTaxonomyProgression passedModule={taxonomyModuleFilter} />
               </div>
             )}
           </div>

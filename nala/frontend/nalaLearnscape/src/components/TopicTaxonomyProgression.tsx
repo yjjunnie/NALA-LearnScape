@@ -170,7 +170,10 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
   ];
 
   const normalizeModuleValue = (value: string) =>
-    value.toString().toLowerCase().replace(/[^a-z0-9]+/g, "");
+    value
+      .toString()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "");
 
   const descriptions = {
     Remember: "You managed to recall those essential facts and definitions!",

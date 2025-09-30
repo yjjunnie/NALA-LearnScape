@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 
 node_modules
+nala/backend/prediction_model/src/pipeline/predict_pipeline.py
+nala/backend/prediction_model/src/pipeline/predict_pipeline.py

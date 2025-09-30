@@ -30,55 +30,98 @@ def load_data(apps, schema_editor):
                     }
                 )
 
-    # === Load Nodes (generic) ===
+   # === Load Nodes (robust two-pass) ===
     nodes_path = os.path.join(base_dir, "nodes.csv")
-    with open(nodes_path, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            node_id = row["node_id"]
-            name = row["node_name"]
-            summary = row["node_description"]
-            node_type = row["node_type"].lower()
-            module_id = row.get("node_module_id")
-            module = Module.objects.get(id=module_id) if module_id else None
+    if os.path.exists(nodes_path):
+        with open(nodes_path, newline="", encoding="utf-8") as f:
+            reader = list(csv.DictReader(f))  # read all rows first
 
-            if node_type == "topic":
-                Topic.objects.update_or_create(
+        # --- Pass 1: Topics ---
+        for row in reader:
+            if row["node_type"].lower() == "topic":
+                node_id = row["node_id"]
+                name = row["node_name"]
+                summary = row["node_description"]
+                module_id = row["node_module_id"]
+                week_no = row.get("week_no")
+                week_no = week_no.strip() if week_no and week_no.strip() else None
+                module = Module.objects.get(id=module_id) if module_id else None
+
+                # update/create parent Node
+                node_obj, _ = Node.objects.update_or_create(
                     id=node_id,
-                    defaults={"name": name, "summary": summary, "module": module}
+                    defaults={
+                        "name": name,
+                        "summary": summary,
+                        "module": module,
+                        "week_no": week_no
+                    }
                 )
-            elif node_type == "concept":
+                # ensure Topic exists
+                Topic.objects.get_or_create(node_ptr=node_obj)
+
+        # --- Pass 2: Concepts ---
+        for row in reader:
+            if row["node_type"].lower() == "concept":
+                node_id = row["node_id"]
+                name = row["node_name"]
+                summary = row["node_description"]
+                module_id = row["node_module_id"]
                 parent_id = row.get("parent_node_id")
-                if parent_id:
-                    parent_topic = Topic.objects.get(id=parent_id)
-                    Concept.objects.update_or_create(
-                        id=node_id,
-                        defaults={"name": name, "summary": summary, "related_topic": parent_topic, "module": module}
-                    )
-                else:
-                    Node.objects.update_or_create(
-                        id=node_id,
-                        defaults={"name": name, "summary": summary, "module": module}
-                    )
-            else:
+                week_no = row.get("week_no")
+                week_no = week_no.strip() if week_no and week_no.strip() else None
+                module = Module.objects.get(id=module_id) if module_id else None
+                parent_topic = Topic.objects.get(id=parent_id) if parent_id else None
+
+                # update/create parent Node
+                node_obj, _ = Node.objects.update_or_create(
+                    id=node_id,
+                    defaults={
+                        "name": name,
+                        "summary": summary,
+                        "module": module,
+                        "week_no": week_no
+                    }
+                )
+                # ensure Concept exists
+                Concept.objects.get_or_create(node_ptr=node_obj, defaults={"related_topic": parent_topic})
+
+        # --- Pass 3: Other Nodes ---
+        for row in reader:
+            if row["node_type"].lower() not in ("topic", "concept"):
+                node_id = row["node_id"]
+                name = row["node_name"]
+                summary = row["node_description"]
+                module_id = row["node_module_id"]
+                week_no = row.get("week_no")
+                week_no = week_no.strip() if week_no and week_no.strip() else None
+                module = Module.objects.get(id=module_id) if module_id else None
+
                 Node.objects.update_or_create(
                     id=node_id,
-                    defaults={"name": name, "summary": summary, "module": module}
+                    defaults={
+                        "name": name,
+                        "summary": summary,
+                        "module": module,
+                        "week_no": week_no
+                    }
                 )
 
     # === Load Relationships ===
     rels_path = os.path.join(base_dir, "relationships.csv")
-    with open(rels_path, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            rel_id = row["relationship_id"]
-            first_node = Node.objects.get(id=row["node_id_1"])
-            second_node = Node.objects.get(id=row["node_id_2"])
-            rs_type = row["relationship_type"]
-            Relationship.objects.update_or_create(
-                id=rel_id,
-                defaults={"first_node": first_node, "second_node": second_node, "rs_type": rs_type}
-            )
+    if os.path.exists(rels_path):
+        with open(rels_path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                rel_id = row["relationship_id"]
+                first_node = Node.objects.get(id=row["node_id_1"])
+                second_node = Node.objects.get(id=row["node_id_2"])
+                rs_type = row["relationship_type"]
+
+                Relationship.objects.update_or_create(
+                    id=rel_id,
+                    defaults={"first_node": first_node, "second_node": second_node, "rs_type": rs_type}
+                )
 
     # === Load Students ===
     students_path = os.path.join(base_dir, "students.csv")
@@ -164,12 +207,16 @@ def unload_data(apps, schema_editor):
     Topic.objects.all().delete()
     Node.objects.all().delete()
 
-
 class Migration(migrations.Migration):
+    
     dependencies = [
-        ("app", "0002_conversation_message_studentbloomrecord"),
+        ("app", "0001_initial"), 
     ]
+
+
     operations = [
         migrations.RunPython(load_data, reverse_code=unload_data),
     ]
+
+
 

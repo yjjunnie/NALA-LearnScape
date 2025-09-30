@@ -19,58 +19,36 @@ def load_data(apps, schema_editor):
     # === Load Modules ===
     modules_path = os.path.join(base_dir, "modules.csv")
     if os.path.exists(modules_path):
-        print(f"Loading modules from: {modules_path}")
         with open(modules_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                module, created = Module.objects.update_or_create(
-                    id=row["module_id"].strip(),
+                Module.objects.update_or_create(
+                    id=row["module_id"],
                     defaults={
-                        "name": row["module_name"].strip(),
-                        "index": row.get("module_index", "").strip()
+                        "name": row["module_name"],
+                        "index": row.get("module_index", "")
                     }
                 )
-                print(f"  {'Created' if created else 'Updated'} module: {module.id} - {module.name}")
-    else:
-        print(f"WARNING: modules.csv not found at {modules_path}")
 
-    # === Load Nodes (robust three-pass) ===
+   # === Load Nodes (robust two-pass) ===
     nodes_path = os.path.join(base_dir, "nodes.csv")
     if os.path.exists(nodes_path):
-        print(f"\nLoading nodes from: {nodes_path}")
         with open(nodes_path, newline="", encoding="utf-8") as f:
-            reader = list(csv.DictReader(f))
-        
-        print(f"Total rows in CSV: {len(reader)}")
-        
-        # Count different node types
-        topic_rows = [r for r in reader if r["node_type"].strip().lower() == "topic"]
-        concept_rows = [r for r in reader if r["node_type"].strip().lower() == "concept"]
-        other_rows = [r for r in reader if r["node_type"].strip().lower() not in ("topic", "concept")]
-        
-        print(f"  Topics to load: {len(topic_rows)}")
-        print(f"  Concepts to load: {len(concept_rows)}")
-        print(f"  Other nodes to load: {len(other_rows)}")
+            reader = list(csv.DictReader(f))  # read all rows first
 
         # --- Pass 1: Topics ---
-        print("\n=== PASS 1: Loading Topics ===")
-        for row in topic_rows:
-            try:
+        for row in reader:
+            if row["node_type"].strip().lower() == "topic":
                 node_id = row["node_id"].strip()
                 name = row["node_name"].strip()
                 summary = row["node_description"].strip()
                 module_id = row["node_module_id"].strip()
                 week_no = row.get("week_no", "").strip() or None
                 
-                module = None
-                if module_id:
-                    try:
-                        module = Module.objects.get(id=module_id)
-                    except Module.DoesNotExist:
-                        print(f"  ERROR: Module {module_id} not found for topic {node_id}")
+                module = Module.objects.get(id=module_id) if module_id else None
 
-                # Create Topic directly (this automatically creates the Node parent)
-                topic_obj, topic_created = Topic.objects.update_or_create(
+                # update/create parent Node
+                node_obj, _ = Node.objects.update_or_create(
                     id=node_id,
                     defaults={
                         "name": name,
@@ -79,233 +57,166 @@ def load_data(apps, schema_editor):
                         "week_no": week_no
                     }
                 )
-                print(f"  {'✓' if topic_created else '↻'} Topic {node_id}: {name}")
-                
-            except Exception as e:
-                print(f"  ERROR loading topic {row.get('node_id', 'UNKNOWN')}: {str(e)}")
+                # ensure Topic exists (will create or get existing)
+                Topic.objects.get_or_create(node_ptr=node_obj)
 
         # --- Pass 2: Concepts ---
-        print("\n=== PASS 2: Loading Concepts ===")
-        for row in concept_rows:
-            try:
+        for row in reader:
+            if row["node_type"].strip().lower() == "concept":
                 node_id = row["node_id"].strip()
                 name = row["node_name"].strip()
                 summary = row["node_description"].strip()
                 module_id = row["node_module_id"].strip()
-                parent_id = row.get("parent_node_id", "").strip()
+                parent_id = row.get("parent_node_id", "").strip() or None
                 week_no = row.get("week_no", "").strip() or None
                 
-                # Handle NULL or empty parent_id
-                if parent_id.upper() == "NULL" or not parent_id:
-                    parent_id = None
-                
-                module = None
-                if module_id:
-                    try:
-                        module = Module.objects.get(id=module_id)
-                    except Module.DoesNotExist:
-                        print(f"  ERROR: Module {module_id} not found for concept {node_id}")
-
+                module = Module.objects.get(id=module_id) if module_id else None
                 parent_topic = None
                 if parent_id:
                     try:
                         parent_topic = Topic.objects.get(id=parent_id)
                     except Topic.DoesNotExist:
-                        print(f"  WARNING: Parent topic {parent_id} not found for concept {node_id}")
+                        print(f"Warning: Parent topic {parent_id} not found for concept {node_id}")
 
-                # Create Concept directly (this automatically creates the Node parent)
-                concept_obj, concept_created = Concept.objects.update_or_create(
+                # update/create parent Node
+                node_obj, _ = Node.objects.update_or_create(
                     id=node_id,
                     defaults={
                         "name": name,
                         "summary": summary,
                         "module": module,
-                        "week_no": week_no,
-                        "related_topic": parent_topic
+                        "week_no": week_no
                     }
                 )
                 
-                status = '✓' if concept_created else '↻'
-                parent_info = f" -> Topic {parent_id}" if parent_topic else " (NO PARENT)"
-                print(f"  {status} Concept {node_id}: {name}{parent_info}")
+                # ensure Concept exists with correct related_topic
+                # Use update_or_create to handle both new and existing concepts
+                Concept.objects.update_or_create(
+                    node_ptr=node_obj,
+                    defaults={"related_topic": parent_topic}
+                )
+
+        # --- Pass 3: Other Nodes (if any) ---
+        for row in reader:
+            node_type = row["node_type"].strip().lower()
+            if node_type not in ("topic", "concept"):
+                node_id = row["node_id"].strip()
+                name = row["node_name"].strip()
+                summary = row["node_description"].strip()
+                module_id = row["node_module_id"].strip()
+                week_no = row.get("week_no", "").strip() or None
                 
-            except Exception as e:
-                print(f"  ERROR loading concept {row.get('node_id', 'UNKNOWN')}: {str(e)}")
+                module = Module.objects.get(id=module_id) if module_id else None
 
-        # --- Pass 3: Other Nodes ---
-        if other_rows:
-            print("\n=== PASS 3: Loading Other Nodes ===")
-            for row in other_rows:
-                try:
-                    node_id = row["node_id"].strip()
-                    name = row["node_name"].strip()
-                    summary = row["node_description"].strip()
-                    module_id = row["node_module_id"].strip()
-                    week_no = row.get("week_no", "").strip() or None
-                    
-                    module = Module.objects.get(id=module_id) if module_id else None
-
-                    node_obj, created = Node.objects.update_or_create(
-                        id=node_id,
-                        defaults={
-                            "name": name,
-                            "summary": summary,
-                            "module": module,
-                            "week_no": week_no
-                        }
-                    )
-                    print(f"  {'✓' if created else '↻'} Node {node_id}: {name}")
-                except Exception as e:
-                    print(f"  ERROR loading node {row.get('node_id', 'UNKNOWN')}: {str(e)}")
-    else:
-        print(f"WARNING: nodes.csv not found at {nodes_path}")
-
-    # Print summary
-    print("\n=== LOAD SUMMARY ===")
-    print(f"Total Modules: {Module.objects.count()}")
-    print(f"Total Nodes: {Node.objects.count()}")
-    print(f"Total Topics: {Topic.objects.count()}")
-    print(f"Total Concepts: {Concept.objects.count()}")
-    print(f"Concepts without parent: {Concept.objects.filter(related_topic__isnull=True).count()}")
+                Node.objects.update_or_create(
+                    id=node_id,
+                    defaults={
+                        "name": name,
+                        "summary": summary,
+                        "module": module,
+                        "week_no": week_no
+                    }
+                )
 
     # === Load Relationships ===
     rels_path = os.path.join(base_dir, "relationships.csv")
     if os.path.exists(rels_path):
-        print(f"\n=== Loading Relationships ===")
         with open(rels_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            rel_count = 0
             for row in reader:
-                try:
-                    rel_id = row["relationship_id"].strip()
-                    first_node = Node.objects.get(id=row["node_id_1"].strip())
-                    second_node = Node.objects.get(id=row["node_id_2"].strip())
-                    rs_type = row["relationship_type"].strip()
+                rel_id = row["relationship_id"]
+                first_node = Node.objects.get(id=row["node_id_1"])
+                second_node = Node.objects.get(id=row["node_id_2"])
+                rs_type = row["relationship_type"]
 
-                    Relationship.objects.update_or_create(
-                        id=rel_id,
-                        defaults={
-                            "first_node": first_node, 
-                            "second_node": second_node, 
-                            "rs_type": rs_type
-                        }
-                    )
-                    rel_count += 1
-                except Exception as e:
-                    print(f"  ERROR loading relationship {row.get('relationship_id', 'UNKNOWN')}: {str(e)}")
-            print(f"  Loaded {rel_count} relationships")
-    else:
-        print(f"WARNING: relationships.csv not found at {rels_path}")
+                Relationship.objects.update_or_create(
+                    id=rel_id,
+                    defaults={"first_node": first_node, "second_node": second_node, "rs_type": rs_type}
+                )
 
     # === Load Students ===
     students_path = os.path.join(base_dir, "students.csv")
     if os.path.exists(students_path):
-        print(f"\n=== Loading Students ===")
         with open(students_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            student_count = 0
             for row in reader:
-                try:
-                    student, created = Student.objects.update_or_create(
-                        id=row["id"].strip(),
-                        defaults={
-                            "name": row["name"].strip(),
-                            "email": row["email"].strip(),
-                            "learningStyle": row.get("learningStyle", "RETRIEVAL").strip(),
-                            "learningStyleBreakdown": {}
-                        }
-                    )
-                    
-                    # === Enroll student in module(s) ===
-                    module_ids = row.get("enrolled_modules", "").split(",")
-                    for mid in module_ids:
-                        mid = mid.strip()
-                        if mid:
-                            try:
-                                module = Module.objects.get(id=mid)
-                                student.enrolled_modules.add(module)
-                            except Module.DoesNotExist:
-                                print(f"  WARNING: Module {mid} not found for student {student.id}")
-                    
-                    student_count += 1
-                    print(f"  {'✓' if created else '↻'} Student {student.id}: {student.name}")
-                    
-                except Exception as e:
-                    print(f"  ERROR loading student {row.get('id', 'UNKNOWN')}: {str(e)}")
-            print(f"  Loaded {student_count} students")
-    else:
-        print(f"WARNING: students.csv not found at {students_path}")
+                student, created = Student.objects.update_or_create(
+                    id=row["id"],
+                    defaults={
+                        "name": row["name"],
+                        "email": row["email"],
+                        "learningStyle": row.get("learningStyle", "RETRIEVAL"),
+                        "learningStyleBreakdown": {}
+                    }
+                )
+                
+                # === Enroll student in module(s) ===
+                module_ids = row.get("enrolled_modules", "").split(",")  # CSV column can list module IDs
+                for mid in module_ids:
+                    if mid:
+                        module = Module.objects.get(id=mid)
+                        student.enrolled_modules.add(module)
+
 
     # === Load Quiz Questions ===
     quiz_path = os.path.join(base_dir, "weeklyquizzes.csv")
     if os.path.exists(quiz_path):
-        print(f"\n=== Loading Quizzes ===")
+        # Step 1: Group questions by module_id + topic_id
         grouped_quizzes = defaultdict(list)
         with open(quiz_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                key = (row["module_id"].strip(), row["topic_id"].strip(), row.get("quiz_type", "weekly").strip())
+                key = (row["module_id"], row["topic_id"], row.get("quiz_type", "weekly"))
                 question_dict = {
-                    "question": row["question"].strip(),
+                    "question": row["question"],
                     "options": {
-                        "A": row["option_A"].strip(),
-                        "B": row["option_B"].strip(),
-                        "C": row["option_C"].strip(),
-                        "D": row["option_D"].strip(),
+                        "A": row["option_A"],
+                        "B": row["option_B"],
+                        "C": row["option_C"],
+                        "D": row["option_D"],
                     },
-                    "answer": row["answer"].strip(),
-                    "bloom_level": row["bloom_level"].strip()
+                    "answer": row["answer"],
+                    "bloom_level": row["bloom_level"]
                 }
                 grouped_quizzes[key].append(question_dict)
 
-        quiz_count = 0
+        # Step 2: Create one quiz per topic per student in that module
         for (module_id, topic_id, quiz_type), questions in grouped_quizzes.items():
-            try:
-                module = Module.objects.get(id=module_id)
-                topic = Topic.objects.get(id=topic_id)
-                students = Student.objects.filter(enrolled_modules=module)
+            module = Module.objects.get(id=module_id)
+            topic = Topic.objects.get(id=topic_id)
 
-                for student in students:
-                    history = StudentQuizHistory.objects.create(
-                        student=student,
-                        module=module,
-                        quiz_data=questions,
-                        student_answers={},
-                        score=None,
-                        completed=False,
-                        quiz_type=quiz_type
-                    )
-                    history.topics_covered.set([topic])
-                    quiz_count += 1
-                    
-            except Exception as e:
-                print(f"  ERROR creating quiz for module {module_id}, topic {topic_id}: {str(e)}")
-        print(f"  Created {quiz_count} quiz instances")
-    else:
-        print(f"WARNING: weeklyquizzes.csv not found at {quiz_path}")
+            # Get students enrolled in this module
+            students = Student.objects.filter(enrolled_modules=module)
 
-    print("\n=== DATA LOAD COMPLETE ===")
+            for student in students:
+                history = StudentQuizHistory.objects.create(
+                    student=student,
+                    module=module,
+                    quiz_data=questions,
+                    student_answers={},
+                    score=None,
+                    completed=False,
+                    quiz_type=quiz_type
+                )
+                history.topics_covered.set([topic])
 
 
 def unload_data(apps, schema_editor):
     StudentQuizHistory = apps.get_model("app", "StudentQuizHistory")
     Student = apps.get_model("app", "Student")
     Relationship = apps.get_model("app", "Relationship")
+    Node = apps.get_model("app", "Node")
     Concept = apps.get_model("app", "Concept")
     Topic = apps.get_model("app", "Topic")
-    Node = apps.get_model("app", "Node")
     Module = apps.get_model("app", "Module")
 
-    print("Cleaning up data...")
+    # Delete dependent objects first
     StudentQuizHistory.objects.all().delete()
     Student.objects.all().delete()
     Relationship.objects.all().delete()
     Concept.objects.all().delete()
     Topic.objects.all().delete()
     Node.objects.all().delete()
-    Module.objects.all().delete()
-    print("Data cleanup complete.")
-
 
 class Migration(migrations.Migration):
     
@@ -313,6 +224,11 @@ class Migration(migrations.Migration):
         ("app", "0001_initial"), 
     ]
 
+
     operations = [
         migrations.RunPython(load_data, reverse_code=unload_data),
     ]
+
+
+
+

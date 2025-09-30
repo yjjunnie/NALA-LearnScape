@@ -165,6 +165,41 @@ class StudentQuizHistory(models.Model):
     def __str__(self):
         return f"QuizHistory: {self.student.name} - Module: {self.module.name if self.module else 'N/A'} ({self.quiz_type})"
 
+    def get_questions(self):
+        """Return the list of quiz questions regardless of stored format."""
+        data = self.quiz_data
+
+        if isinstance(data, dict):
+            questions = data.get('questions', [])
+            return questions if isinstance(questions, list) else []
+
+        if isinstance(data, list):
+            return data
+
+        return []
+
+    def get_topic_ids(self):
+        """Return topic IDs from the JSON payload or the M2M relation."""
+        data = self.quiz_data
+
+        if isinstance(data, dict):
+            topic_ids = data.get('topic_ids')
+            if isinstance(topic_ids, (list, tuple)):
+                return [str(tid) for tid in topic_ids if str(tid)]
+
+        return [str(topic_id) for topic_id in self.topics_covered.values_list('id', flat=True)]
+
+    def get_effective_quiz_type(self):
+        """Determine the quiz type using the JSON payload or the model field."""
+        data = self.quiz_data
+
+        if isinstance(data, dict):
+            quiz_type = data.get('quiz_type')
+            if isinstance(quiz_type, str) and quiz_type:
+                return quiz_type
+
+        return self.quiz_type or 'weekly'
+
 
 # === Bloom Records ===
 class StudentBloomRecord(models.Model):

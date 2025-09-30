@@ -16,6 +16,7 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
     targetY,
     style,
     markerEnd,
+    markerStart,
     data,
   } = props;
 
@@ -147,12 +148,12 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
 
   return (
     <>
-      <BaseEdge path={edgePath} style={style} markerEnd={markerEnd} />
-      <path
-        d={edgePath}
-        fill="none"
-        stroke="transparent"
-        strokeWidth={20}
+      <BaseEdge
+        path={edgePath}
+        style={style}
+        markerEnd={markerEnd}
+        markerStart={markerStart}
+        interactionWidth={28}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       />

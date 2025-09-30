@@ -1,0 +1,7 @@
+[ 2025-09-30 16:10:50,616 ] 28 root - INFO - Entered the data ingestion method
+[ 2025-09-30 16:10:50,618 ] 31 root - INFO - Read the dataset as dataframe
+[ 2025-09-30 16:10:50,620 ] 37 root - INFO - Train test validation split initiated
+[ 2025-09-30 16:10:50,623 ] 43 root - INFO - Ingestion of data is completed
+[ 2025-09-30 16:10:50,623 ] 75 root - INFO - Read train and test data completed
+[ 2025-09-30 16:10:50,623 ] 76 root - INFO - Obtaining preprocessing object
+[ 2025-09-30 16:10:50,625 ] 57 root - INFO - Numerical Columns: ['topic_difficulty', 'previous_grade']

@@ -1,9 +1,10 @@
-[ 2025-09-29 05:24:34,116 ] 45 root - INFO - Random Forest,Train model score :0.9984245864431536, Test model score: 0.9857617503747541
-[ 2025-09-29 05:24:34,136 ] 45 root - INFO - Decision Tree,Train model score :0.9999925242087849, Test model score: 0.9773070457910157
-[ 2025-09-29 05:24:44,573 ] 45 root - INFO - Gradient Boosting,Train model score :0.998597777500081, Test model score: 0.9903709379923191
-[ 2025-09-29 05:24:44,577 ] 45 root - INFO - Linear Regression,Train model score :0.9902672228583173, Test model score: 0.9805947018434868
-[ 2025-09-29 05:24:55,273 ] 45 root - INFO - XGBRegressor,Train model score :0.9994795138983132, Test model score: 0.9856334698698658
-[ 2025-09-29 05:24:57,382 ] 45 root - INFO - CatBoosting Regressor,Train model score :0.9971561205380266, Test model score: 0.9900927683892792
-[ 2025-09-29 05:25:01,284 ] 45 root - INFO - AdaBoost Regressor,Train model score :0.9907182456245673, Test model score: 0.9795789310613154
+[ 2025-09-30 16:11:21,194 ] 45 root - INFO - Random Forest,Train model score :0.9933350344964813, Test model score: 0.9388091511995114
+[ 2025-09-30 16:11:21,214 ] 45 root - INFO - Decision Tree,Train model score :0.9966250797283184, Test model score: 0.9130531700369994
+[ 2025-09-30 16:11:30,306 ] 45 root - INFO - Gradient Boosting,Train model score :0.989299365350703, Test model score: 0.9560877707732163
+[ 2025-09-30 16:11:30,315 ] 45 root - INFO - Linear Regression,Train model score :0.9731990303321839, Test model score: 0.9663347416782424
+[ 2025-09-30 16:11:40,692 ] 45 root - INFO - XGBRegressor,Train model score :0.9945247467546193, Test model score: 0.9478005096556549
+[ 2025-09-30 16:11:42,129 ] 45 root - INFO - CatBoosting Regressor,Train model score :0.9871718211013943, Test model score: 0.9653923600102144
+[ 2025-09-30 16:11:45,486 ] 45 root - INFO - AdaBoost Regressor,Train model score :0.9485118528367457, Test model score: 0.9107505187624917
+[ 2025-09-30 16:11:45,487 ] 101 root - INFO - Best found model on training and testing dataset
 
-Model used: CatBoosting Regressor since it has the highest Test model score.
+Model used: Linear Regressor since it has the highest Test model score.

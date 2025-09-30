@@ -1,12 +1,9 @@
 import React, { useMemo, useState } from "react";
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getStraightPath,
-  useReactFlow,
-} from "@xyflow/react";
+import { BaseEdge, EdgeLabelRenderer, useReactFlow } from "@xyflow/react";
 import type { EdgeProps, XYPosition } from "@xyflow/react";
-import type { FlowEdge, FlowNode } from "./types";
+
+import { CONCEPT_BASE_RADIUS, TOPIC_BASE_RADIUS } from "./constants";
+import type { FlowEdge, FlowNode, NodeData } from "./types";
 
 const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
   const {
@@ -19,6 +16,7 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
     targetY,
     style,
     markerEnd,
+    markerStart,
     data,
   } = props;
 
@@ -56,7 +54,13 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
 
     const centerX = position.x + width / 2;
     const centerY = position.y + height / 2;
-    const radius = Math.min(width, height) / 2;
+    const nodeData = (extended.data ?? null) as NodeData | null;
+    const measuredRadius = Math.min(width, height) / 2;
+    const fallbackRadius =
+      nodeData?.node_type === "topic"
+        ? TOPIC_BASE_RADIUS
+        : CONCEPT_BASE_RADIUS;
+    const radius = Math.max(measuredRadius, fallbackRadius);
 
     return { centerX, centerY, radius };
   };
@@ -110,11 +114,11 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
           (edge.source === source && edge.target === target) ||
           (edge.source === target && edge.target === source)
       ),
-    [edges, source, target, sourceX, sourceY, targetX, targetY]
+    [edges, source, target]
   );
 
   const parallelIndex = parallelEdges.findIndex((edge) => edge.id === id);
-  const offsetStep = 18;
+  const offsetStep = 26;
   const offsetAmount =
     parallelEdges.length > 1
       ? (parallelIndex - (parallelEdges.length - 1) / 2) * offsetStep
@@ -127,23 +131,29 @@ const HoverLabelEdge: React.FC<EdgeProps> = (props) => {
   const offsetX = (-dy / length) * offsetAmount;
   const offsetY = (dx / length) * offsetAmount;
 
-  const [edgePath, labelX, labelY] = getStraightPath({
-    sourceX: rawSourcePoint.x + offsetX,
-    sourceY: rawSourcePoint.y + offsetY,
-    targetX: rawTargetPoint.x + offsetX,
-    targetY: rawTargetPoint.y + offsetY,
-  });
+  const startPoint = {
+    x: rawSourcePoint.x + offsetX,
+    y: rawSourcePoint.y + offsetY,
+  };
+  const endPoint = {
+    x: rawTargetPoint.x + offsetX,
+    y: rawTargetPoint.y + offsetY,
+  };
+
+  const edgePath = `M ${startPoint.x},${startPoint.y} L ${endPoint.x},${endPoint.y}`;
+  const labelX = (startPoint.x + endPoint.x) / 2;
+  const labelY = (startPoint.y + endPoint.y) / 2;
 
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <>
-      <BaseEdge path={edgePath} style={style} markerEnd={markerEnd} />
-      <path
-        d={edgePath}
-        fill="none"
-        stroke="transparent"
-        strokeWidth={20}
+      <BaseEdge
+        path={edgePath}
+        style={style}
+        markerEnd={markerEnd}
+        markerStart={markerStart}
+        interactionWidth={28}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       />

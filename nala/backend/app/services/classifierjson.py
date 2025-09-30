@@ -475,7 +475,8 @@ def calculate_taxonomy_progression_time(filepath: str) -> List[Dict]:
             "highest_level_reached": max(progressions, key=lambda x: x["to_level_index"])["to_level"],
             "total_study_time_minutes": round(
                 (user_messages[-1]["timestamp"] - user_messages[0]["timestamp"]).total_seconds() / 60, 2
-            )
+            ),
+            "current_time": current_time.isoformat()
         }
         progressions.append({"summary": summary})
     

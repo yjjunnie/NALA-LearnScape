@@ -46,11 +46,17 @@ class TopicSerializer(serializers.ModelSerializer):
         return None
     
 class ThreadMapTopicSerializer(serializers.ModelSerializer):
-    module_id = serializers.IntegerField(source='module.id', read_only=True)
-    type = 'topic'
+    module_id = serializers.SerializerMethodField()
+    type = serializers.SerializerMethodField()
     class Meta:
         model = Topic
         fields = ['id', 'type', 'name', 'summary', 'module_id']
+    def get_module_id(self, obj):
+        if obj.module is None:
+            return None
+        return str(obj.module_id)
+    def get_type(self, obj):
+        return 'topic'
 
 class ConceptSerializer(serializers.ModelSerializer):
     module_info = serializers.SerializerMethodField()
@@ -81,13 +87,25 @@ class ConceptSerializer(serializers.ModelSerializer):
         return None
 
 class ThreadMapConceptSerializer(serializers.ModelSerializer):
-    module_id = serializers.IntegerField(source='module.id', read_only=True)
-    related_topic = serializers.IntegerField(source='related_topic.id', read_only=True)
-    type = 'concept'
+    module_id = serializers.SerializerMethodField()
+    related_topic = serializers.SerializerMethodField()
+    type = serializers.SerializerMethodField()
+    def get_type(self, obj):
+        return 'concept'
     
     class Meta:
         model = Concept
         fields = ['id', 'type', 'name', 'summary', 'related_topic', 'module_id',]
+        
+    def get_module_id(self, obj):
+        if obj.module is None:
+            return None
+        return str(obj.module_id)
+
+    def get_related_topic(self, obj):
+        if obj.related_topic is None:
+            return None
+        return str(obj.related_topic_id)
         
 class RelationshipSerializer(serializers.ModelSerializer):
     first_node_info = serializers.SerializerMethodField()
@@ -112,8 +130,8 @@ class RelationshipSerializer(serializers.ModelSerializer):
         }
         
 class ThreadMapRelationshipSerializer(serializers.ModelSerializer):
-    first_node = serializers.IntegerField(source='first_node.id', read_only=True)
-    second_node = serializers.IntegerField(source='second_node.id', read_only=True)
+    first_node = serializers.CharField(source='first_node.id', read_only=True)
+    second_node = serializers.CharField(source='second_node.id', read_only=True)
     
     class Meta:
         model = Relationship

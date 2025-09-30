@@ -113,7 +113,7 @@ const Home: React.FC = () => {
           <div className="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-end-3 flex flex-col gap-4 md:gap-6">
             <LearningStyleOverview />
             <div className="flex-1 bg-gradient-to-br from-purple-100 to-blue-100 border border-purple-200/40 rounded-3xl p-6 flex items-center justify-center">
-              <TopicTaxonomyProgression />
+              <TopicTaxonomyProgression passedModule="1" />
             </div>
           </div>
 

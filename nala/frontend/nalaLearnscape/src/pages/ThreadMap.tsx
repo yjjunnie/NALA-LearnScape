@@ -26,8 +26,7 @@ import type {
   OnConnectStart,
   OnConnectEnd,
   NodeChange,
-  OnNodeDragStart,
-  OnNodeDragStop,
+  OnNodeDrag,
 } from "@xyflow/react";
 import * as d3 from "d3";
 import {
@@ -61,6 +60,7 @@ import NodeInputModal from "./threadMap/NodeInputModal";
 import HoverLabelEdge from "./threadMap/HoverLabelEdge";
 import AddNodeHover from "./threadMap/AddNodeHover";
 import TopicTaxonomyProgression from "../components/TopicTaxonomyProgression";
+import { useThreadMapData } from "./threadMap/hooks/useThreadMapData";
 
 type RawDatabaseNode = {
   id: number | string;
@@ -160,7 +160,7 @@ const centerNodesAroundCentroid = (nodes: FlowNode[]): FlowNode[] => {
   if (Math.abs(centroid.x) < 1 && Math.abs(centroid.y) < 1) {
     return nodes;
   }
-
+  return nodes.map((node) => {
     const position = node.position ?? { x: 0, y: 0 };
     return {
       ...node,
@@ -214,7 +214,8 @@ const resolveNodeCollisions = (
           labelSizeB.width / 2 + 18,
           labelSizeB.height / 2 + 18
         );
-        const minDistance = effectiveRadiusA + effectiveRadiusB;0
+        const minDistance = effectiveRadiusA + effectiveRadiusB;
+        0;
 
         if (distance === 0) {
           const jitter = 0.5;
@@ -359,7 +360,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     []
   );
   const edgeTypes = useMemo(() => ({ hoverLabel: HoverLabelEdge }), []);
-
   const [nodes, setNodes, _onNodesChange] = useNodesState<FlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
   const {
@@ -505,28 +505,20 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     originY: number;
   } | null>(null);
   const controlDraggedRef = useRef<boolean>(false);
-  const dragContextRef = useRef<
-    | {
-        nodeId: string;
-        offsets: Map<string, { dx: number; dy: number }>;
-      }
-    | null
-  >(null);
-  const taxonomyDragStartRef = useRef<
-    | {
-        startX: number;
-        startY: number;
-        originX: number;
-        originY: number;
-      }
-    | null
-  >(null);
-  const pointerPressRef = useRef<{ nodeId: string | null; time: number }>(
-    {
-      nodeId: null,
-      time: 0,
-    }
-  );
+  const dragContextRef = useRef<{
+    nodeId: string;
+    offsets: Map<string, { dx: number; dy: number }>;
+  } | null>(null);
+  const taxonomyDragStartRef = useRef<{
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+  } | null>(null);
+  const pointerPressRef = useRef<{ nodeId: string | null; time: number }>({
+    nodeId: null,
+    time: 0,
+  });
   const allowNodeDragRef = useRef<boolean>(false);
 
   const adjacencyMap = useMemo(() => {
@@ -1281,9 +1273,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     setIsAddingEdge(false);
   }, []);
 
-  const handleNodeDragStart = useCallback<
-    OnNodeDragStart<FlowNode, FlowEdge>
-  >(
+  const handleNodeDragStart: OnNodeDrag<FlowNode> = useCallback(
     (_, node) => {
       if (isEditMode) {
         allowNodeDragRef.current = true;
@@ -1304,7 +1294,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     [interactionMode, isEditMode]
   );
 
-  const handleNodeDragStop = useCallback<OnNodeDragStop<FlowNode, FlowEdge>>(() => {
+  const handleNodeDragStop: OnNodeDrag<FlowNode> = useCallback(() => {
     allowNodeDragRef.current = false;
     pointerPressRef.current = { nodeId: null, time: 0 };
   }, []);
@@ -1319,7 +1309,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         interactionMode === "cursor" &&
         changes.some(
           (change) =>
-            change.type === "position" && change.dragging && !allowNodeDragRef.current
+            change.type === "position" &&
+            change.dragging &&
+            !allowNodeDragRef.current
         );
 
       if (preventDrag) {
@@ -1416,7 +1408,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       if (triggerSimulation) {
         shouldRunSimulationRef.current = true;
       }
-  },
+    },
     [adjacencyMap, interactionMode, isEditMode, setNodes]
   );
 
@@ -1774,7 +1766,13 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       deleteSelectedEdge();
     }
     setIsDeleteHovered(false);
-  }, [deleteSelectedEdge, deleteSelectedNode, isEditMode, selectedEdge, selectedNode]);
+  }, [
+    deleteSelectedEdge,
+    deleteSelectedNode,
+    isEditMode,
+    selectedEdge,
+    selectedNode,
+  ]);
 
   useEffect(() => {
     if (!isDraggingControl) return;
@@ -1824,11 +1822,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
-  }, [
-    handleTaxonomyDragEnd,
-    handleTaxonomyDragMove,
-    isDraggingTaxonomy,
-  ]);
+  }, [handleTaxonomyDragEnd, handleTaxonomyDragMove, isDraggingTaxonomy]);
 
   useEffect(() => {
     const bounds = containerRef.current?.getBoundingClientRect();
@@ -1840,7 +1834,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     const widgetHeight = isTaxonomyCollapsed ? 76 : 460;
     setTaxonomyPosition((prev) => {
       const x = Math.max(12, Math.min(bounds.width - widgetWidth - 12, prev.x));
-      const y = Math.max(12, Math.min(bounds.height - widgetHeight - 12, prev.y));
+      const y = Math.max(
+        12,
+        Math.min(bounds.height - widgetHeight - 12, prev.y)
+      );
       if (x === prev.x && y === prev.y) {
         return prev;
       }
@@ -2395,7 +2392,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                 gap: "12px",
               }}
             >
-              <span style={{ fontWeight: 600, fontSize: "13px" }}>
+              <span
+                style={{
+                  fontFamily: "Fredoka, sans-serif",
+                  fontWeight: 600,
+                  fontSize: "17px",
+                  color: "4C73FF",
+                }}
+              >
                 Topic taxonomy
               </span>
               <button
@@ -2449,7 +2453,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                   maxHeight: 360,
                 }}
               >
-                <TopicTaxonomyProgression />
+                <TopicTaxonomyProgression passedModule={module_id} />
               </div>
             )}
           </div>
@@ -2564,7 +2568,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         <ReactFlow<FlowNode, FlowEdge>
           nodes={nodes}
           nodeTypes={nodeTypes}
-          //edges={showEdges ? edges : []}
           edges={displayedEdges}
           edgeTypes={edgeTypes}
           onNodesChange={handleNodesChange}

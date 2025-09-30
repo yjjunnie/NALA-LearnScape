@@ -10,7 +10,7 @@ urlpatterns = [
     path('api/student/<str:pk>/', views.getStudent, name='get_student'),
     path('api/student/<str:student_id>/topic/<str:topic_id>/notes/', views.student_topic_notes, name='student_topic_notes'),
 
-    # Modules & topics
+    # Modules & topics 
     path('api/module/<str:pk>/', views.getModule, name='get_module'),
     path('api/nodes/<str:module_id>/', views.getTopicAndConcepts, name='get_nodes'),
     path('api/relationships/<str:module_id>/', views.getRelationships, name='get_relationships'),

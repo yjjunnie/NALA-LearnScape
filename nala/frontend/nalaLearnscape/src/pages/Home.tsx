@@ -1,13 +1,22 @@
-import React, { useState } from "react";
-import { Fade, Grow, IconButton } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Fade, IconButton } from "@mui/material";
 import { MenuRounded as MenuRoundedIcon } from "@mui/icons-material";
 import Welcome from "../components/Welcome";
-import ThreadMapSection from "../components/ThreadMapSection";
+import ThreadMapSection, {
+  type ThreadMapModule,
+} from "../components/ThreadMapSection";
 import SideNav from "../components/SideNav";
 import LearningStyleOverview from "../components/LearningStyleOverview";
 import TopicTaxonomyProgression from "../components/TopicTaxonomyProgression";
 
 const Home: React.FC = () => {
+  const DEMO_STUDENT_ID = "1"; // For demo purposes
+  const [modules, setModules] = useState<ThreadMapModule[]>([]);
+  const [selectedModuleId, setSelectedModuleId] = useState<string>();
+  const handleModuleSelect = (moduleId: string) => {
+    setSelectedModuleId(moduleId);
+  };
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const toggleDrawer = () => {
@@ -17,6 +26,44 @@ const Home: React.FC = () => {
   const handleCloseDrawer = () => {
     setIsDrawerOpen(false);
   };
+
+  useEffect(() => {
+    const fetchModules = async () => {
+      try {
+        const response = await fetch(`/api/student/${DEMO_STUDENT_ID}/`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch student.");
+        }
+
+        const student = await response.json();
+        const moduleList = Array.isArray(student?.enrolled_modules_info)
+          ? student.enrolled_modules_info
+          : [];
+
+        const normalizedModules: ThreadMapModule[] = moduleList
+          .map((module) => ({
+            id: module?.id ? String(module.id) : "",
+            code: module?.code ?? null,
+            name: module?.name ?? null,
+            description: module?.description ?? null,
+          }))
+          .filter((module) => module.id);
+
+        setModules(normalizedModules);
+      } catch (error) {
+        console.error("Error fetching modules:", error);
+        setModules([]);
+      }
+    };
+
+    fetchModules();
+  }, [DEMO_STUDENT_ID]);
+
+  useEffect(() => {
+    if (!selectedModuleId && modules.length > 0) {
+      setSelectedModuleId(modules[0].id);
+    }
+  }, [modules, selectedModuleId]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8">
@@ -54,29 +101,32 @@ const Home: React.FC = () => {
       {/* Bento Grid Container */}
       <Fade in={true}>
         <div
-        className="grid grid-cols-12 gap-4 md:gap-6 max-w-8xl mx-auto"
-        style={{ gridTemplateRows: "auto auto" }}
-      >
-        {/* Welcome Component */}
-        <div className="col-span-12 lg:col-span-7 lg:row-start-1">
-          <Welcome />
-        </div>
+          className="grid grid-cols-12 gap-4 md:gap-6 max-w-8xl mx-auto"
+          style={{ gridTemplateRows: "auto auto" }}
+        >
+          {/* Welcome Component */}
+          <div className="col-span-12 lg:col-span-7 lg:row-start-1">
+            <Welcome />
+          </div>
 
-        {/* Right column container */}
-        <div className="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-end-3 flex flex-col gap-4 md:gap-6">
-          <LearningStyleOverview/>
-          <div className="flex-1 bg-gradient-to-br from-purple-100 to-blue-100 border border-purple-200/40 rounded-3xl p-6 flex items-center justify-center">
-            <TopicTaxonomyProgression />
+          {/* Right column container */}
+          <div className="col-span-12 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-end-3 flex flex-col gap-4 md:gap-6">
+            <LearningStyleOverview />
+            <div className="flex-1 bg-gradient-to-br from-purple-100 to-blue-100 border border-purple-200/40 rounded-3xl p-6 flex items-center justify-center">
+              <TopicTaxonomyProgression passedModule="1" />
+            </div>
+          </div>
+
+          {/* Thread Map Section */}
+          <div className="col-span-12 lg:col-span-7 lg:col-start-1 lg:row-start-2">
+            <ThreadMapSection
+              modules={modules}
+              selectedModuleId={selectedModuleId}
+              onModuleSelect={handleModuleSelect}
+            />
           </div>
         </div>
-
-        {/* Thread Map Section */}
-        <div className="col-span-12 lg:col-span-7 lg:col-start-1 lg:row-start-2">
-          <ThreadMapSection />
-        </div>
-      </div>
       </Fade>
-      
 
       {/* Side Navigation */}
       <SideNav isOpen={isDrawerOpen} onClose={handleCloseDrawer} />

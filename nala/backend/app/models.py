@@ -15,6 +15,7 @@ class Node(models.Model):
     name = models.CharField(max_length=255, unique=True)
     summary = models.TextField()
     module = models.ForeignKey(Module, on_delete=models.CASCADE, blank=True, null=True)
+    week_no = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
         return f'Node: {self.name}'
@@ -31,6 +32,18 @@ class Relationship(models.Model):
         ('is_contrasted_with', 'Is_Contrasted_With'),
         ('is_applied_in', 'Is_Applied_In')
     ])
+    
+    week_no = models.CharField(max_length=50, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.first_node and self.second_node:
+            week_nos = []
+            if self.first_node.week_no:
+                week_nos.append(self.first_node.week_no)
+            if self.second_node.week_no:
+                week_nos.append(self.second_node.week_no)
+            self.week_no = max(week_nos) if week_nos else None
+        super(Relationship, self).save(*args, **kwargs)
     
     def __str__(self):
         return f'Relationship: {self.first_node.name} {self.rs_type} {self.second_node.name}'
@@ -117,4 +130,4 @@ class StudentNote(models.Model):
         ordering = ['-updated_at']
     
     def __str__(self):
-        return f"{self.student.username} - {self.topic.name}"
+        return f"{self.student.name} - {self.topic.name}"

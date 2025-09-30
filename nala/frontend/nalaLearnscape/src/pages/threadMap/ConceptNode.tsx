@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Handle, Position } from "@xyflow/react";
 
+import { CONCEPT_NODE_DIAMETER, TOPIC_NODE_DIAMETER } from "./constants";
 import type { NodeData } from "./types";
 
 interface ConceptNodeProps {
@@ -12,10 +13,12 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
   data,
   selected = false,
 }) => {
-  const size = data.node_type === "topic" ? 120 : 80;
-  const fontSize = data.node_type === "topic" ? "16px" : "14px";
+  const isTopic = data.node_type === "topic";
+  const diameter = isTopic ? TOPIC_NODE_DIAMETER : CONCEPT_NODE_DIAMETER;
+  const fontSize = isTopic ? "18px" : "14px";
 
   const moduleNumber = data.node_module_index ?? data.node_module_id;
+  const showModuleBadge = isTopic;
 
   // State to track which handle is hovered
   const [hoveredHandle, setHoveredHandle] = useState<string | null>(null);
@@ -80,19 +83,42 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
     </React.Fragment>
   );
 
-  const circleSize = `${size}px`;
-  const nameStyles: React.CSSProperties = {
+  const circleSize = `${diameter}px`;
+  const topicNameStyles: React.CSSProperties = {
     marginTop: "10px",
     textAlign: "center",
     color: "#1f2937",
     fontFamily: '"Fredoka", sans-serif',
-    fontWeight: data.node_type === "topic" ? 700 : 600,
-    fontSize: data.node_type === "topic" ? "16px" : "13px",
-    lineHeight: 1.25,
+    fontWeight: isTopic ? 700 : 600,
+    fontSize: isTopic ? "20px" : "14px",
+    lineHeight: 1.3,
     maxWidth: circleSize,
     wordBreak: "normal", // Avoid breaking words
     overflowWrap: "break-word", // Allow wrapping of long words when necessary
     whiteSpace: "normal", // Allow text to wrap to the next line if needed
+  };
+  const conceptLabelContainerStyles: React.CSSProperties = {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "16px",
+    color: "#ffffff",
+    fontFamily: '"GlacialIndifference", sans-serif',
+    fontWeight: 600,
+    fontSize: "14px",
+    lineHeight: 1.35,
+    textAlign: "center",
+    pointerEvents: "none",
+  };
+  const conceptLabelTextStyles: React.CSSProperties = {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    display: "-webkit-box",
+    WebkitLineClamp: 4,
+    WebkitBoxOrient: "vertical",
+    width: "100%",
   };
 
   return (
@@ -119,14 +145,16 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           cursor: "pointer",
           borderStyle: "solid",
           borderWidth: 3,
-          borderColor: selected ? "#ff6b35" : "rgba(255,255,255,0.35)",
+          borderColor: selected ? "#ef4444" : "rgba(255,255,255,0.35)",
+          transition:
+            "box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease",
           boxShadow: selected
-            ? "0 0 20px rgba(255,107,53,0.4)"
-            : "0 4px 12px rgba(0,0,0,0.15)",
-          transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+            ? "0 0 0 3px rgba(239, 68, 68, 0.45), 0 16px 30px rgba(15, 23, 42, 0.22)"
+            : "0 12px 22px rgba(15, 23, 42, 0.12)",
           boxSizing: "border-box",
           position: "relative",
           overflow: "hidden",
+          padding: 0,
         }}
         title={`${data.node_name}${
           data.node_description
@@ -134,38 +162,31 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
             : ""
         }\nModule: ${data.node_module_name || data.node_module_id}`}
       >
-        <div
-          style={{
-            padding: "12px 10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "100%",
-            height: "100%",
-          }}
-        >
+        {showModuleBadge ? (
           <div
             style={{
-              fontSize: data.node_type === "topic" ? "24px" : "18px",
-              fontWeight: 700,
+              padding: "12px 10px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              height: "100%",
             }}
           >
-            {moduleNumber || "?"}
+            <div
+              style={{
+                fontSize: "24px",
+                fontWeight: 700,
+              }}
+            >
+              {moduleNumber || "?"}
+            </div>
           </div>
-
-          <div
-            style={{
-              fontSize: data.node_type === "topic" ? "11px" : "10px",
-              lineHeight: "1.2",
-              maxWidth: "90%",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-            }}
-          ></div>
-        </div>
+        ) : (
+          <div style={conceptLabelContainerStyles} title={data.node_name}>
+            <span style={conceptLabelTextStyles}>{data.node_name}</span>
+          </div>
+        )}
         {renderHandle(
           "target-top",
           "target",
@@ -255,7 +276,7 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           "+"
         )}
       </div>
-      <div style={nameStyles}>{data.node_name}</div>
+      {isTopic && <div style={topicNameStyles}>{data.node_name}</div>}
     </div>
   );
 };

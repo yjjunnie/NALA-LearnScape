@@ -13,7 +13,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/Modules" element={<Modules />} />
         <Route path="/Modules/:moduleId" element={<ModuleInfo />} />
-        {/* <Route path="/threadmap" element={<ThreadMap />} /> */}
+        <Route path="/threadmap" element={<ThreadMap />} />
         <Route path="/Modules/:moduleId/Topics/:topicId/Notes" element={<KnowledgeCapsule />} />
       </Routes>
     </Router>

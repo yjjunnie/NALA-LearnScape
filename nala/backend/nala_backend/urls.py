@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 from app import views
+from django.db import transaction
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -35,7 +36,7 @@ urlpatterns = [
     # Bloom's Taxonomy Levels
     path('api/bloom/process-messages/', views.process_pending_messages, name='process_pending_messages'),
     path('api/bloom/process-quiz/', views.process_quiz_completion, name='process_quiz_completion'),
-    path('api/bloom/initialize/', views.initialize_bloom_from_history, name='initialize_bloom_from_history'),
+    path('api/bloom/initialize/', views.initialize_bloom_from_scenario, name='initialize_bloom'),
     path('api/bloom/restore/', views.restore_bloom_summary, name='restore_bloom_summary'),
     path('api/bloom/summary/', views.get_bloom_summary, name='get_bloom_summary'),
     path('api/bloom/progression/', views.get_bloom_progression, name='get_bloom_progression'),

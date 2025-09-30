@@ -24,5 +24,15 @@ urlpatterns = [
     path('api/time-spent-per-topic/', views.time_spent_per_topic, name="time-spent-per-topic"),
     path('api/percentage-learning-style/', views.percentage_learning_style, name="percentage-learningstyle"),
     path('api/taxonomy-progression/', views.taxonomy_progression, name="taxonomy-progression"),
-    path('api/bloom-by-topic-classifier/', views.bloom_by_topic_classifier, name="bloom-by-topic-classifier"),
+    # path('api/bloom-by-topic-classifier/', views.bloom_by_topic_classifier, name="bloom-by-topic-classifier"),
+
+    # Quiz
+    path('api/module/<str:module_id>/quiz/weekly/', views.get_weekly_quiz, name='get_weekly_quiz'),
+    path('api/module/<str:module_id>/quiz/generate/', views.generate_custom_quiz, name='generate_custom_quiz'),
+    path('api/quiz/<int:quiz_history_id>/answer/', views.save_quiz_answer, name='save_quiz_answer'),
+    path('api/quiz/<int:quiz_history_id>/submit/', views.submit_quiz, name='submit_quiz'),
+    path('api/student/<str:student_id>/quiz-history/', views.get_quiz_history, name='get_quiz_history'),
+
+    # Bloom's Taxonomy Levels
+    path('api/bloom-summary/', views.get_bloom_summary, name='get_bloom_summary')
 ]

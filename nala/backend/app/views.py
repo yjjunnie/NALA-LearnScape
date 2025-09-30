@@ -381,19 +381,31 @@ def submit_quiz(request, quiz_history_id):
     For weekly quizzes, this updates the same entry (allowing retries).
     """
     try:
-        answers = request.data.get('answers', {})
+        answers_payload = request.data.get('answers', {})
         student_id = request.data.get('student_id')
-        
+
         if not student_id:
             return Response({'error': 'student_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         quiz_history = StudentQuizHistory.objects.get(id=str(quiz_history_id))
-        
+
         if str(quiz_history.student_id) != str(student_id):
             return Response({'error': 'Unauthorized: Quiz does not belong to this student'}, status=status.HTTP_403_FORBIDDEN)
-        
-        quiz_history.student_answers = {str(k): v for k, v in answers.items()}
-        
+
+        if isinstance(answers_payload, list):
+            answers = {str(index): value for index, value in enumerate(answers_payload) if value is not None}
+        elif isinstance(answers_payload, dict):
+            answers = {str(key): value for key, value in answers_payload.items() if value is not None}
+        elif answers_payload in (None, ""):
+            answers = {}
+        else:
+            return Response(
+                {'error': 'answers must be provided as an object or list'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        quiz_history.student_answers = answers
+
         questions = quiz_history.get_questions()
         correct_count = 0
 

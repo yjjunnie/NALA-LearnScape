@@ -783,12 +783,11 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       setTopicBloomLevels(() => {
         const next: Record<string, TopicBloomSummary> = {};
         topicBloomRequests.forEach(({ topicId }) => {
-          next[String(topicId)] =
-            combined[String(topicId)] ?? {
-              label: null,
-              value: null,
-              counts: null,
-            };
+          next[String(topicId)] = combined[String(topicId)] ?? {
+            label: null,
+            value: null,
+            counts: null,
+          };
         });
         return next;
       });
@@ -2736,32 +2735,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                     >
                       ×
                     </button>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                      fontSize: "12.5px",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    <div>
-                      • Drag the blue handle to move the control panel.
-                      <br />• Switch between cursor and edit modes to explore or
-                      modify the map.
-                    </div>
-                    <div>
-                      • Hover nodes in cursor mode to view their relationships.
-                      <br />• Click a node to open its knowledge capsule
-                      preview.
-                    </div>
-                    <div>
-                      • In edit mode, select nodes or edges to delete or
-                      reconnect them.
-                      <br />• Use the taxonomy widget to filter by Bloom’s
-                      levels.
-                    </div>
                   </div>
                   <div
                     style={{

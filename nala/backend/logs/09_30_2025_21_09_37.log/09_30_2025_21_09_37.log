@@ -3,3 +3,4 @@
 [ 2025-09-30 21:09:40,658 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 21:09:40] "GET /student/student456/topics HTTP/1.1" 200 -
 [ 2025-09-30 21:09:43,342 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 21:09:43] "GET /student/student456/topics HTTP/1.1" 200 -
 [ 2025-09-30 21:09:50,499 ] 97 werkzeug - INFO - 127.0.0.1 - - [30/Sep/2025 21:09:50] "GET /student/student123/topics HTTP/1.1" 200 -
+[ 2025-09-30 21:30:16,257 ] 97 werkzeug - INFO -  * Detected change in '/Users/yvonne/User Github/NALA-LearnScape/nala/backend/app/migrations/0001_initial.py', reloading

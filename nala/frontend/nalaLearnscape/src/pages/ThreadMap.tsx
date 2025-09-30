@@ -38,6 +38,7 @@ import {
   Minimize2,
   Pencil,
   Trash2,
+  Link2,
 } from "lucide-react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import "@xyflow/react/dist/style.css";
@@ -67,6 +68,9 @@ import {
   CONCEPT_BASE_RADIUS,
   TOPIC_BASE_RADIUS,
 } from "./threadMap/constants";
+import EdgeInputModal from "./threadMap/EdgeInputModal";
+import KnowledgePanel from "./threadMap/KnowledgePanel";
+import { adjustNodePositions, getNodeLayoutRadius } from "./threadMap/layoutUtils";
 
 type RawDatabaseNode = {
   id: number | string;
@@ -95,264 +99,6 @@ interface ThreadMapProps {
 }
 
 const LONG_PRESS_MS = 320;
-
-const getNodeRadius = (node: FlowNode): number => {
-  const type = node.data?.node_type;
-  return type === "topic" ? TOPIC_BASE_RADIUS : CONCEPT_BASE_RADIUS;
-};
-
-const estimateNodeLabelSize = (node: FlowNode) => {
-  const label = node.data?.node_name ?? "";
-  const sanitized = label.trim();
-  if (!sanitized) {
-    return { width: 96, height: 56 };
-  }
-
-  const words = sanitized.split(/\s+/);
-  const maxCharsPerLine = 14;
-  const lines: string[] = [];
-  let currentLine = "";
-
-  words.forEach((word) => {
-    if (!currentLine) {
-      currentLine = word;
-      return;
-    }
-
-    const candidate = `${currentLine} ${word}`;
-    if (candidate.length <= maxCharsPerLine) {
-      currentLine = candidate;
-    } else {
-      lines.push(currentLine);
-      currentLine = word;
-    }
-  });
-
-  if (currentLine) {
-    lines.push(currentLine);
-  }
-
-  const longestLine = lines.reduce(
-    (max, line) => Math.max(max, line.length),
-    0
-  );
-  const width = Math.min(240, Math.max(110, longestLine * 8.2 + 32));
-  const height = Math.min(220, Math.max(60, lines.length * 24 + 36));
-
-  return { width, height };
-};
-
-const centerNodesAroundCentroid = (
-  nodes: FlowNode[],
-  center: XYPosition = { x: 0, y: 0 }
-): FlowNode[] => {
-  if (nodes.length === 0) {
-    return nodes;
-  }
-
-  const sum = nodes.reduce(
-    (acc, node) => {
-      const x = node.position?.x ?? 0;
-      const y = node.position?.y ?? 0;
-      return { x: acc.x + x, y: acc.y + y };
-    },
-    { x: 0, y: 0 }
-  );
-
-  const centroid = {
-    x: sum.x / nodes.length,
-    y: sum.y / nodes.length,
-  };
-
-  if (
-    Math.abs(centroid.x - center.x) < 1 &&
-    Math.abs(centroid.y - center.y) < 1
-  ) {
-    return nodes;
-  }
-
-  return nodes.map((node) => {
-    const position = node.position ?? { x: 0, y: 0 };
-    return {
-      ...node,
-      position: {
-        x: position.x - centroid.x + center.x,
-        y: position.y - centroid.y + center.y,
-      },
-    };
-  });
-};
-
-const resolveNodeCollisions = (
-  nodes: FlowNode[],
-  lockedNodeId?: string
-): FlowNode[] => {
-  const resolvedNodes = nodes.map((node) => ({
-    ...node,
-    position: {
-      x: node.position?.x ?? 0,
-      y: node.position?.y ?? 0,
-    },
-  }));
-
-  const maxIterations = 6;
-
-  for (let iteration = 0; iteration < maxIterations; iteration += 1) {
-    let moved = false;
-
-    for (let i = 0; i < resolvedNodes.length; i += 1) {
-      for (let j = i + 1; j < resolvedNodes.length; j += 1) {
-        const nodeA = resolvedNodes[i];
-        const nodeB = resolvedNodes[j];
-
-        const ax = nodeA.position?.x ?? 0;
-        const ay = nodeA.position?.y ?? 0;
-        const bx = nodeB.position?.x ?? 0;
-        const by = nodeB.position?.y ?? 0;
-
-        const dx = bx - ax;
-        const dy = by - ay;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const labelSizeA = estimateNodeLabelSize(nodeA);
-        const labelSizeB = estimateNodeLabelSize(nodeB);
-        const effectiveRadiusA = Math.max(
-          getNodeRadius(nodeA) + 16,
-          labelSizeA.width / 2 + 20,
-          labelSizeA.height / 2 + 20
-        );
-        const effectiveRadiusB = Math.max(
-          getNodeRadius(nodeB) + 16,
-          labelSizeB.width / 2 + 20,
-          labelSizeB.height / 2 + 20
-        );
-        const minDistance = effectiveRadiusA + effectiveRadiusB;
-        0;
-
-        if (distance === 0) {
-          const jitter = 0.5;
-          resolvedNodes[i] = {
-            ...nodeA,
-            position: { x: ax - jitter, y: ay - jitter },
-          };
-          resolvedNodes[j] = {
-            ...nodeB,
-            position: { x: bx + jitter, y: by + jitter },
-          };
-          moved = true;
-          continue;
-        }
-
-        if (distance >= minDistance) {
-          continue;
-        }
-
-        const overlap = (minDistance - distance) / 2;
-        const normX = dx / distance;
-        const normY = dy / distance;
-
-        if (lockedNodeId) {
-          if (nodeA.id === lockedNodeId && nodeB.id !== lockedNodeId) {
-            resolvedNodes[j] = {
-              ...nodeB,
-              position: {
-                x: bx + normX * overlap * 2,
-                y: by + normY * overlap * 2,
-              },
-            };
-            moved = true;
-            continue;
-          }
-          if (nodeB.id === lockedNodeId && nodeA.id !== lockedNodeId) {
-            resolvedNodes[i] = {
-              ...nodeA,
-              position: {
-                x: ax - normX * overlap * 2,
-                y: ay - normY * overlap * 2,
-              },
-            };
-            moved = true;
-            continue;
-          }
-        }
-
-        resolvedNodes[i] = {
-          ...nodeA,
-          position: {
-            x: ax - normX * overlap,
-            y: ay - normY * overlap,
-          },
-        };
-        resolvedNodes[j] = {
-          ...nodeB,
-          position: {
-            x: bx + normX * overlap,
-            y: by + normY * overlap,
-          },
-        };
-        moved = true;
-      }
-    }
-
-    if (!moved) {
-      break;
-    }
-  }
-
-  return resolvedNodes;
-};
-
-const keepConceptsNearParent = (nodes: FlowNode[]): FlowNode[] => {
-  const nodeLookup = new Map(nodes.map((node) => [node.id, node]));
-
-  return nodes.map((node) => {
-    if (node.data?.node_type !== "concept" || !node.data.parent_node_id) {
-      return node;
-    }
-
-    const parent = nodeLookup.get(String(node.data.parent_node_id));
-    if (!parent) {
-      return node;
-    }
-
-    const parentPosition = parent.position ?? { x: 0, y: 0 };
-    const nodePosition = node.position ?? { x: 0, y: 0 };
-
-    const dx = nodePosition.x - parentPosition.x;
-    const dy = nodePosition.y - parentPosition.y;
-    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
-
-    const parentRadius = getNodeRadius(parent);
-    const minDistance = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_GAP;
-    const maxDistance = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_MAX_OFFSET;
-
-    if (distance >= minDistance && distance <= maxDistance) {
-      return node;
-    }
-
-    const clampedDistance = Math.min(
-      Math.max(distance, minDistance),
-      maxDistance
-    );
-    const scale = clampedDistance / distance;
-
-    return {
-      ...node,
-      position: {
-        x: parentPosition.x + dx * scale,
-        y: parentPosition.y + dy * scale,
-      },
-    };
-  });
-};
-
-const adjustNodePositions = (
-  nodes: FlowNode[],
-  options: { lockedNodeId?: string; center?: XYPosition } = {}
-): FlowNode[] => {
-  const withoutCollisions = resolveNodeCollisions(nodes, options.lockedNodeId);
-  const clustered = keepConceptsNearParent(withoutCollisions);
-  return centerNodesAroundCentroid(clustered, options.center);
-};
 
 const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   const [searchParams] = useSearchParams();
@@ -409,6 +155,12 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   );
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [isDeleteHovered, setIsDeleteHovered] = useState(false);
+  const [isEdgeModalOpen, setIsEdgeModalOpen] = useState(false);
+  const [pendingEdge, setPendingEdge] = useState<{
+    firstNodeId?: string;
+    secondNodeId?: string;
+    relationshipType?: string;
+  } | null>(null);
   const [pendingNodePosition, setPendingNodePosition] =
     useState<XYPosition | null>(null);
   const [reactFlowInstance, setReactFlowInstanceState] =
@@ -685,9 +437,37 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     () =>
       activePopup
         ? nodes.find((node) => node.id === activePopup.nodeId) ?? null
-        : null,
+      : null,
     [activePopup, nodes]
   );
+
+  const popupTopicId = useMemo(() => {
+    if (!popupNode) {
+      return undefined;
+    }
+
+    if (popupNode.data?.node_type === "topic") {
+      return String(popupNode.data.node_id ?? popupNode.id);
+    }
+
+    if (popupNode.data?.node_type === "concept") {
+      return popupNode.data.parent_node_id
+        ? String(popupNode.data.parent_node_id)
+        : undefined;
+    }
+
+    return undefined;
+  }, [popupNode]);
+
+  const popupConceptName = useMemo(() => {
+    if (!popupNode) {
+      return undefined;
+    }
+
+    return popupNode.data?.node_type === "concept"
+      ? popupNode.data?.node_name
+      : undefined;
+  }, [popupNode]);
 
   const popupLayout = useMemo(() => {
     if (!activePopup || !reactFlowInstance || !containerRef.current)
@@ -928,8 +708,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         const angleSpread = Math.min(Math.PI * 0.9, Math.PI / 3 + count * 0.15);
         const parentNode = topicNodeLookup.get(parentId);
         const parentRadius = parentNode
-          ? getNodeRadius(parentNode)
-          : TOPIC_BASE_RADIUS;
+          ? getNodeLayoutRadius(parentNode)
+          : TOPIC_BASE_RADIUS + 60;
         const baseRadius = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_GAP;
         const maxRadius =
           parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_MAX_OFFSET;
@@ -1016,6 +796,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         type: "hoverLabel",
         style: getEdgeStyle(String(rel.id)),
         animated: false,
+        selected: selectedEdge === String(rel.id),
+        selectable: true,
         data: { label: rsType, rsType },
       };
     });
@@ -1044,6 +826,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         type: "hoverLabel",
         style: getEdgeStyle(edgeId),
         animated: false,
+        selectable: false,
         data: { label: "" },
       });
     });
@@ -1172,8 +955,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         | SimulationNode
         | undefined;
       const parentRadius = parentNode
-        ? getNodeRadius(parentNode as unknown as FlowNode)
-        : TOPIC_BASE_RADIUS;
+        ? getNodeLayoutRadius(parentNode as unknown as FlowNode)
+        : TOPIC_BASE_RADIUS + 60;
       const baseRadius = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_GAP;
       const maxRadius = parentRadius + CONCEPT_BASE_RADIUS + CLUSTER_MAX_OFFSET;
       const clusterLimit = Math.min(maxRadius, baseRadius + count * 28);
@@ -1240,12 +1023,14 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         .forceCollide()
         .radius((d: any) => {
           const nodeData = d.data as NodeData;
-          const baseRadius =
-            nodeData.node_type === "topic"
-              ? TOPIC_BASE_RADIUS
-              : CONCEPT_BASE_RADIUS;
-          const padding = nodeData.node_type === "topic" ? 32 : 22;
-          return baseRadius + padding;
+          const originalNode = nodeMap.get(String(d.id));
+          const layoutRadius = originalNode
+            ? getNodeLayoutRadius(originalNode)
+            : nodeData.node_type === "topic"
+            ? TOPIC_BASE_RADIUS + 60
+            : CONCEPT_BASE_RADIUS;
+          const padding = nodeData.node_type === "topic" ? 18 : 14;
+          return layoutRadius + padding;
         })
         .strength(1)
         .iterations(6)
@@ -1605,25 +1390,25 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   // Handle connection
   const onConnect: OnConnect = useCallback(
     (params) => {
-      if (!params.source || !params.target || !isEditMode) return;
+      if (!isEditMode) {
+        setIsAddingEdge(false);
+        return;
+      }
 
-      const maxRelationshipId = dbRelationships.reduce((max, relationship) => {
-        const numericId = Number(relationship.id);
-        return Number.isFinite(numericId) ? Math.max(max, numericId) : max;
-      }, 0);
+      if (!params.source || !params.target) {
+        setIsAddingEdge(false);
+        return;
+      }
 
-      const newRelationship: DatabaseRelationship = {
-        id: String(maxRelationshipId + 1),
-        first_node: params.source,
-        second_node: params.target,
-        rs_type: "",
-      };
-
-      setDbRelationships((prev) => [...prev, newRelationship]);
-      shouldRunSimulationRef.current = true; // Run simulation for new edge
+      setPendingEdge({
+        firstNodeId: params.source,
+        secondNodeId: params.target,
+        relationshipType: "",
+      });
+      setIsEdgeModalOpen(true);
       setIsAddingEdge(false);
     },
-    [dbRelationships, isEditMode]
+    [isEditMode]
   );
 
   // Handle node click - only select, don't trigger layout
@@ -1641,6 +1426,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         }
         return { nodeId: node.id, expanded: false };
       });
+
+      setIsEdgeModalOpen(false);
+      setPendingEdge(null);
 
       if (!isEditMode) {
         setSelectedNode(null);
@@ -1662,6 +1450,12 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       }
 
       event.stopPropagation();
+      if (edge.id.startsWith("topic-concept-")) {
+        return;
+      }
+
+      setIsEdgeModalOpen(false);
+      setPendingEdge(null);
       setSelectedEdge((prev) => (prev === edge.id ? null : edge.id));
       setSelectedNode(null); // Deselect node when selecting edge
     },
@@ -1677,6 +1471,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     setSelectedEdge(null);
     setActivePopup(null);
     setIsAddingEdge(false);
+    setIsEdgeModalOpen(false);
+    setPendingEdge(null);
   }, []);
 
   const handleExpandThreadmap = useCallback(() => {
@@ -1849,6 +1645,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       setActivePopup(null);
       setInteractionMode(next ? "add-node" : "cursor");
       setIsAddingEdge(false);
+      setIsEdgeModalOpen(false);
+      setPendingEdge(null);
       return next;
     });
   }, []);
@@ -1922,6 +1720,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     );
     setSelectedNode(null);
     setActivePopup((prev) => (prev?.nodeId === selectedNode ? null : prev));
+    setIsEdgeModalOpen(false);
+    setPendingEdge(null);
     shouldRunSimulationRef.current = true;
   }, [isEditMode, selectedNode]);
 
@@ -1930,6 +1730,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
     setDbRelationships((prev) => prev.filter((rel) => rel.id !== selectedEdge));
     setSelectedEdge(null);
+    setIsEdgeModalOpen(false);
+    setPendingEdge(null);
     shouldRunSimulationRef.current = true;
   }, [isEditMode, selectedEdge]);
 
@@ -2051,6 +1853,13 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, [isEditMode]);
 
   useEffect(() => {
+    if (!isEditMode) {
+      setIsEdgeModalOpen(false);
+      setPendingEdge(null);
+    }
+  }, [isEditMode]);
+
+  useEffect(() => {
     if (!selectedEdge) {
       return;
     }
@@ -2075,6 +1884,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       );
     } else {
       setIsAddingEdge(false);
+      setIsEdgeModalOpen(false);
+      setPendingEdge(null);
     }
   }, [interactionMode]);
 
@@ -2089,6 +1900,52 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     setIsModalOpen(true);
     setHoverNode((prev) => ({ ...prev, visible: false }));
   }, [hoverNode.flowPosition]);
+
+  const handleOpenEdgeModal = useCallback(
+    (defaults?: { firstNodeId?: string; secondNodeId?: string }) => {
+      setPendingEdge(defaults ?? {});
+      setIsEdgeModalOpen(true);
+    },
+    []
+  );
+
+  const handleCloseEdgeModal = useCallback(() => {
+    setIsEdgeModalOpen(false);
+    setPendingEdge(null);
+    setIsAddingEdge(false);
+  }, []);
+
+  const handleSaveNewEdge = useCallback(
+    (firstNodeId: string, secondNodeId: string, relationshipType: string) => {
+      let createdId = "";
+      setDbRelationships((prev) => {
+        const numericIds = prev
+          .map((rel) => Number(rel.id))
+          .filter((value) => Number.isFinite(value)) as number[];
+        const nextNumericId =
+          numericIds.length > 0 ? Math.max(...numericIds) + 1 : null;
+        const newRelationship: DatabaseRelationship = {
+          id:
+            nextNumericId !== null
+              ? String(nextNumericId)
+              : `rel-${Date.now()}`,
+          first_node: firstNodeId,
+          second_node: secondNodeId,
+          rs_type: relationshipType,
+        };
+        createdId = newRelationship.id;
+        return [...prev, newRelationship];
+      });
+
+      setSelectedEdge(createdId || null);
+      setSelectedNode(null);
+      setIsEdgeModalOpen(false);
+      setPendingEdge(null);
+      setIsAddingEdge(false);
+      shouldRunSimulationRef.current = true;
+    },
+    [setDbRelationships]
+  );
 
   const handleSaveNewNode = useCallback(
     (
@@ -2400,40 +2257,69 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                 {isEditMode ? <Pencil size={18} /> : <Hand size={18} />}
               </button>
               {isEditMode && (
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleDeleteSelection();
-                  }}
-                  onMouseEnter={() => hasSelection && setIsDeleteHovered(true)}
-                  onMouseLeave={() => hasSelection && setIsDeleteHovered(false)}
-                  style={{
-                    width: controlButtonSize - 6,
-                    height: controlButtonSize - 6,
-                    borderRadius: "50%",
-                    border: "none",
-                    background: hasSelection
-                      ? isDeleteHovered
-                        ? "#b91c1c"
-                        : "#dc2626"
-                      : "#e2e8f0",
-                    color: hasSelection ? "#fff" : "#94a3b8",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: hasSelection
-                      ? "0 12px 26px rgba(220, 38, 38, 0.4)"
-                      : "none",
-                    cursor: hasSelection ? "pointer" : "not-allowed",
-                    transition: "background 0.2s ease",
-                  }}
-                  aria-label={deleteSelectionLabel}
-                  title={deleteSelectionLabel}
-                  disabled={!hasSelection}
-                >
-                  <Trash2 size={18} />
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleOpenEdgeModal(
+                        selectedNode ? { firstNodeId: selectedNode } : undefined
+                      );
+                    }}
+                    style={{
+                      width: controlButtonSize - 6,
+                      height: controlButtonSize - 6,
+                      borderRadius: "50%",
+                      border: "none",
+                      background: "#0f766e",
+                      color: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 12px 26px rgba(15, 118, 110, 0.35)",
+                      cursor: "pointer",
+                      transition: "background 0.2s ease, box-shadow 0.2s ease",
+                    }}
+                    aria-label="Add new edge"
+                    title="Add new edge"
+                  >
+                    <Link2 size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleDeleteSelection();
+                    }}
+                    onMouseEnter={() => hasSelection && setIsDeleteHovered(true)}
+                    onMouseLeave={() => hasSelection && setIsDeleteHovered(false)}
+                    style={{
+                      width: controlButtonSize - 6,
+                      height: controlButtonSize - 6,
+                      borderRadius: "50%",
+                      border: "none",
+                      background: hasSelection
+                        ? isDeleteHovered
+                          ? "#b91c1c"
+                          : "#dc2626"
+                        : "#e2e8f0",
+                      color: hasSelection ? "#fff" : "#94a3b8",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: hasSelection
+                        ? "0 12px 26px rgba(220, 38, 38, 0.4)"
+                        : "none",
+                      cursor: hasSelection ? "pointer" : "not-allowed",
+                      transition: "background 0.2s ease",
+                    }}
+                    aria-label={deleteSelectionLabel}
+                    title={deleteSelectionLabel}
+                    disabled={!hasSelection}
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -2959,28 +2845,16 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             <div
               style={{
                 flex: 1,
-                overflowY: "auto",
+                overflow: "hidden",
                 background: "#f8fafc",
                 padding: "16px",
-                color: "#475569",
-                fontSize: "13px",
-                lineHeight: 1.5,
               }}
             >
-              <div
-                style={{
-                  border: "1px dashed #cbd5f5",
-                  borderRadius: "10px",
-                  background: "#ffffff",
-                  minHeight: activePopup.expanded ? "100%" : "360px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#94a3b8",
-                  fontStyle: "italic",
-                }}
-              >
-                Page content placeholder
+              <div style={{ height: "100%", overflow: "auto" }}>
+                <KnowledgePanel
+                  topicId={popupTopicId}
+                  conceptName={popupConceptName}
+                />
               </div>
             </div>
             <div
@@ -3011,6 +2885,15 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         onSave={handleSaveNewNode}
         availableNodes={dbNodes}
         availableModules={availableModules}
+      />
+      <EdgeInputModal
+        isOpen={isEdgeModalOpen}
+        onClose={handleCloseEdgeModal}
+        onSave={handleSaveNewEdge}
+        availableNodes={dbNodes}
+        initialFirstNodeId={pendingEdge?.firstNodeId}
+        initialSecondNodeId={pendingEdge?.secondNodeId}
+        initialRelationshipType={pendingEdge?.relationshipType}
       />
     </div>
   );

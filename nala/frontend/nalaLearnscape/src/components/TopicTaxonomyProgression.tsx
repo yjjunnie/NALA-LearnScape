@@ -160,14 +160,17 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
     Create: "#4C73FF",
   };
 
-  const bloomOrder = [
-    "Remember",
-    "Understand",
-    "Apply",
-    "Analyze",
-    "Evaluate",
-    "Create",
-  ];
+  const bloomOrder = useMemo(
+    () => [
+      "Remember",
+      "Understand",
+      "Apply",
+      "Analyze",
+      "Evaluate",
+      "Create",
+    ],
+    []
+  );
 
   const normalizeModuleValue = (value: string) =>
     value
@@ -246,20 +249,138 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
   };
 
   useEffect(() => {
+    let ignore = false;
+    const controller = new AbortController();
+
+    const normalizeCounts = (
+      counts: unknown
+    ): Record<string, number> | null => {
+      if (!counts || typeof counts !== "object") {
+        return null;
+      }
+
+      const result: Record<string, number> = {};
+      let hasValue = false;
+      bloomOrder.forEach((level) => {
+        const value = Number((counts as Record<string, unknown>)[level]);
+        if (!Number.isNaN(value)) {
+          result[level] = value;
+          if (value > 0) {
+            hasValue = true;
+          }
+        } else {
+          result[level] = 0;
+        }
+      });
+
+      return hasValue || Object.keys(result).length > 0 ? result : null;
+    };
+
+    const normalizeEntry = (entry: unknown): TopicData | null => {
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+
+      const source = entry as Record<string, unknown>;
+      const moduleName =
+        typeof source.module === "string"
+          ? source.module
+          : typeof source.module_name === "string"
+          ? source.module_name
+          : typeof source.module_info === "object" && source.module_info !== null
+          ? ((source.module_info as Record<string, unknown>).name as string | undefined)
+          : undefined;
+      const topicName =
+        typeof source.topic === "string"
+          ? source.topic
+          : typeof source.topic_name === "string"
+          ? source.topic_name
+          : typeof source.name === "string"
+          ? source.name
+          : undefined;
+      const counts =
+        normalizeCounts(source.bloom_level_counts) ??
+        normalizeCounts(source.counts) ??
+        normalizeCounts(source.bloom_levels);
+
+      if (!moduleName || !topicName || !counts) {
+        return null;
+      }
+
+      return {
+        module: moduleName,
+        topic: topicName,
+        bloom_level_counts: counts,
+      };
+    };
+
+    const normalizePayload = (payload: unknown): TopicData[] => {
+      if (!payload) {
+        return [];
+      }
+
+      if (Array.isArray(payload)) {
+        return payload
+          .map(normalizeEntry)
+          .filter((item): item is TopicData => Boolean(item));
+      }
+
+      if (typeof payload === "object") {
+        const source = payload as Record<string, unknown>;
+        if (Array.isArray(source.summary)) {
+          return normalizePayload(source.summary);
+        }
+        if (Array.isArray(source.data)) {
+          return normalizePayload(source.data);
+        }
+      }
+
+      return [];
+    };
+
     const fetchData = async () => {
+      setLoading(true);
       try {
-        console.log("Loading dummy data...");
-        setRawData(dummyData.summary || []);
-        console.log("rawData set:", dummyData.summary?.length);
+        const response = await fetch("/api/taxonomy-progression/", {
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch topic progression: ${response.status}`);
+        }
+
+        const payload = await response.json();
+        if (ignore) {
+          return;
+        }
+
+        const parsed = normalizePayload(payload);
+        if (parsed.length > 0) {
+          setRawData(parsed);
+        } else {
+          setRawData(dummyData.summary || []);
+        }
       } catch (error) {
-        console.error("Failed to fetch topic progression", error);
+        if (ignore) {
+          return;
+        }
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          console.error("Failed to fetch topic progression", error);
+        }
+        setRawData(dummyData.summary || []);
       } finally {
-        console.log("Setting loading = false");
-        setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     };
+
     fetchData();
-  }, []);
+
+    return () => {
+      ignore = true;
+      controller.abort();
+    };
+  }, [bloomOrder]);
 
   useEffect(() => {
     if (!passedModule) {

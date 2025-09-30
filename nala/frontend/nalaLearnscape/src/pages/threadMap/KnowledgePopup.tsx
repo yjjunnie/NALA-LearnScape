@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Maximize2, Minimize2 } from "lucide-react";
 
 interface KnowledgePopupProps {
@@ -28,6 +28,20 @@ const KnowledgePopup: React.FC<KnowledgePopupProps> = ({
   onResizeMouseDown,
   children,
 }) => {
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!scrollContainerRef.current) {
+      return;
+    }
+
+    scrollContainerRef.current.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
+  }, [children, isExpanded, title]);
+
   return (
     <div
       style={{
@@ -129,7 +143,12 @@ const KnowledgePopup: React.FC<KnowledgePopupProps> = ({
           padding: "16px",
         }}
       >
-        <div style={{ height: "100%", overflow: "auto" }}>{children}</div>
+        <div
+          ref={scrollContainerRef}
+          style={{ height: "100%", overflow: "auto" }}
+        >
+          {children}
+        </div>
       </div>
       <div
         onMouseDown={onResizeMouseDown}

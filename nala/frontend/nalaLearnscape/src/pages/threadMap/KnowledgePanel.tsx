@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import KnowledgeCapsule from "../KnowledgeCapsule";
 
@@ -41,9 +41,68 @@ const extractTextFromNode = (node: any): string => {
   return "";
 };
 
+const extractConceptNotesFromPlainText = (
+  notes: string,
+  conceptName: string
+): string[] => {
+  const target = normalize(conceptName);
+  const lines = notes.split(/\r?\n/);
+  const collected: string[] = [];
+  let capturing = false;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      if (capturing && collected.length > 0) {
+        break;
+      }
+      continue;
+    }
+
+    const normalizedLine = normalize(line.replace(/[:\-]+$/, ""));
+
+    if (!capturing) {
+      if (
+        normalizedLine === target ||
+        normalizedLine.includes(target)
+      ) {
+        capturing = true;
+      }
+      continue;
+    }
+
+    if (/^#{1,6}\s/.test(line)) {
+      break;
+    }
+
+    collected.push(line);
+  }
+
+  if (collected.length > 0) {
+    return collected;
+  }
+
+  return notes
+    .split(/\r?\n{2,}/)
+    .map((block) => block.replace(/\r?\n/g, " ").trim())
+    .filter((block) => block.length > 0)
+    .slice(0, 3);
+};
+
 const extractConceptNotes = (notes: string, conceptName: string): string[] => {
+  const trimmed = notes.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  const looksLikeJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+
+  if (!looksLikeJson) {
+    return extractConceptNotesFromPlainText(trimmed, conceptName);
+  }
+
   try {
-    const parsed = JSON.parse(notes);
+    const parsed = JSON.parse(trimmed);
     const children: any[] = parsed?.root?.children ?? [];
     const target = normalize(conceptName);
     const collected: string[] = [];
@@ -70,17 +129,23 @@ const extractConceptNotes = (notes: string, conceptName: string): string[] => {
       }
     }
 
-    return collected;
+    if (collected.length > 0) {
+      return collected;
+    }
   } catch (error) {
-    console.error("Failed to parse notes for concept preview", error);
-    return [];
+    if (!(error instanceof SyntaxError)) {
+      console.warn("Failed to parse structured notes for concept preview", error);
+    }
   }
+
+  return extractConceptNotesFromPlainText(trimmed, conceptName);
 };
 
 const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName }) => {
   const [topic, setTopic] = useState<Topic | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const showConceptView = Boolean(conceptName);
 
@@ -160,6 +225,14 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName })
 
   const panelTitle = conceptName ?? topic?.name ?? "Knowledge capsule";
 
+  useEffect(() => {
+    if (!scrollContainerRef.current) {
+      return;
+    }
+
+    scrollContainerRef.current.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [showConceptView, topicId, conceptName, topic?.id, topic?.notes]);
+
   if (!topicId) {
     return (
       <div
@@ -231,6 +304,7 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName })
           width: "100%",
           overflow: "auto",
         }}
+        ref={scrollContainerRef}
       >
         <KnowledgeCapsule topicIdOverride={topicId} hideBackButton />
       </div>
@@ -277,6 +351,7 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({ topicId, conceptName })
             overflowY: "auto",
             maxHeight: "100%",
           }}
+          ref={scrollContainerRef}
         >
           {focusedConcept ? (
             <div

@@ -17,7 +17,14 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
   const diameter = isTopic ? TOPIC_NODE_DIAMETER : CONCEPT_NODE_DIAMETER;
   const fontSize = isTopic ? "18px" : "14px";
 
-  const moduleNumber = data.node_module_index ?? data.node_module_id;
+  const bloomLevelNumber =
+    typeof data.bloom_level_numeric === "number"
+      ? data.bloom_level_numeric
+      : null;
+  const bloomLevelLabel =
+    typeof data.bloom_level_label === "string"
+      ? data.bloom_level_label
+      : null;
   const showModuleBadge = isTopic;
 
   // State to track which handle is hovered
@@ -160,7 +167,15 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           data.node_description
             ? "\n Description: " + data.node_description
             : ""
-        }\nModule: ${data.node_module_name || data.node_module_id}`}
+        }\nModule: ${data.node_module_name || data.node_module_id}${
+          isTopic
+            ? `\nBloom level: ${
+                bloomLevelLabel
+                  ? `${bloomLevelLabel} (${bloomLevelNumber ?? "?"})`
+                  : "Unclassified"
+              }`
+            : ""
+        }`}
       >
         {showModuleBadge ? (
           <div
@@ -175,11 +190,12 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           >
             <div
               style={{
-                fontSize: "24px",
+                fontSize: "50px",
                 fontWeight: 700,
+                fontFamily: 'glacialindifference, sans-serif',
               }}
             >
-              {moduleNumber || "?"}
+              {bloomLevelNumber ?? "?"}
             </div>
           </div>
         ) : (
@@ -276,7 +292,23 @@ const ConceptNode: React.FC<ConceptNodeProps> = ({
           "+"
         )}
       </div>
-      {isTopic && <div style={topicNameStyles}>{data.node_name}</div>}
+      {isTopic && (
+        <div style={topicNameStyles}>
+          <div>{data.node_name}</div>
+          <div
+            style={{
+              fontSize: "14px",
+              color: "#475569",
+              fontWeight: 500,
+              marginTop: "4px",
+            }}
+          >
+            {bloomLevelLabel
+              ? `${bloomLevelLabel} (${bloomLevelNumber ?? "?"})`
+              : "Not classified"}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

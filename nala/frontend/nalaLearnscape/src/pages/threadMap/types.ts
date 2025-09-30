@@ -10,6 +10,9 @@ export interface NodeData extends Record<string, unknown> {
   node_module_name?: string;
   node_module_index?: string;
   color?: string;
+  bloom_level_label?: string | null;
+  bloom_level_numeric?: number | null;
+  bloom_level_counts?: Record<string, number> | null;
 }
 
 export type FlowNode = Node<NodeData>;

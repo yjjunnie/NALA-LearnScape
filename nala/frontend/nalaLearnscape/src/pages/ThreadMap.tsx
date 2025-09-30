@@ -34,7 +34,6 @@ import {
   Pencil,
   Hand,
   Trash2,
-  Link2,
   Maximize2,
   Minimize2,
 } from "lucide-react";
@@ -67,7 +66,6 @@ import {
 } from "./threadMap/constants";
 import EdgeInputModal from "./threadMap/EdgeInputModal";
 import KnowledgePanel from "./threadMap/KnowledgePanel";
-import ThreadMapControls from "./threadMap/ThreadMapControls";
 import TaxonomyWidget from "./threadMap/TaxonomyWidget";
 import KnowledgePopup from "./threadMap/KnowledgePopup";
 import {
@@ -102,6 +100,42 @@ interface ThreadMapProps {
 }
 
 const LONG_PRESS_MS = 320;
+const STUDENT_ID = "1";
+const BLOOM_LEVEL_ORDER = [
+  "Remember",
+  "Understand",
+  "Apply",
+  "Analyze",
+  "Evaluate",
+  "Create",
+];
+const BLOOM_LEVEL_MAP = BLOOM_LEVEL_ORDER.reduce<Record<string, number>>(
+  (acc, level, index) => {
+    acc[level] = index + 1;
+    return acc;
+  },
+  {}
+);
+
+const getHighestBloomLevel = (
+  counts?: Record<string, number> | null
+): { label: string | null; value: number | null } => {
+  if (!counts) {
+    return { label: null, value: null };
+  }
+
+  for (let index = BLOOM_LEVEL_ORDER.length - 1; index >= 0; index -= 1) {
+    const level = BLOOM_LEVEL_ORDER[index];
+    if ((counts[level] ?? 0) > 0) {
+      return {
+        label: level,
+        value: BLOOM_LEVEL_MAP[level],
+      };
+    }
+  }
+
+  return { label: null, value: null };
+};
 
 const distancePointToSegment = (
   point: XYPosition,
@@ -171,6 +205,16 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     screenPosition: { x: 0, y: 0 },
     visible: false,
   });
+  const [topicBloomLevels, setTopicBloomLevels] = useState<
+    Record<
+      string,
+      {
+        label: string | null;
+        value: number | null;
+        counts: Record<string, number> | null;
+      }
+    >
+  >({});
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [interactionMode, setInteractionMode] = useState<"cursor" | "add-node">(
     "cursor"
@@ -623,6 +667,78 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, [popupSizing]);
 
   useEffect(() => {
+    if (!activeModuleId) {
+      setTopicBloomLevels({});
+      return;
+    }
+
+    const controller = new AbortController();
+    let isMounted = true;
+
+    const fetchBloomLevels = async () => {
+      try {
+        const params = new URLSearchParams({
+          student_id: STUDENT_ID,
+          module_id: String(activeModuleId),
+        });
+        const response = await fetch(
+          `/api/bloom/summary/?${params.toString()}`,
+          { signal: controller.signal }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch Bloom summary for module ${activeModuleId}`
+          );
+        }
+
+        const payload = (await response.json()) as {
+          bloom_summary?: Record<string, Record<string, number>>;
+        };
+
+        if (!isMounted) {
+          return;
+        }
+
+        const summary = payload?.bloom_summary ?? {};
+        const mapping: Record<
+          string,
+          {
+            label: string | null;
+            value: number | null;
+            counts: Record<string, number> | null;
+          }
+        > = {};
+
+        Object.entries(summary).forEach(([topicId, counts]) => {
+          const safeCounts = counts ?? {};
+          const { label, value } = getHighestBloomLevel(safeCounts);
+          mapping[String(topicId)] = {
+            label,
+            value,
+            counts: safeCounts,
+          };
+        });
+
+        setTopicBloomLevels(mapping);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+        console.error("Failed to load Bloom summary for thread map", error);
+        setTopicBloomLevels({});
+      }
+    };
+
+    fetchBloomLevels();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [activeModuleId, dbNodes.length]);
+
+  useEffect(() => {
     if (!activePopup) {
       setPopupPosition(null);
       setPopupSize(null);
@@ -703,6 +819,11 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           shouldRunSimulationRef.current = true;
         }
 
+        const bloomInfo =
+          node.type === "topic"
+            ? topicBloomLevels[String(node.id)]
+            : undefined;
+
         const data: NodeData = {
           node_id: node.id,
           node_name: node.name,
@@ -713,6 +834,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           node_module_name: moduleInfo?.module_name,
           node_module_index: moduleInfo?.module_index,
           color: nodeColor,
+          bloom_level_label: bloomInfo?.label ?? null,
+          bloom_level_numeric: bloomInfo?.value ?? null,
+          bloom_level_counts: bloomInfo?.counts ?? null,
         };
 
         colorCache.set(node.id, nodeColor);
@@ -814,7 +938,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     if (pendingUsed) {
       pendingNodePositionRef.current = null;
     }
-  }, [dbNodes, getLayoutCenter, moduleLookup, setNodes]);
+  }, [dbNodes, getLayoutCenter, moduleLookup, setNodes, topicBloomLevels]);
 
   useEffect(() => {
     setNodes((prevNodes) => {
@@ -1476,7 +1600,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   // Handle node click - only select, don't trigger layout
   const handleNodeClick: NodeMouseHandler<FlowNode> = useCallback(
     (event, node) => {
-      if (interactionMode === "add-node") {
+      if (!isEditMode && interactionMode === "add-node") {
         return;
       }
 
@@ -1509,7 +1633,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   // Handle edge click - select edge for deletion
   const handleEdgeClick: EdgeMouseHandler<FlowEdge> = useCallback(
     (event, edge) => {
-      if (!isEditMode || interactionMode === "add-node") {
+      if (!isEditMode) {
         return;
       }
 
@@ -1525,7 +1649,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       setEdgeSelection(nextSelectedEdge);
       setSelectedNode(null); // Deselect node when selecting edge
     },
-    [interactionMode, isEditMode, selectedEdge, setEdgeSelection]
+    [isEditMode, selectedEdge, setEdgeSelection]
   );
 
   const handleMove = useCallback<OnMove>((_, nextViewport) => {
@@ -1964,6 +2088,28 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     selectedEdge,
     selectedNode,
   ]);
+
+  useEffect(() => {
+    if (!isEditMode) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        (event.key === "Delete" || event.key === "Backspace") &&
+        (selectedNode || selectedEdge)
+      ) {
+        event.preventDefault();
+        handleDeleteSelection();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleDeleteSelection, isEditMode, selectedEdge, selectedNode]);
 
   useEffect(() => {
     if (!isDraggingControl) return;

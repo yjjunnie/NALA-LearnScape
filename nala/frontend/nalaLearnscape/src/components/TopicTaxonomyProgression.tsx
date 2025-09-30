@@ -7,145 +7,22 @@ interface TopicData {
   bloom_level_counts: Record<string, number>;
 }
 
-// Dummy data with proper module structure
-const dummyData = {
-  summary: [
-    {
-      module: "Linear Algebra",
-      topic: "Introducing the Matrix",
-      bloom_level_counts: {
-        Remember: 2,
-        Understand: 3,
-        Apply: 2,
-        Analyze: 0,
-        Evaluate: 0,
-        Create: 1,
-      },
-    },
-    {
-      module: "Linear Algebra",
-      topic: "Linear Transforms and the Matrix",
-      bloom_level_counts: {
-        Remember: 0,
-        Understand: 1,
-        Apply: 5,
-        Analyze: 3,
-        Evaluate: 1,
-        Create: 0,
-      },
-    },
-    {
-      module: "Linear Algebra",
-      topic: "Manipulating the Matrix",
-      bloom_level_counts: {
-        Remember: 3,
-        Understand: 1,
-        Apply: 2,
-        Analyze: 5,
-        Evaluate: 1,
-        Create: 1,
-      },
-    },
-    {
-      module: "Linear Algebra",
-      topic: "Inverting the Matrix",
-      bloom_level_counts: {
-        Remember: 3,
-        Understand: 2,
-        Apply: 3,
-        Analyze: 2,
-        Evaluate: 0,
-        Create: 2,
-      },
-    },
-    {
-      module: "Calculus",
-      topic: "Limits and Continuity",
-      bloom_level_counts: {
-        Remember: 4,
-        Understand: 2,
-        Apply: 1,
-        Analyze: 0,
-        Evaluate: 0,
-        Create: 0,
-      },
-    },
-    {
-      module: "Calculus",
-      topic: "Derivatives",
-      bloom_level_counts: {
-        Remember: 1,
-        Understand: 3,
-        Apply: 4,
-        Analyze: 2,
-        Evaluate: 1,
-        Create: 0,
-      },
-    },
-    {
-      module: "Calculus",
-      topic: "Integration Techniques",
-      bloom_level_counts: {
-        Remember: 2,
-        Understand: 2,
-        Apply: 5,
-        Analyze: 3,
-        Evaluate: 2,
-        Create: 1,
-      },
-    },
-    {
-      module: "Probability & Statistics",
-      topic: "Probability Fundamentals",
-      bloom_level_counts: {
-        Remember: 3,
-        Understand: 4,
-        Apply: 2,
-        Analyze: 1,
-        Evaluate: 0,
-        Create: 0,
-      },
-    },
-    {
-      module: "Probability & Statistics",
-      topic: "Distributions",
-      bloom_level_counts: {
-        Remember: 2,
-        Understand: 3,
-        Apply: 3,
-        Analyze: 2,
-        Evaluate: 1,
-        Create: 0,
-      },
-    },
-    {
-      module: "Probability & Statistics",
-      topic: "Hypothesis Testing",
-      bloom_level_counts: {
-        Remember: 1,
-        Understand: 2,
-        Apply: 4,
-        Analyze: 4,
-        Evaluate: 3,
-        Create: 1,
-      },
-    },
-  ],
-};
-
 interface TopicTaxonomyProgressionProps {
   passedModule?: string;
+  studentId: string; // Required: student ID for API calls
 }
 
 const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
   passedModule,
+  studentId,
 }) => {
   const [rawData, setRawData] = useState<TopicData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
-  const [selectedModuleDisplay, setSelectedModuleDisplay] = useState<
-    string | null
-  >(passedModule ?? null);
+  const [selectedModuleDisplay, setSelectedModuleDisplay] = useState<string | null>(
+    passedModule ?? null
+  );
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -161,24 +38,14 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
   };
 
   const bloomOrder = useMemo(
-    () => [
-      "Remember",
-      "Understand",
-      "Apply",
-      "Analyze",
-      "Evaluate",
-      "Create",
-    ],
+    () => ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"],
     []
   );
 
   const normalizeModuleValue = (value: string) =>
-    value
-      .toString()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "");
+    value.toString().toLowerCase().replace(/[^a-z0-9]+/g, "");
 
-  const descriptions = {
+  const descriptions: Record<string, string> = {
     Remember: "You managed to recall those essential facts and definitions!",
     Understand:
       "You're able to explain them in your own words, and make everything click.",
@@ -214,159 +81,63 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
   const selectedModuleLabel =
     selectedModuleDisplay ?? selectedModule ?? "All Modules";
 
-  // Show loading state
-  if (loading) {
-    console.log("Render: still loading");
-    return <div className="text-sm text-gray-500">Loading...</div>;
-  }
-
-  // Show no data state
-  if (rawData.length === 0) {
-    console.log("Render: no data");
-    return (
-      <div className="p-4 text-center text-sm text-gray-500">
-        No topic progression data available
-      </div>
-    );
-  }
-
-  // Add this handler
-  const handleModuleClick = (moduleName: string) => {
-    setExpandedModule(expandedModule === moduleName ? null : moduleName);
-    setExpandedTopic(null); // collapse any topic when switching modules
-  };
-
-  const handleTopicClick = (topicName: string) => {
-    setExpandedTopic(expandedTopic === topicName ? null : topicName);
-  };
-
-  const handleFilterSelect = (module: string | null) => {
-    setSelectedModule(module);
-    setSelectedModuleDisplay(module);
-    setShowFilterMenu(false);
-    setExpandedModule(module);
-    setExpandedTopic(null);
-  };
-
+  // Fetch data from backend
   useEffect(() => {
     let ignore = false;
     const controller = new AbortController();
 
-    const normalizeCounts = (
-      counts: unknown
-    ): Record<string, number> | null => {
-      if (!counts || typeof counts !== "object") {
-        return null;
-      }
-
-      const result: Record<string, number> = {};
-      let hasValue = false;
-      bloomOrder.forEach((level) => {
-        const value = Number((counts as Record<string, unknown>)[level]);
-        if (!Number.isNaN(value)) {
-          result[level] = value;
-          if (value > 0) {
-            hasValue = true;
-          }
-        } else {
-          result[level] = 0;
-        }
-      });
-
-      return hasValue || Object.keys(result).length > 0 ? result : null;
-    };
-
-    const normalizeEntry = (entry: unknown): TopicData | null => {
-      if (!entry || typeof entry !== "object") {
-        return null;
-      }
-
-      const source = entry as Record<string, unknown>;
-      const moduleName =
-        typeof source.module === "string"
-          ? source.module
-          : typeof source.module_name === "string"
-          ? source.module_name
-          : typeof source.module_info === "object" && source.module_info !== null
-          ? ((source.module_info as Record<string, unknown>).name as string | undefined)
-          : undefined;
-      const topicName =
-        typeof source.topic === "string"
-          ? source.topic
-          : typeof source.topic_name === "string"
-          ? source.topic_name
-          : typeof source.name === "string"
-          ? source.name
-          : undefined;
-      const counts =
-        normalizeCounts(source.bloom_level_counts) ??
-        normalizeCounts(source.counts) ??
-        normalizeCounts(source.bloom_levels);
-
-      if (!moduleName || !topicName || !counts) {
-        return null;
-      }
-
-      return {
-        module: moduleName,
-        topic: topicName,
-        bloom_level_counts: counts,
-      };
-    };
-
-    const normalizePayload = (payload: unknown): TopicData[] => {
-      if (!payload) {
-        return [];
-      }
-
-      if (Array.isArray(payload)) {
-        return payload
-          .map(normalizeEntry)
-          .filter((item): item is TopicData => Boolean(item));
-      }
-
-      if (typeof payload === "object") {
-        const source = payload as Record<string, unknown>;
-        if (Array.isArray(source.summary)) {
-          return normalizePayload(source.summary);
-        }
-        if (Array.isArray(source.data)) {
-          return normalizePayload(source.data);
-        }
-      }
-
-      return [];
-    };
-
     const fetchData = async () => {
+      if (!studentId) {
+        setError("Student ID is required");
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
+      setError(null);
+
       try {
-        const response = await fetch("/api/taxonomy-progression/", {
+        // Build URL with query parameters
+        const params = new URLSearchParams({
+          student_id: studentId,
+        });
+
+        // Add module_id if passedModule is provided
+        if (passedModule) {
+          params.append('module_id', passedModule);
+        }
+
+        const url = `/api/bloom/progression/?${params.toString()}`;
+        
+        const response = await fetch(url, {
           signal: controller.signal,
         });
+
         if (!response.ok) {
-          throw new Error(`Failed to fetch topic progression: ${response.status}`);
+          throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
         }
 
-        const payload = await response.json();
-        if (ignore) {
-          return;
-        }
+        const result = await response.json();
 
-        const parsed = normalizePayload(payload);
-        if (parsed.length > 0) {
-          setRawData(parsed);
-        } else {
-          setRawData(dummyData.summary || []);
+        if (ignore) return;
+
+        // Backend returns { data: [...] }
+        const fetchedData = result.data || [];
+        
+        if (fetchedData.length === 0) {
+          setError("No progression data available");
         }
-      } catch (error) {
-        if (ignore) {
+        
+        setRawData(fetchedData);
+      } catch (err) {
+        if (ignore) return;
+        
+        if (err instanceof DOMException && err.name === "AbortError") {
           return;
         }
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          console.error("Failed to fetch topic progression", error);
-        }
-        setRawData(dummyData.summary || []);
+        
+        console.error("Failed to fetch bloom progression:", err);
+        setError(err instanceof Error ? err.message : "Failed to load data");
       } finally {
         if (!ignore) {
           setLoading(false);
@@ -380,8 +151,9 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
       ignore = true;
       controller.abort();
     };
-  }, [bloomOrder]);
+  }, [studentId, passedModule]);
 
+  // Handle passedModule auto-select
   useEffect(() => {
     if (!passedModule) {
       setSelectedModule(null);
@@ -409,26 +181,76 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
       setSelectedModule(matchedModule);
       setExpandedModule(matchedModule);
       setSelectedModuleDisplay(matchedModule);
-      return;
     }
-
-    const numericValue = Number.parseInt(passedModule, 10);
-    const isNumeric = !Number.isNaN(numericValue);
-    if (isNumeric && modules.length > 0) {
-      const index = Math.max(0, Math.min(modules.length - 1, numericValue - 1));
-      const fallbackModule = modules[index];
-      if (fallbackModule) {
-        setSelectedModule(fallbackModule);
-        setExpandedModule(fallbackModule);
-        setSelectedModuleDisplay(fallbackModule);
-        return;
-      }
-    }
-
-    setSelectedModule(null);
-    setExpandedModule(null);
-    setSelectedModuleDisplay(passedModule);
   }, [modules, passedModule]);
+
+  // Handlers
+  const handleModuleClick = (moduleName: string) => {
+    setExpandedModule(expandedModule === moduleName ? null : moduleName);
+    setExpandedTopic(null);
+  };
+
+  const handleTopicClick = (topicName: string) => {
+    setExpandedTopic(expandedTopic === topicName ? null : topicName);
+  };
+
+  const handleFilterSelect = (module: string | null) => {
+    setSelectedModule(module);
+    setSelectedModuleDisplay(module);
+    setShowFilterMenu(false);
+    setExpandedModule(module);
+    setExpandedTopic(null);
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="rounded-3xl px-5 py-4 w-full h-full flex items-center justify-center"
+        style={{
+          background: "linear-gradient(180deg, #ffffff 0%, #f3f6ff 100%)",
+          border: "2px solid rgba(76,115,255,0.14)",
+        }}
+      >
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#4C73FF] border-t-transparent mb-2"></div>
+          <p className="text-sm text-gray-500">Loading progression data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="rounded-3xl px-5 py-4 w-full h-full"
+        style={{
+          background: "linear-gradient(180deg, #ffffff 0%, #f3f6ff 100%)",
+          border: "2px solid rgba(76,115,255,0.14)",
+        }}
+      >
+        <div className="p-4 text-center">
+          <div className="text-red-500 mb-2">⚠️</div>
+          <p className="text-sm text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No data state
+  if (rawData.length === 0) {
+    return (
+      <div className="rounded-3xl px-5 py-4 w-full h-full"
+        style={{
+          background: "linear-gradient(180deg, #ffffff 0%, #f3f6ff 100%)",
+          border: "2px solid rgba(76,115,255,0.14)",
+        }}
+      >
+        <div className="p-4 text-center text-sm text-gray-500">
+          No topic progression data available
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -438,6 +260,7 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
         border: "2px solid rgba(76,115,255,0.14)",
       }}
     >
+      {/* HEADER + FILTER */}
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h2 className="text-sm font-bold tracking-wider uppercase text-[#4C73FF] mb-1">
@@ -457,7 +280,7 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowFilterMenu(!showFilterMenu)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-['GlacialIndifference',sans-serif] font-semibold transition-all duration-200 hover:bg-[rgba(76,115,255,0.15)]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 hover:bg-[rgba(76,115,255,0.15)]"
             style={{
               backgroundColor: "rgba(76,115,255,0.1)",
               color: "#2D4BB4",
@@ -505,21 +328,12 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
             >
               <button
                 onClick={() => handleFilterSelect(null)}
-                className="w-full text-left px-4 py-2.5 text-sm font-['GlacialIndifference',sans-serif] transition-colors duration-150"
+                className="w-full text-left px-4 py-2.5 text-sm transition-colors duration-150 hover:bg-[rgba(76,115,255,0.05)]"
                 style={{
                   backgroundColor: !selectedModule
                     ? "rgba(76,115,255,0.1)"
                     : "transparent",
                   color: !selectedModule ? "#2D4BB4" : "#4B5563",
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedModule)
-                    e.currentTarget.style.backgroundColor =
-                      "rgba(76,115,255,0.05)";
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedModule)
-                    e.currentTarget.style.backgroundColor = "transparent";
                 }}
               >
                 All Modules
@@ -528,22 +342,13 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
                 <button
                   key={module}
                   onClick={() => handleFilterSelect(module)}
-                  className="w-full text-left px-4 py-2.5 text-sm font-['GlacialIndifference',sans-serif] transition-colors duration-150"
+                  className="w-full text-left px-4 py-2.5 text-sm transition-colors duration-150 hover:bg-[rgba(76,115,255,0.05)]"
                   style={{
                     backgroundColor:
                       selectedModule === module
                         ? "rgba(76,115,255,0.1)"
                         : "transparent",
                     color: selectedModule === module ? "#2D4BB4" : "#4B5563",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (selectedModule !== module)
-                      e.currentTarget.style.backgroundColor =
-                        "rgba(76,115,255,0.05)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (selectedModule !== module)
-                      e.currentTarget.style.backgroundColor = "transparent";
                   }}
                 >
                   {module}
@@ -554,10 +359,8 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
         </div>
       </div>
 
-      <div
-        className="space-y-3 overflow-y-auto"
-        style={{ maxHeight: "calc(100% - 90px)" }}
-      >
+      {/* MODULES + TOPICS */}
+      <div className="space-y-3 overflow-y-auto" style={{ maxHeight: "calc(100% - 90px)" }}>
         {Object.entries(filteredModules).map(([moduleName, topics]) => {
           const totalModuleQuestions = topics.reduce((sum, topic) => {
             return (
@@ -583,7 +386,7 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
                     <h2 className="font-bold text-lg text-[#2D4BB4]">
                       {moduleName}
                     </h2>
-                    <p className="font-['GlacialIndifference',sans-serif] text-xs text-gray-600 mt-0.5">
+                    <p className="text-xs text-gray-600 mt-0.5">
                       {topics.length} topics • {totalModuleQuestions} questions
                     </p>
                   </div>
@@ -617,7 +420,7 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
                       <div key={topicIndex} className="space-y-2">
                         <button
                           onClick={() => handleTopicClick(topicData.topic)}
-                          className="w-full text-left rounded-xl px-3 py-2 transition-all duration-200 hover:bg-[rgba(76,115,255,0.08)] focus:outline-none focus:ring-2 focus:ring-[#4C73FF] focus:ring-opacity-30"
+                          className="w-full text-left rounded-xl px-3 py-2 transition-all duration-200 hover:bg-[rgba(76,115,255,0.08)]"
                           style={{
                             backgroundColor: isTopicExpanded
                               ? "rgba(76,115,255,0.12)"
@@ -625,11 +428,11 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
                           }}
                         >
                           <div className="flex items-center justify-between">
-                            <h3 className="font-['GlacialIndifference',sans-serif] font-bold text-sm text-[#2D4BB4]">
+                            <h3 className="font-bold text-sm text-[#2D4BB4]">
                               {topicData.topic}
                             </h3>
                             <div className="flex items-center gap-2">
-                              <span className="font-['GlacialIndifference',sans-serif] text-xs text-gray-600">
+                              <span className="text-xs text-gray-600">
                                 {totalQuestions} questions
                               </span>
                               <svg
@@ -666,7 +469,7 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
                               return (
                                 <div key={level} className="space-y-0.5">
                                   <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-1 font-['GlacialIndifference',sans-serif] font-medium text-xs text-gray-700">
+                                    <div className="flex items-center gap-1 text-xs text-gray-700">
                                       <span>{level}</span>
                                       <Tooltip
                                         title={descriptions[level] || level}
@@ -675,11 +478,8 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
                                         componentsProps={{
                                           tooltip: {
                                             sx: {
-                                              backgroundColor:
-                                                "rgba(40,72,209,0.95)",
+                                              backgroundColor: "rgba(40,72,209,0.95)",
                                               fontSize: "12px",
-                                              fontFamily:
-                                                '"GlacialIndifference", sans-serif',
                                               maxWidth: "250px",
                                               "& .MuiTooltip-arrow": {
                                                 color: "rgba(40,72,209,0.95)",
@@ -687,19 +487,16 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
                                               padding: "8px 12px",
                                               textAlign: "center",
                                               borderRadius: "8px",
-                                              marginRight: "8px",
                                             },
                                           },
                                         }}
                                       >
-                                        <div className="flex-shrink-0 w-4 h-4 bg-[#e1e9ff] text-[#1b46d1] rounded-full flex items-center justify-center text-xs font-['Fredoka',sans-serif] font-bold cursor-help">
+                                        <span className="w-4 h-4 bg-[#e1e9ff] text-[#1b46d1] rounded-full flex items-center justify-center text-xs font-bold cursor-help">
                                           ?
-                                        </div>
+                                        </span>
                                       </Tooltip>
                                     </div>
-                                    <span className="font-['GlacialIndifference',sans-serif] text-xs text-gray-600">
-                                      {count}
-                                    </span>
+                                    <span className="text-xs text-gray-600">{count}</span>
                                   </div>
 
                                   <div className="relative w-full h-5 bg-[rgba(232,241,255,0.4)] rounded-lg overflow-hidden">
@@ -711,10 +508,8 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
                                       }}
                                     />
                                     <div className="absolute inset-0 flex items-center px-2">
-                                      <span className="font-['GlacialIndifference',sans-serif] text-xs font-medium text-gray-700 z-10">
-                                        {percentage > 0
-                                          ? `${Math.round(percentage)}%`
-                                          : ""}
+                                      <span className="text-xs font-medium text-gray-700 z-10">
+                                        {percentage > 0 ? `${Math.round(percentage)}%` : ""}
                                       </span>
                                     </div>
                                   </div>

@@ -38,6 +38,7 @@ urlpatterns = [
     path('api/bloom/initialize/', views.initialize_bloom_from_history, name='initialize_bloom_from_history'),
     path('api/bloom/restore/', views.restore_bloom_summary, name='restore_bloom_summary'),
     path('api/bloom/summary/', views.get_bloom_summary, name='get_bloom_summary'),
+    path('api/bloom/progression/', views.get_bloom_progression, name='get_bloom_progression'),
 
     # Learning preferences
     path('api/learning-preferences/update/', views.update_learning_preferences, name='update_learning_preferences'),

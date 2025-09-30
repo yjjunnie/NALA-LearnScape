@@ -869,3 +869,99 @@ def get_bloom_summary(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+@api_view(['GET'])
+def get_bloom_progression(request):
+    """
+    Get Bloom progression data formatted for the frontend visualization.
+    
+    Query params:
+        student_id: Student ID
+        module_id: Optional - specific module, omit for all modules
+    """
+    try:
+        student_id = request.GET.get('student_id')
+        module_id = request.GET.get('module_id')
+        
+        if not student_id:
+            return Response(
+                {'error': 'student_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get student
+        try:
+            student = Student.objects.get(id=student_id)
+        except Student.DoesNotExist:
+            return Response(
+                {'error': 'Student not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get bloom records
+        if module_id:
+            records = StudentBloomRecord.objects.filter(
+                student=student,
+                module_id=module_id
+            )
+        else:
+            records = StudentBloomRecord.objects.filter(student=student)
+        
+        # Debug: Log the query
+        print(f"Found {records.count()} bloom records for student {student_id}")
+        
+        if not records.exists():
+            return Response(
+                {'error': 'No bloom records found for this student'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Transform to frontend format
+        result = []
+        for record in records:
+            module_name = record.module.name
+            bloom_summary = record.bloom_summary
+            
+            print(f"Processing module: {module_name}")
+            print(f"Bloom summary keys: {list(bloom_summary.keys())}")
+            
+            # bloom_summary structure: { "topic_id": { "Remember": 5, ... } }
+            for topic_id, level_counts in bloom_summary.items():
+                # Fetch the actual topic name from the database
+                try:
+                    topic = Topic.objects.get(id=topic_id)
+                    topic_name = topic.name
+                    
+                    result.append({
+                        'module': module_name,
+                        'topic': topic_name,
+                        'bloom_level_counts': level_counts
+                    })
+                    print(f"Added topic: {topic_name} (ID: {topic_id})")
+                    
+                except Topic.DoesNotExist:
+                    # Log missing topics but continue processing
+                    print(f"WARNING: Topic with ID {topic_id} does not exist in database")
+                    continue
+        
+        if not result:
+            return Response(
+                {'error': 'No valid topics found in bloom records'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        print(f"Returning {len(result)} topic progression entries")
+        
+        return Response({
+            'data': result
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"Error in get_bloom_progression: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

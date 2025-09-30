@@ -245,14 +245,25 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
   }, []);
 
   useEffect(() => {
-    if (passedModule && rawData.length > 0) {
-      // If the module exists in data, select + expand it
-      if (moduleData[passedModule]) {
-        setSelectedModule(passedModule);
-        setExpandedModule(passedModule);
-      }
+    if (!passedModule || rawData.length === 0) {
+      return;
     }
-  }, [passedModule, rawData, moduleData]);
+
+    const normalized = passedModule.toString().trim().toLowerCase();
+    if (!normalized) {
+      return;
+    }
+
+    const matchedModule =
+      modules.find((module) => module.toLowerCase() === normalized) ||
+      modules.find((module) => module.toLowerCase().includes(normalized)) ||
+      modules.find((module) => normalized.includes(module.toLowerCase()));
+
+    if (matchedModule) {
+      setSelectedModule(matchedModule);
+      setExpandedModule(matchedModule);
+    }
+  }, [modules, passedModule, rawData]);
 
   return (
     <div

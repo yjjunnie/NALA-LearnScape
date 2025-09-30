@@ -36,7 +36,6 @@ import {
   Info,
   Maximize2,
   Minimize2,
-  Pencil,
   Trash2,
 } from "lucide-react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
@@ -421,6 +420,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   const editToggleLabel = isEditMode
     ? "Switch to move mode"
     : "Switch to edit mode";
+  const [showConceptParentEdges, setShowConceptParentEdges] =
+    useState<boolean>(true);
   const [edgeTypeFilter, setEdgeTypeFilter] = useState<string>("all");
   const edgeTypeOptions = useMemo(() => {
     const types = new Set<string>();
@@ -433,21 +434,103 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     return Array.from(types).sort((a, b) => a.localeCompare(b));
   }, [dbRelationships]);
   const displayedEdges = useMemo(() => {
-    if (edgeTypeFilter === "all") {
-      return edges;
+    const baseEdges =
+      edgeTypeFilter === "all"
+        ? edges
+        : edges.filter((edge) => {
+            const rsType =
+              typeof edge.data === "object" && edge.data !== null
+                ? (edge.data as Record<string, unknown>).rsType
+                : undefined;
+            if (typeof rsType !== "string" || rsType.trim().length === 0) {
+              return true;
+            }
+            return rsType.trim() === edgeTypeFilter;
+          });
+
+    if (showConceptParentEdges) {
+      return baseEdges;
     }
 
-    return edges.filter((edge) => {
-      const rsType =
-        typeof edge.data === "object" && edge.data !== null
-          ? (edge.data as Record<string, unknown>).rsType
-          : undefined;
-      if (typeof rsType !== "string" || rsType.trim().length === 0) {
+    const nodeLookup = new Map(nodes.map((node) => [node.id, node]));
+
+    return baseEdges.filter((edge) => {
+      const sourceNode = nodeLookup.get(edge.source);
+      const targetNode = nodeLookup.get(edge.target);
+      if (!sourceNode || !targetNode) {
         return true;
       }
-      return rsType.trim() === edgeTypeFilter;
+
+      const sourceType = sourceNode.data?.node_type;
+      const targetType = targetNode.data?.node_type;
+      const sourceParent = sourceNode.data?.parent_node_id;
+      const targetParent = targetNode.data?.parent_node_id;
+
+      const isConceptParentConnection =
+        (sourceType === "topic" &&
+          targetType === "concept" &&
+          targetParent === sourceNode.id) ||
+        (targetType === "topic" &&
+          sourceType === "concept" &&
+          sourceParent === targetNode.id);
+
+      if (isConceptParentConnection) {
+        return false;
+      }
+
+      if (edge.id.startsWith("topic-concept-")) {
+        return false;
+      }
+
+      return true;
     });
-  }, [edgeTypeFilter, edges]);
+  }, [edgeTypeFilter, edges, nodes, showConceptParentEdges]);
+  const activeModuleInfo = activeModuleId
+    ? moduleLookup[activeModuleId]
+    : undefined;
+  const taxonomyModuleFilter = useMemo(() => {
+    if (!isStandaloneView || !activeModuleId) {
+      return undefined;
+    }
+
+    if (activeModuleInfo?.module_name) {
+      return activeModuleInfo.module_name;
+    }
+
+    if (activeModuleInfo?.module_id) {
+      return activeModuleInfo.module_id;
+    }
+
+    return activeModuleId;
+  }, [activeModuleId, activeModuleInfo, isStandaloneView]);
+  const taxonomyModuleDisplay = useMemo(() => {
+    if (!isStandaloneView || !activeModuleId) {
+      return null;
+    }
+
+    if (!activeModuleInfo) {
+      return activeModuleId;
+    }
+
+    const parts: string[] = [];
+    if (activeModuleInfo.module_index) {
+      parts.push(String(activeModuleInfo.module_index));
+    }
+    if (activeModuleInfo.module_name) {
+      parts.push(activeModuleInfo.module_name);
+    }
+
+    const composed = parts.join(" • ").trim();
+    if (composed) {
+      return composed;
+    }
+
+    return (
+      activeModuleInfo.module_name ??
+      activeModuleInfo.module_id ??
+      activeModuleId
+    );
+  }, [activeModuleId, activeModuleInfo, isStandaloneView]);
   const [isTaxonomyCollapsed, setIsTaxonomyCollapsed] = useState(true);
   const [taxonomyPosition, setTaxonomyPosition] = useState({ x: 24, y: 120 });
   const [isDraggingTaxonomy, setIsDraggingTaxonomy] = useState(false);
@@ -1051,17 +1134,17 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
 
     simulation.nodes(simulationNodes as any);
     simulation.force("center", d3.forceCenter(width / 2, height / 2));
-    simulation.alphaDecay(0.25);
-    simulation.velocityDecay(0.4);
+    simulation.alphaDecay(0.18);
+    simulation.velocityDecay(0.52);
 
     simulation.force(
       "charge",
       d3
         .forceManyBody()
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "topic" ? -380 : -200
+          (d.data as NodeData).node_type === "topic" ? -260 : -180
         )
-        .distanceMax(520)
+        .distanceMax(460)
     );
 
     simulation.force(
@@ -1070,10 +1153,10 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
         .forceCollide()
         .radius((d: any) => {
           const nodeData = d.data as NodeData;
-          return nodeData.node_type === "topic" ? 118 : 62;
+          return nodeData.node_type === "topic" ? 66 : 40;
         })
-        .strength(0.9)
-        .iterations(2)
+        .strength(0.95)
+        .iterations(5)
     );
 
     simulation.force(
@@ -1104,14 +1187,15 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             const layoutTarget = conceptNode
               ? conceptLayoutTargets.get(String(conceptNode.id))
               : null;
-            return layoutTarget?.radius ?? 140;
+            const preferred = layoutTarget?.radius ?? 110;
+            return Math.max(90, preferred);
           }
 
           const sourceRoot = findRootTopicId(sourceNode);
           const targetRoot = findRootTopicId(targetNode);
-          if (sourceRoot && targetRoot && sourceRoot === targetRoot) return 120;
+          if (sourceRoot && targetRoot && sourceRoot === targetRoot) return 140;
 
-          return 280;
+          return 260;
         })
         .strength((link: any) => {
           const resolveNode = (value: any) =>
@@ -1126,13 +1210,13 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           const isParentChild =
             sourceNode?.data?.parent_node_id === targetNode?.id ||
             targetNode?.data?.parent_node_id === sourceNode?.id;
-          if (isParentChild) return 1;
+          if (isParentChild) return 0.9;
 
           const sourceRoot = findRootTopicId(sourceNode);
           const targetRoot = findRootTopicId(targetNode);
-          if (sourceRoot && targetRoot && sourceRoot === targetRoot) return 0.6;
+          if (sourceRoot && targetRoot && sourceRoot === targetRoot) return 0.45;
 
-          return 0.18;
+          return 0.12;
         })
     );
 
@@ -1158,7 +1242,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           return d.x ?? width / 2;
         })
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "concept" ? 0.32 : 0.04
+          (d.data as NodeData).node_type === "concept" ? 0.2 : 0.05
         )
     );
 
@@ -1184,7 +1268,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           return d.y ?? height / 2;
         })
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "concept" ? 0.32 : 0.04
+          (d.data as NodeData).node_type === "concept" ? 0.2 : 0.05
         )
     );
 
@@ -1198,7 +1282,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           return d.x ?? width / 2;
         })
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "topic" ? 0.06 : 0.015
+          (d.data as NodeData).node_type === "topic" ? 0.08 : 0.02
         )
     );
 
@@ -1212,7 +1296,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           return d.y ?? height / 2;
         })
         .strength((d: any) =>
-          (d.data as NodeData).node_type === "topic" ? 0.06 : 0.015
+          (d.data as NodeData).node_type === "topic" ? 0.08 : 0.02
         )
     );
 
@@ -1974,7 +2058,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   );
 
   const getNodeCount = (): number => dbNodes.length;
-  const getEdgeCount = (): number => dbRelationships.length;
+  const getEdgeCount = (): number => displayedEdges.length;
 
   // Popup drag handlers
   const handlePopupMouseDown = useCallback(
@@ -2205,7 +2289,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                   transition: "background 0.2s ease, box-shadow 0.2s ease",
                 }}
               >
-                {isEditMode ? <Pencil size={18} /> : <Hand size={18} />}
+                {isEditMode ? <Trash2 size={18} /> : <Hand size={18} />}
               </button>
               {isEditMode && deleteSelectionLabel && (
                 <button
@@ -2308,6 +2392,41 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             >
               <span>Nodes: {getNodeCount()}</span>
               <span>Edges: {getEdgeCount()}</span>
+            </div>
+            <div
+              style={{
+                marginTop: "12px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "11.5px",
+                color: "#0f172a",
+              }}
+            >
+              <input
+                id="concept-parent-toggle"
+                type="checkbox"
+                checked={showConceptParentEdges}
+                onChange={(event) =>
+                  setShowConceptParentEdges(event.target.checked)
+                }
+                style={{
+                  width: 14,
+                  height: 14,
+                  cursor: "pointer",
+                  accentColor: "#1d4ed8",
+                }}
+              />
+              <label
+                htmlFor="concept-parent-toggle"
+                style={{
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontFamily: '"GlacialIndifference", sans-serif',
+                }}
+              >
+                Show concept-parent edges
+              </label>
             </div>
             {edgeTypeOptions.length > 0 && (
               <div
@@ -2453,7 +2572,30 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                   maxHeight: 360,
                 }}
               >
-                <TopicTaxonomyProgression passedModule={module_id} />
+                {taxonomyModuleDisplay && (
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: "#334155",
+                      marginBottom: "8px",
+                      fontFamily: '"GlacialIndifference", sans-serif',
+                    }}
+                  >
+                    Showing module:
+                    <span
+                      style={{
+                        color: "#1d4ed8",
+                        marginLeft: "4px",
+                      }}
+                    >
+                      {taxonomyModuleDisplay}
+                    </span>
+                  </div>
+                )}
+                <TopicTaxonomyProgression
+                  passedModule={taxonomyModuleFilter}
+                />
               </div>
             )}
           </div>

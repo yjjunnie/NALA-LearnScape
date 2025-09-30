@@ -16,6 +16,20 @@ type ScenarioMessage = Omit<Message, "id">;
 
 type ScenarioKey = keyof typeof CHAT_SCENARIOS;
 
+type LearningPreferenceSnapshot = {
+  breakdown: Record<string, number>;
+  style: string | null;
+  styleDisplay: string | null;
+};
+
+type StudentLearningPreferenceResponse = {
+  learningStyleBreakdown?: Record<string, number>;
+  learning_style_breakdown?: Record<string, number>;
+  learningStyle?: string | null;
+  learning_style?: string | null;
+  learning_style_display?: string | null;
+};
+
 const STUDENT_ID = "1";
 const BLOOM_LEVEL_SEQUENCE = [
   "Remember",
@@ -148,13 +162,17 @@ const determineTopicLevel = (
 export default function ChatbotDemo() {
   const { moduleId } = useParams<{ moduleId: string }>();
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Message[]>(() => [
-    {
+  const defaultWelcomeMessage: Message = useMemo(
+    () => ({
       id: 1,
       text: "Hello! I'm your NALA learning assistant. How can I help you today?",
       sender: "bot",
       timestamp: new Date(),
-    },
+    }),
+    []
+  );
+  const [messages, setMessages] = useState<Message[]>(() => [
+    defaultWelcomeMessage,
   ]);
   const [activeScenario, setActiveScenario] = useState<ScenarioKey | null>(
     null
@@ -168,26 +186,23 @@ export default function ChatbotDemo() {
     string,
     Record<string, number>
   > | null>(null);
+  const [baselineBloomSummary, setBaselineBloomSummary] = useState<
+    Record<string, Record<string, number>> | null
+  >(null);
+  const [, setLearningPreference] =
+    useState<LearningPreferenceSnapshot | null>(null);
+  const [baselineLearningPreference, setBaselineLearningPreference] =
+    useState<LearningPreferenceSnapshot | null>(null);
+  const [hasScenarioChanges, setHasScenarioChanges] = useState(false);
+  const [isReverting, setIsReverting] = useState(false);
 
   const moduleForSummary = moduleId ?? "1";
 
-  const sampleQuestions = useMemo(
-    () => [
-      "Explain the key concepts from Week 1",
-      "What are the main differences between X and Y?",
-      "Can you give me an example of Z?",
-      "Help me understand this topic better",
-    ],
-    []
-  );
-
-  const botResponses = useMemo(
-    () => [
-      "Great question! Let me break this down for you. The key concepts include understanding the fundamental principles and how they apply to real-world scenarios. Would you like me to elaborate on any specific aspect?",
-      "The main difference lies in their approach and application. X focuses on theoretical foundations while Y emphasizes practical implementation. Both are important for a comprehensive understanding.",
-      "Here's a practical example: Imagine you're working on a project where you need to apply these concepts. You would first analyze the requirements, then implement the solution step by step.",
-      "I'd be happy to help clarify! This topic builds on previous concepts we've covered. Let's start with the basics and work our way through the more complex ideas.",
-    ],
+  const deepCloneBloomSummary = useCallback(
+    (
+      summary: Record<string, Record<string, number>>
+    ): Record<string, Record<string, number>> =>
+      JSON.parse(JSON.stringify(summary)),
     []
   );
 
@@ -206,16 +221,60 @@ export default function ChatbotDemo() {
         bloom_summary?: Record<string, Record<string, number>>;
       };
 
-      setBloomSummary(payload?.bloom_summary ?? {});
+      const summary = payload?.bloom_summary ?? {};
+      setBloomSummary(summary);
+      setBaselineBloomSummary((prev) =>
+        prev ? prev : deepCloneBloomSummary(summary)
+      );
+      return summary;
     } catch (error) {
       console.error("Failed to load Bloom summary", error);
       setBloomSummary(null);
+      return null;
     }
-  }, [moduleForSummary]);
+  }, [moduleForSummary, deepCloneBloomSummary]);
+
+  const createLearningPreferenceSnapshot = useCallback(
+    (
+      payload: StudentLearningPreferenceResponse
+    ): LearningPreferenceSnapshot => ({
+      breakdown: JSON.parse(
+        JSON.stringify(
+          payload.learningStyleBreakdown ??
+            payload.learning_style_breakdown ??
+            {}
+        )
+      ),
+      style:
+        payload.learning_style ?? payload.learningStyle ?? null,
+      styleDisplay: payload.learning_style_display ?? null,
+    }),
+    []
+  );
+
+  const fetchLearningPreference = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/student/${STUDENT_ID}/`);
+      if (!response.ok) {
+        throw new Error("Unable to fetch learning preference.");
+      }
+
+      const payload = (await response.json()) as StudentLearningPreferenceResponse;
+      const snapshot = createLearningPreferenceSnapshot(payload);
+      setLearningPreference(snapshot);
+      setBaselineLearningPreference((prev) => (prev ? prev : snapshot));
+      return snapshot;
+    } catch (error) {
+      console.error("Failed to load learning preference", error);
+      setLearningPreference(null);
+      return null;
+    }
+  }, [createLearningPreferenceSnapshot]);
 
   useEffect(() => {
     fetchBloomSummary();
-  }, [fetchBloomSummary]);
+    fetchLearningPreference();
+  }, [fetchBloomSummary, fetchLearningPreference]);
 
   const overallBloom = useMemo(() => {
     if (!bloomSummary) {
@@ -249,33 +308,11 @@ export default function ChatbotDemo() {
     navigate(-1);
   };
 
-  const handleQuestionClick = useCallback(
-    (question: string) => {
-      setScenarioStatus(null);
-      setActiveScenario(null);
-      setMessages((prev) => {
-        const lastId = prev.length > 0 ? prev[prev.length - 1].id : 0;
-        const userMessage: Message = {
-          id: lastId + 1,
-          text: question,
-          sender: "user",
-          timestamp: new Date(),
-        };
-        const botMessage: Message = {
-          id: lastId + 2,
-          text: botResponses[Math.floor(Math.random() * botResponses.length)],
-          sender: "bot",
-          timestamp: new Date(),
-        };
-
-        return [...prev, userMessage, botMessage];
-      });
-    },
-    [botResponses]
-  );
-
   const handleScenarioLoad = useCallback(
     async (scenarioKey: ScenarioKey) => {
+      if (isReverting) {
+        return;
+      }
       const scenario = CHAT_SCENARIOS[scenarioKey];
       if (!scenario) {
         return;
@@ -328,12 +365,45 @@ export default function ChatbotDemo() {
           throw new Error("Bloom taxonomy classifier could not be triggered.");
         }
 
+        const learningPreferenceResponse = await fetch(
+          `/api/learning-preferences/update/`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              student_id: STUDENT_ID,
+              chat_filepath: scenario.file,
+            }),
+          }
+        );
+
+        if (!learningPreferenceResponse.ok) {
+          const errorPayload = await learningPreferenceResponse.json().catch(() => null);
+          const message =
+            (errorPayload &&
+              typeof errorPayload === "object" &&
+              "error" in errorPayload &&
+              typeof errorPayload.error === "string"
+              ? errorPayload.error
+              : null) ||
+            "Learning preference update failed.";
+          throw new Error(message);
+        }
+
+        const learningPreferencePayload =
+          (await learningPreferenceResponse.json()) as StudentLearningPreferenceResponse;
+        const updatedLearningPreference =
+          createLearningPreferenceSnapshot(learningPreferencePayload);
+        setLearningPreference(updatedLearningPreference);
+
+        await Promise.all([fetchBloomSummary(), fetchLearningPreference()]);
+
+        setHasScenarioChanges(true);
         setScenarioStatus({
           type: "success",
-          message: `Bloom taxonomy updated using the ${scenario.label} conversation history.`,
+          message: `Bloom taxonomy and learning preferences updated using the ${scenario.label} conversation history.`,
         });
 
-        await fetchBloomSummary();
       } catch (error) {
         console.error("Failed to load conversation scenario", error);
         setScenarioStatus({
@@ -343,12 +413,124 @@ export default function ChatbotDemo() {
               ? error.message
               : "Unable to load stored conversation history.",
         });
+        setActiveScenario(null);
       } finally {
         setIsLoadingScenario(false);
       }
     },
-    [fetchBloomSummary, moduleForSummary]
+    [
+      createLearningPreferenceSnapshot,
+      fetchBloomSummary,
+      fetchLearningPreference,
+      isReverting,
+      moduleForSummary,
+    ]
   );
+
+  const handleRevertChanges = useCallback(async () => {
+    if (
+      !baselineBloomSummary ||
+      !baselineLearningPreference ||
+      isReverting
+    ) {
+      return;
+    }
+
+    setIsReverting(true);
+    setScenarioStatus(null);
+
+    try {
+      const bloomRestoreResponse = await fetch(`/api/bloom/restore/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          student_id: STUDENT_ID,
+          module_id: moduleForSummary,
+          bloom_summary: baselineBloomSummary,
+        }),
+      });
+
+      if (!bloomRestoreResponse.ok) {
+        throw new Error("Unable to restore Bloom taxonomy summary.");
+      }
+
+      const learningRestoreResponse = await fetch(
+        `/api/learning-preferences/update/`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            student_id: STUDENT_ID,
+            learning_style_breakdown: baselineLearningPreference.breakdown,
+            learning_style: baselineLearningPreference.style,
+          }),
+        }
+      );
+
+      if (!learningRestoreResponse.ok) {
+        const errorPayload = await learningRestoreResponse
+          .json()
+          .catch(() => null);
+        const message =
+          (errorPayload &&
+            typeof errorPayload === "object" &&
+            "error" in errorPayload &&
+            typeof errorPayload.error === "string"
+            ? errorPayload.error
+            : null) ||
+          "Unable to restore learning preference.";
+        throw new Error(message);
+      }
+
+      setMessages([
+        {
+          id: 1,
+          text: defaultWelcomeMessage.text,
+          sender: defaultWelcomeMessage.sender,
+          timestamp: new Date(),
+        },
+      ]);
+      setActiveScenario(null);
+
+      await Promise.all([fetchBloomSummary(), fetchLearningPreference()]);
+
+      setHasScenarioChanges(false);
+      setScenarioStatus({
+        type: "success",
+        message:
+          "Bloom taxonomy and learning preferences restored to their original values.",
+      });
+    } catch (error) {
+      console.error("Failed to restore student progress", error);
+      setScenarioStatus({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to restore previous student progress.",
+      });
+    } finally {
+      setIsReverting(false);
+    }
+  }, [
+    baselineBloomSummary,
+    baselineLearningPreference,
+    defaultWelcomeMessage,
+    fetchBloomSummary,
+    fetchLearningPreference,
+    isReverting,
+    moduleForSummary,
+  ]);
+
+  const isRevertDisabled =
+    !baselineBloomSummary ||
+    !baselineLearningPreference ||
+    !hasScenarioChanges ||
+    isLoadingScenario ||
+    isReverting;
+
+  const activeScenarioLabel =
+    activeScenario ? CHAT_SCENARIOS[activeScenario].label : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8">
@@ -394,44 +576,31 @@ export default function ChatbotDemo() {
             </h2>
             <p className="text-sm text-gray-600">
               Load a stored chat session to review past discussions and trigger
-              a Bloom's taxonomy recalculation that mimics the passage of time.
+              refreshed Bloom's taxonomy and learning preference calculations.
+              Use the scenario buttons in the chat panel to explore different
+              checkpoints and simulate student progression.
             </p>
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            {(
-              Object.entries(CHAT_SCENARIOS) as Array<
-                [ScenarioKey, (typeof CHAT_SCENARIOS)[ScenarioKey]]
-              >
-            ).map(([key, scenario]) => {
-              const isActive = activeScenario === key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => handleScenarioLoad(key)}
-                  disabled={isLoadingScenario}
-                  className={`rounded-xl border transition-all text-left p-4 h-full flex flex-col gap-2 ${
-                    isActive
-                      ? "border-[#004aad] bg-[#e8efff] shadow-md"
-                      : "border-transparent bg-gray-50 hover:border-[#004aad] hover:shadow"
-                  } ${
-                    isLoadingScenario ? "opacity-70 cursor-not-allowed" : ""
-                  }`}
-                >
-                  <div className="text-sm font-semibold text-[#004aad] uppercase tracking-wide">
-                    {scenario.label}
-                  </div>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {scenario.description}
-                  </p>
-                  {isActive && (
-                    <span className="text-xs font-medium text-[#004aad]">
-                      Scenario loaded
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-gray-600">
+              {isLoadingScenario
+                ? "Loading conversation history and recalculating progress..."
+                : activeScenarioLabel
+                ? `Currently viewing: ${activeScenarioLabel}`
+                : "Select a stored scenario from the chat footer to begin."}
+            </div>
+            <button
+              type="button"
+              onClick={handleRevertChanges}
+              disabled={isRevertDisabled}
+              className={`inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                isRevertDisabled
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-[#004aad] text-white hover:bg-[#003a8c]"
+              }`}
+            >
+              {isReverting ? "Reverting..." : "Revert to original progress"}
+            </button>
           </div>
           {scenarioStatus && (
             <div
@@ -442,11 +611,6 @@ export default function ChatbotDemo() {
               }`}
             >
               {scenarioStatus.message}
-            </div>
-          )}
-          {isLoadingScenario && (
-            <div className="text-sm text-gray-600">
-              Loading conversation history and recalculating Bloom levels...
             </div>
           )}
         </div>
@@ -494,22 +658,43 @@ export default function ChatbotDemo() {
             ))}
           </div>
 
-          {/* Sample Questions */}
-          <div className="border-t border-gray-200 bg-gray-50 p-2">
+          {/* Scenario Buttons */}
+          <div className="border-t border-gray-200 bg-gray-50 p-3 md:p-4">
             <p className="text-sm font-semibold text-gray-600 mb-3">
-              Try asking:
+              Stored conversation scenarios
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {sampleQuestions.map((question, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleQuestionClick(question)}
-                  className="text-left bg-white rounded-lg px-3 py-2 text-sm text-[#004aad] hover:bg-[#cddcf7] transition-colors border border-gray-200 hover:border-[#004aad]"
-                  disabled={isLoadingScenario}
+              {(
+                Object.entries(CHAT_SCENARIOS) as Array<
+                  [ScenarioKey, (typeof CHAT_SCENARIOS)[ScenarioKey]]
                 >
-                  {question}
-                </button>
-              ))}
+              ).map(([key, scenario]) => {
+                const isActive = activeScenario === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => handleScenarioLoad(key)}
+                    disabled={isLoadingScenario || isReverting}
+                    className={`text-left rounded-lg border px-3 py-3 text-sm transition-all ${
+                      isActive
+                        ? "border-[#004aad] bg-[#e8efff] text-[#004aad] shadow-sm"
+                        : "border-transparent bg-white text-[#004aad] hover:border-[#004aad] hover:bg-[#eef3ff]"
+                    } ${
+                      isLoadingScenario || isReverting
+                        ? "opacity-70 cursor-not-allowed"
+                        : ""
+                    }`}
+                  >
+                    <div className="font-semibold uppercase tracking-wide text-xs mb-1">
+                      {scenario.label}
+                    </div>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      {scenario.description}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -540,8 +725,8 @@ export default function ChatbotDemo() {
               </IconButton>
             </div>
             <p className="text-xs text-gray-500 mt-2 text-center">
-              Demo mode — Use the stored scenarios or sample prompts above to
-              explore the assistant.
+              Demo mode — Use the scenario buttons above to replay stored
+              conversations and analyze progress.
             </p>
           </div>
         </div>

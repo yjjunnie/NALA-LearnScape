@@ -130,6 +130,42 @@ const getHighestBloomLevel = (
   return { label: null, value: null };
 };
 
+const normalizeBloomCounts = (
+  value: unknown
+): Record<string, number> | null => {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  if (
+    typeof record.bloom_levels === "object" &&
+    record.bloom_levels !== null
+  ) {
+    return normalizeBloomCounts(record.bloom_levels);
+  }
+
+  const counts: Record<string, number> = {};
+  let hasValues = false;
+
+  Object.entries(record).forEach(([key, raw]) => {
+    const numeric =
+      typeof raw === "number"
+        ? raw
+        : typeof raw === "string"
+        ? Number.parseFloat(raw)
+        : Number.NaN;
+
+    if (Number.isFinite(numeric)) {
+      counts[key] = numeric;
+      hasValues = true;
+    }
+  });
+
+  return hasValues ? counts : null;
+};
+
 const distancePointToSegment = (
   point: XYPosition,
   start: XYPosition,
@@ -685,42 +721,37 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
           );
         }
 
-        const payload = (await response.json()) as {
-          bloom_summary?: Record<string, Record<string, number>>;
-        };
+            const payload = (await response.json()) as {
+              bloom_summary?: Record<string, unknown>;
+            };
 
-        if (!isMounted) {
-          return;
-        }
-
-        const summary = payload?.bloom_summary ?? {};
-        const mapping: Record<
-          string,
-          {
-            label: string | null;
-            value: number | null;
-            counts: Record<string, number> | null;
+            const summary = payload?.bloom_summary ?? {};
+            Object.entries(summary).forEach(([topicId, rawCounts]) => {
+              const safeCounts = normalizeBloomCounts(rawCounts);
+              const { label, value } = getHighestBloomLevel(safeCounts);
+              combined[String(topicId)] = {
+                label,
+                value,
+                counts: safeCounts,
+              };
+            });
+          } catch (error) {
+            if (
+              error instanceof DOMException &&
+              error.name === "AbortError"
+            ) {
+              return;
+            }
+            console.error("Failed to load Bloom summary for thread map", error);
           }
-        > = {};
+        })
+      );
 
-        Object.entries(summary).forEach(([topicId, counts]) => {
-          const safeCounts = counts ?? {};
-          const { label, value } = getHighestBloomLevel(safeCounts);
-          mapping[String(topicId)] = {
-            label,
-            value,
-            counts: safeCounts,
-          };
-        });
-
-        setTopicBloomLevels(mapping);
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-        console.error("Failed to load Bloom summary for thread map", error);
-        setTopicBloomLevels({});
+      if (!isMounted) {
+        return;
       }
+
+      setTopicBloomLevels(combined);
     };
 
     fetchBloomLevels();
@@ -2532,30 +2563,219 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               gap: 12,
             }}
           >
-            <button
-              type="button"
-              onMouseDown={handleControlMouseDown}
-              onClick={handleInfoToggle}
-              aria-label="Threadmap information"
-              title="Threadmap information"
+            <div
+              onMouseEnter={handleInfoMouseEnter}
+              onMouseLeave={handleInfoMouseLeave}
               style={{
-                width: controlButtonSize,
-                height: controlButtonSize,
-                borderRadius: "50%",
-                border: "none",
-                background: "#1d4ed8",
-                color: "#fff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 5px 20px rgba(15, 23, 42, 0.45)",
-                cursor: isDraggingControl ? "grabbing" : "grab",
-                transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                transform: isDraggingControl ? "scale(0.98)" : "scale(1)",
+                position: "relative",
+                display: "inline-flex",
               }}
             >
-              <Info size={22} />
-            </button>
+              <button
+                type="button"
+                onMouseDown={handleControlMouseDown}
+                aria-label="Threadmap information"
+                title="Threadmap information"
+                style={{
+                  width: controlButtonSize,
+                  height: controlButtonSize,
+                  borderRadius: "50%",
+                  border: "none",
+                  background: "#1d4ed8",
+                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 5px 20px rgba(15, 23, 42, 0.45)",
+                  cursor: isDraggingControl ? "grabbing" : "grab",
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                  transform: isDraggingControl ? "scale(0.98)" : "scale(1)",
+                }}
+              >
+                <Info size={22} />
+              </button>
+              {showInfoTooltip && (
+                <div
+                  style={{
+                    pointerEvents: "auto",
+                    position: "absolute",
+                    top: infoOffsetY,
+                    left: infoOffsetX,
+                    width: infoPanelWidth,
+                    background: "#ffffff",
+                    borderRadius: "16px",
+                    boxShadow: "0 18px 35px rgba(15, 23, 42, 0.28)",
+                    padding: "16px",
+                    fontFamily: "GlacialIndifference, sans-serif",
+                    color: "#1e293b",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: "12px",
+                      gap: "12px",
+                    }}
+                  >
+                    <div
+                      style={{ fontWeight: 700, fontSize: "15px", color: "#4C73FF" }}
+                    >
+                      THREADMAP QUICK GUIDE
+                    </div>
+                    <button
+                      onClick={() => setShowInfoTooltip(false)}
+                      aria-label="Close threadmap tips"
+                      style={{
+                        border: "none",
+                        background: "#e2e8f0",
+                        color: "#0f172a",
+                        width: 26,
+                        height: 26,
+                        borderRadius: "8px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        lineHeight: 1,
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                      fontSize: "12.5px",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <div>
+                      • Drag the blue handle to move the control panel.<br />• Switch
+                      between cursor and edit modes to explore or modify the map.
+                    </div>
+                    <div>
+                      • Hover nodes in cursor mode to view their relationships.<br />•
+                      Click a node to open its knowledge capsule preview.
+                    </div>
+                    <div>
+                      • In edit mode, select nodes or edges to delete or reconnect
+                      them.<br />• Use the taxonomy widget to filter by Bloom’s levels.
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      marginTop: "10px",
+                      fontSize: "11.5px",
+                      color: "#475569",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    • Numbers represent Bloom's Taxonomy levels (1=Remember,
+                    6=Create).<br />• Toggle between cursor and edit mode to explore or
+                    edit relationships.<br />• Use node handles to connect concepts or
+                    restructure relationships.<br />• Click nodes in cursor mode to view
+                    details and in edit mode to modify them.
+                  </div>
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "12px",
+                      fontSize: "11px",
+                      color: "#0f172a",
+                      background: "#f1f5f9",
+                      borderRadius: "10px",
+                      padding: "8px 10px",
+                    }}
+                  >
+                    <span>Nodes: {getNodeCount()}</span>
+                    <span>Edges: {getEdgeCount()}</span>
+                  </div>
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "11.5px",
+                      color: "#0f172a",
+                    }}
+                  >
+                    <input
+                      id="concept-parent-toggle"
+                      type="checkbox"
+                      checked={showConceptParentEdges}
+                      onChange={(event) =>
+                        setShowConceptParentEdges(event.target.checked)
+                      }
+                      style={{
+                        width: 14,
+                        height: 14,
+                        cursor: "pointer",
+                        accentColor: "#1d4ed8",
+                      }}
+                    />
+                    <label
+                      htmlFor="concept-parent-toggle"
+                      style={{
+                        cursor: "pointer",
+                        fontWeight: 600,
+                        fontFamily: '"GlacialIndifference", sans-serif',
+                      }}
+                    >
+                      Show concept-topic edges
+                    </label>
+                  </div>
+                  {edgeTypeOptions.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: "8px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                        fontSize: "11.5px",
+                        color: "#0f172a",
+                      }}
+                    >
+                      <label
+                        htmlFor="edge-type-filter"
+                        style={{
+                          fontWeight: 600,
+                          fontFamily: '"GlacialIndifference", sans-serif',
+                        }}
+                      >
+                        Filter relationship type
+                      </label>
+                      <select
+                        id="edge-type-filter"
+                        value={edgeTypeFilter}
+                        onChange={(event) =>
+                          setEdgeTypeFilter(event.target.value)
+                        }
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: "8px",
+                          border: "1px solid #cbd5f5",
+                          fontFamily: '"GlacialIndifference", sans-serif',
+                          cursor: "pointer",
+                        }}
+                      >
+                        <option value="all">All relationship types</option>
+                        {edgeTypeOptions.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             <div
               style={{
                 display: "flex",
@@ -2640,163 +2860,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             </div>
           </div>
         </div>
-        {showInfoTooltip && (
-          <div
-            style={{
-              pointerEvents: "auto",
-              position: "absolute",
-              top: infoOffsetY,
-              left: infoOffsetX,
-              width: infoPanelWidth,
-              background: "#ffffff",
-              borderRadius: "16px",
-              boxShadow: "0 18px 35px rgba(15, 23, 42, 0.28)",
-              padding: "16px",
-              fontFamily: "GlacialIndifference, sans-serif",
-              color: "#1e293b",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "12px",
-                gap: "12px",
-              }}
-            >
-              <div
-                style={{ fontWeight: 700, fontSize: "15px", color: "#4C73FF" }}
-              >
-                THREADMAP QUICK GUIDE
-              </div>
-              <button
-                onClick={() => setShowInfoTooltip(false)}
-                aria-label="Close threadmap tips"
-                style={{
-                  border: "none",
-                  background: "#e2e8f0",
-                  color: "#0f172a",
-                  width: 26,
-                  height: 26,
-                  borderRadius: "8px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  lineHeight: 1,
-                }}
-              >
-                ×
-              </button>
-            </div>
-            <div
-              style={{
-                fontSize: "11.5px",
-                color: "#475569",
-                lineHeight: 1.5,
-                marginBottom: "12px",
-              }}
-            >
-              • Numbers represent Bloom's Taxonomy levels (1=Remember,
-              6=Create).
-              <br />• Toggle between cursor and edit mode.
-              <br />• Use node handles to connect concepts.
-              <br />• In edit mode, click nodes to edit or delete them.
-              <br />• In cursor mode, click nodes to view details.
-            </div>
-            <div
-              style={{
-                fontSize: "11px",
-                color: "#0f172a",
-                background: "#f1f5f9",
-                borderRadius: "10px",
-                padding: "8px 10px",
-                display: "flex",
-                justifyContent: "space-between",
-                gap: "12px",
-              }}
-            >
-              <span>Nodes: {getNodeCount()}</span>
-              <span>Edges: {getEdgeCount()}</span>
-            </div>
-            <div
-              style={{
-                marginTop: "12px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                fontSize: "11.5px",
-                color: "#0f172a",
-              }}
-            >
-              <input
-                id="concept-parent-toggle"
-                type="checkbox"
-                checked={showConceptParentEdges}
-                onChange={(event) =>
-                  setShowConceptParentEdges(event.target.checked)
-                }
-                style={{
-                  width: 14,
-                  height: 14,
-                  cursor: "pointer",
-                  accentColor: "#1d4ed8",
-                }}
-              />
-              <label
-                htmlFor="concept-parent-toggle"
-                style={{
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  fontFamily: '"GlacialIndifference", sans-serif',
-                }}
-              >
-                Show concept-topic edges
-              </label>
-            </div>
-            {edgeTypeOptions.length > 0 && (
-              <div
-                style={{
-                  marginTop: "12px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                }}
-              >
-                <label
-                  htmlFor="edge-type-filter"
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    color: "#0f172a",
-                  }}
-                >
-                  Relationship filter
-                </label>
-                <select
-                  id="edge-type-filter"
-                  value={edgeTypeFilter}
-                  onChange={(event) => setEdgeTypeFilter(event.target.value)}
-                  style={{
-                    borderRadius: "10px",
-                    border: "1px solid #cbd5f5",
-                    padding: "6px 8px",
-                    fontSize: "11.5px",
-                    color: "#0f172a",
-                    background: "#f8fafc",
-                    fontFamily: '"GlacialIndifference", sans-serif',
-                  }}
-                >
-                  <option value="all">All relationship types</option>
-                  {edgeTypeOptions.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {isStandaloneView && (

@@ -2391,9 +2391,12 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                 marginBottom: "12px",
               }}
             >
-              • Hover over open space to add a new node.
+              • Numbers represent Bloom's Taxonomy levels (1=Remember,
+              6=Create).
+              <br />• Toggle between cursor and edit mode.
               <br />• Use node handles to connect concepts.
-              <br />• Click nodes or edges to focus them.
+              <br />• In edit mode, click nodes to edit or delete them.
+              <br />• In cursor mode, click nodes to view details.
             </div>
             <div
               style={{
@@ -2442,7 +2445,7 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
                   fontFamily: '"GlacialIndifference", sans-serif',
                 }}
               >
-                Show concept-parent edges
+                Show concept-topic edges
               </label>
             </div>
             {edgeTypeOptions.length > 0 && (

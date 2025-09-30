@@ -36,14 +36,16 @@ const TOPIC_COLORS = ["#7EA8FF", "#4C73FF", "#3D5BDB", "#6B5CE7", "#8B5CF6"];
 
 // Utility functions
 const timeToMinutes = (timeStr: string): number => {
-  const [hours, minutes] = timeStr.split(':').map(Number);
+  const [hours, minutes] = timeStr.split(":").map(Number);
   return hours * 60 + minutes;
 };
 
 const minutesToTime = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, "0")}:${mins
+    .toString()
+    .padStart(2, "0")}`;
 };
 
 const formatDuration = (minutes: number): string => {
@@ -69,24 +71,21 @@ const calculateUrgency = (topic: TopicData): number => {
   // 1. Topic difficulty (higher = more urgent)
   // 2. Lower grade history (lower grade = more urgent)
   // 3. Higher study hours needed (more time = more urgent)
-  
+
   const difficultyScore = topic.topic_difficulty * 20; // 0-100
-  const gradeScore = (100 - topic.student_grade_history); // Lower grade = higher urgency
+  const gradeScore = 100 - topic.student_grade_history; // Lower grade = higher urgency
   const studyHoursScore = topic.actual_study_hours * 10; // 0-100+
-  
-  return (
-    difficultyScore * 0.3 +
-    gradeScore * 0.4 +
-    studyHoursScore * 0.2);
+
+  return difficultyScore * 0.3 + gradeScore * 0.4 + studyHoursScore * 0.2;
 };
 
 // Select top 3 most urgent topics
 const selectTopUrgentTopics = (topics: TopicData[]): TopicData[] => {
-  const topicsWithUrgency = topics.map(topic => ({
+  const topicsWithUrgency = topics.map((topic) => ({
     ...topic,
-    urgency: calculateUrgency(topic)
+    urgency: calculateUrgency(topic),
   }));
-  
+
   // Sort by urgency (descending) and take top 3
   return topicsWithUrgency
     .sort((a, b) => b.urgency - a.urgency)
@@ -101,16 +100,23 @@ interface DropPreviewProps {
   isValid: boolean;
 }
 
-const DropPreview: React.FC<DropPreviewProps> = ({ start, duration, isValid }) => {
-  const leftPos = (start / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING) + HOUR_MARKER_PADDING / 2;
-  const width = (duration / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING);
-  
+const DropPreview: React.FC<DropPreviewProps> = ({
+  start,
+  duration,
+  isValid,
+}) => {
+  const leftPos =
+    (start / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING) +
+    HOUR_MARKER_PADDING / 2;
+  const width =
+    (duration / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING);
+
   return (
     <div
       className={`absolute top-16 bottom-4 rounded-2xl border-2 border-dashed transition-all ${
-        isValid 
-          ? 'bg-green-200/50 border-green-400' 
-          : 'bg-red-200/50 border-red-400'
+        isValid
+          ? "bg-green-200/50 border-green-400"
+          : "bg-red-200/50 border-red-400"
       }`}
       style={{
         left: `${leftPos}px`,
@@ -118,8 +124,12 @@ const DropPreview: React.FC<DropPreviewProps> = ({ start, duration, isValid }) =
       }}
     >
       <div className="p-3 h-full flex items-center justify-center">
-        <div className={`text-sm font-medium ${isValid ? 'text-green-700' : 'text-red-700'}`}>
-          {isValid ? '✓ Drop here' : '✗ Invalid position'}
+        <div
+          className={`text-sm font-medium ${
+            isValid ? "text-green-700" : "text-red-700"
+          }`}
+        >
+          {isValid ? "✓ Drop here" : "✗ Invalid position"}
         </div>
       </div>
     </div>
@@ -130,31 +140,34 @@ const DropPreview: React.FC<DropPreviewProps> = ({ start, duration, isValid }) =
 interface ScheduleBlockProps {
   item: ScheduleItem;
   onDragStart: (e: React.DragEvent, id: string) => void;
-  onResize: (id: string, edge: 'left' | 'right', startX: number) => void;
+  onResize: (id: string, edge: "left" | "right", startX: number) => void;
   isDragging?: boolean;
 }
 
-const ScheduleBlock: React.FC<ScheduleBlockProps> = ({ 
-  item, 
-  onDragStart, 
+const ScheduleBlock: React.FC<ScheduleBlockProps> = ({
+  item,
+  onDragStart,
   onResize,
-  isDragging 
+  isDragging,
 }) => {
-  const leftPos = (item.start / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING) + HOUR_MARKER_PADDING / 2;
-  const width = (item.duration / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING);
-  
+  const leftPos =
+    (item.start / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING) +
+    HOUR_MARKER_PADDING / 2;
+  const width =
+    (item.duration / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING);
+
   const startTime = minutesToTime(item.start);
   const endTime = minutesToTime(item.start + item.duration);
   const durationText = formatDuration(item.duration);
 
-  const handleResizeStart = (e: React.MouseEvent, edge: 'left' | 'right') => {
+  const handleResizeStart = (e: React.MouseEvent, edge: "left" | "right") => {
     e.stopPropagation();
     e.preventDefault();
     onResize(item.id, edge, e.clientX);
   };
 
   const handleDragStart = (e: React.DragEvent) => {
-    const dragImg = document.createElement('div');
+    const dragImg = document.createElement("div");
     dragImg.style.cssText = `
       position: absolute;
       top: -1000px;
@@ -169,9 +182,9 @@ const ScheduleBlock: React.FC<ScheduleBlockProps> = ({
     dragImg.textContent = item.title;
     document.body.appendChild(dragImg);
     e.dataTransfer.setDragImage(dragImg, 50, 20);
-    
+
     setTimeout(() => document.body.removeChild(dragImg), 0);
-    
+
     onDragStart(e, item.id);
   };
 
@@ -205,15 +218,17 @@ const ScheduleBlock: React.FC<ScheduleBlockProps> = ({
       {/* Left resize handle */}
       <div
         className="absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-l-2xl flex items-center justify-center"
-        onMouseDown={(e) => handleResizeStart(e, 'left')}
+        onMouseDown={(e) => handleResizeStart(e, "left")}
       >
         <div className="w-0.5 h-6 bg-white/70 rounded" />
       </div>
-      
+
       {/* Content */}
       <div className="p-3 h-full flex flex-col justify-between pointer-events-none">
         <div>
-          <div className="font-semibold text-sm leading-tight">{item.title}</div>
+          <div className="font-semibold text-sm leading-tight">
+            {item.title}
+          </div>
           <div className="text-xs opacity-80 mt-1">{durationText}</div>
         </div>
         <div className="text-xs font-medium">
@@ -224,7 +239,7 @@ const ScheduleBlock: React.FC<ScheduleBlockProps> = ({
       {/* Right resize handle */}
       <div
         className="absolute right-0 top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-r-2xl flex items-center justify-center"
-        onMouseDown={(e) => handleResizeStart(e, 'right')}
+        onMouseDown={(e) => handleResizeStart(e, "right")}
       >
         <div className="w-0.5 h-6 bg-white/70 rounded" />
       </div>
@@ -245,11 +260,11 @@ const Scheduler: React.FC = () => {
   } | null>(null);
   const [resizing, setResizing] = useState<{
     id: string;
-    edge: 'left' | 'right';
+    edge: "left" | "right";
     startX: number;
     originalItem: ScheduleItem;
   } | null>(null);
-  
+
   const timelineRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -258,40 +273,47 @@ const Scheduler: React.FC = () => {
     const fetchTopics = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/student/student456/topics');
-        
+        const response = await fetch(
+          "http://localhost:5000/student/student456/topics"
+        );
+
         if (!response.ok) {
-          throw new Error('Failed to fetch topics');
+          throw new Error("Failed to fetch topics");
         }
-        
+
         const data: ApiResponse = await response.json();
-        
+
         // Select top 3 urgent topics
         const topUrgentTopics = selectTopUrgentTopics(data.topics);
-        
+
         // Convert to schedule items
         let currentStart = timeToMinutes("08:00");
-        const scheduleItems: ScheduleItem[] = topUrgentTopics.map((topic, index) => {
-          const duration = hoursToMinutes(topic.actual_study_hours);
-          const item = {
-            id: topic.topic_id,
-            title: topic.topic_name,
-            start: currentStart,
-            duration: duration,
-            color: TOPIC_COLORS[index % TOPIC_COLORS.length],
-            predictedHours: topic.actual_study_hours};
-          
-          // Add 30 min break between sessions
-          currentStart += duration + 30;
-          
-          return item;
-        });
-        
+        const scheduleItems: ScheduleItem[] = topUrgentTopics.map(
+          (topic, index) => {
+            const duration = hoursToMinutes(topic.actual_study_hours);
+            const item = {
+              id: topic.topic_id,
+              title: topic.topic_name,
+              start: currentStart,
+              duration: duration,
+              color: TOPIC_COLORS[index % TOPIC_COLORS.length],
+              predictedHours: topic.actual_study_hours,
+            };
+
+            // Add 30 min break between sessions
+            currentStart += duration + 30;
+
+            return item;
+          }
+        );
+
         setSchedule(scheduleItems);
         setError(null);
       } catch (err) {
-        console.error('Error fetching topics:', err);
-        setError('Failed to load topics. Please ensure the backend is running.');
+        console.error("Error fetching topics:", err);
+        setError(
+          "Failed to load topics. Please ensure the backend is running."
+        );
       } finally {
         setLoading(false);
       }
@@ -304,7 +326,9 @@ const Scheduler: React.FC = () => {
   useEffect(() => {
     if (schedule.length > 0 && scrollContainerRef.current) {
       const firstItem = schedule[0];
-      const scrollPos = (firstItem.start / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING);
+      const scrollPos =
+        (firstItem.start / MINUTES_PER_DAY) *
+        (TIMELINE_WIDTH - HOUR_MARKER_PADDING);
       scrollContainerRef.current.scrollLeft = Math.max(0, scrollPos - 100);
     }
   }, [schedule]);
@@ -313,82 +337,120 @@ const Scheduler: React.FC = () => {
   const totalMinutes = schedule.reduce((sum, item) => sum + item.duration, 0);
   const totalHours = Math.floor(totalMinutes / 60);
   const remainingMins = totalMinutes % 60;
-  const totalTimeText = totalHours > 0 ? `${totalHours}h ${remainingMins}min` : `${remainingMins}min`;
+  const totalTimeText =
+    totalHours > 0
+      ? `${totalHours}h ${remainingMins}min`
+      : `${remainingMins}min`;
 
   // Check if a position is valid (no collisions)
-  const isValidPosition = useCallback((start: number, duration: number, excludeId?: string) => {
-    if (start < 0 || start + duration > MINUTES_PER_DAY) return false;
-    
-    return !schedule.some(item => {
-      if (item.id === excludeId) return false;
-      const itemEnd = item.start + item.duration;
-      const newEnd = start + duration;
-      return !(start >= itemEnd || newEnd <= item.start);
-    });
-  }, [schedule]);
+  const isValidPosition = useCallback(
+    (start: number, duration: number, excludeId?: string) => {
+      if (start < 0 || start + duration > MINUTES_PER_DAY) return false;
+
+      return !schedule.some((item) => {
+        if (item.id === excludeId) return false;
+        const itemEnd = item.start + item.duration;
+        const newEnd = start + duration;
+        return !(start >= itemEnd || newEnd <= item.start);
+      });
+    },
+    [schedule]
+  );
 
   // Find the nearest valid position
-  const findNearestValidPosition = useCallback((targetStart: number, duration: number, excludeId?: string) => {
-    if (isValidPosition(targetStart, duration, excludeId)) {
-      return targetStart;
-    }
-
-    const otherItems = schedule
-      .filter(item => item.id !== excludeId)
-      .sort((a, b) => a.start - b.start);
-
-    if (otherItems.length === 0 || otherItems[0].start >= duration) {
-      return Math.max(0, Math.min(targetStart, otherItems[0]?.start - duration || MINUTES_PER_DAY - duration));
-    }
-
-    for (let i = 0; i < otherItems.length - 1; i++) {
-      const gapStart = otherItems[i].start + otherItems[i].duration;
-      const gapEnd = otherItems[i + 1].start;
-      
-      if (gapEnd - gapStart >= duration) {
-        const preferredStart = Math.max(gapStart, Math.min(targetStart, gapEnd - duration));
-        return preferredStart;
+  const findNearestValidPosition = useCallback(
+    (targetStart: number, duration: number, excludeId?: string) => {
+      if (isValidPosition(targetStart, duration, excludeId)) {
+        return targetStart;
       }
-    }
 
-    const lastItem = otherItems[otherItems.length - 1];
-    const afterLast = lastItem.start + lastItem.duration;
-    if (afterLast + duration <= MINUTES_PER_DAY) {
-      return Math.max(afterLast, Math.min(targetStart, MINUTES_PER_DAY - duration));
-    }
+      const otherItems = schedule
+        .filter((item) => item.id !== excludeId)
+        .sort((a, b) => a.start - b.start);
 
-    return targetStart;
-  }, [schedule, isValidPosition]);
+      if (otherItems.length === 0 || otherItems[0].start >= duration) {
+        return Math.max(
+          0,
+          Math.min(
+            targetStart,
+            otherItems[0]?.start - duration || MINUTES_PER_DAY - duration
+          )
+        );
+      }
+
+      for (let i = 0; i < otherItems.length - 1; i++) {
+        const gapStart = otherItems[i].start + otherItems[i].duration;
+        const gapEnd = otherItems[i + 1].start;
+
+        if (gapEnd - gapStart >= duration) {
+          const preferredStart = Math.max(
+            gapStart,
+            Math.min(targetStart, gapEnd - duration)
+          );
+          return preferredStart;
+        }
+      }
+
+      const lastItem = otherItems[otherItems.length - 1];
+      const afterLast = lastItem.start + lastItem.duration;
+      if (afterLast + duration <= MINUTES_PER_DAY) {
+        return Math.max(
+          afterLast,
+          Math.min(targetStart, MINUTES_PER_DAY - duration)
+        );
+      }
+
+      return targetStart;
+    },
+    [schedule, isValidPosition]
+  );
 
   // Drag handlers
   const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", id);
     setDraggedId(id);
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
 
-    if (!draggedId || !timelineRef.current) return;
+      if (!draggedId || !timelineRef.current) return;
 
-    const rect = timelineRef.current.getBoundingClientRect();
-    const x = Math.max(HOUR_MARKER_PADDING / 2, Math.min(e.clientX - rect.left, rect.width - HOUR_MARKER_PADDING / 2));
-    const targetMinutes = snapToInterval(((x - HOUR_MARKER_PADDING / 2) / (rect.width - HOUR_MARKER_PADDING)) * MINUTES_PER_DAY);
+      const rect = timelineRef.current.getBoundingClientRect();
+      const x = Math.max(
+        HOUR_MARKER_PADDING / 2,
+        Math.min(e.clientX - rect.left, rect.width - HOUR_MARKER_PADDING / 2)
+      );
+      const targetMinutes = snapToInterval(
+        ((x - HOUR_MARKER_PADDING / 2) / (rect.width - HOUR_MARKER_PADDING)) *
+          MINUTES_PER_DAY
+      );
 
-    const draggedItem = schedule.find(item => item.id === draggedId);
-    if (!draggedItem) return;
+      const draggedItem = schedule.find((item) => item.id === draggedId);
+      if (!draggedItem) return;
 
-    const nearestStart = findNearestValidPosition(targetMinutes, draggedItem.duration, draggedId);
-    const isValid = isValidPosition(nearestStart, draggedItem.duration, draggedId);
+      const nearestStart = findNearestValidPosition(
+        targetMinutes,
+        draggedItem.duration,
+        draggedId
+      );
+      const isValid = isValidPosition(
+        nearestStart,
+        draggedItem.duration,
+        draggedId
+      );
 
-    setDragPreview({
-      start: nearestStart,
-      duration: draggedItem.duration,
-      isValid
-    });
-  }, [draggedId, schedule, findNearestValidPosition, isValidPosition]);
+      setDragPreview({
+        start: nearestStart,
+        duration: draggedItem.duration,
+        isValid,
+      });
+    },
+    [draggedId, schedule, findNearestValidPosition, isValidPosition]
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
@@ -396,80 +458,106 @@ const Scheduler: React.FC = () => {
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    
-    if (!dragPreview || !draggedId) return;
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
 
-    if (dragPreview.isValid) {
-      setSchedule(prev => 
-        prev.map(item => 
-          item.id === draggedId 
-            ? { ...item, start: dragPreview.start }
-            : item
-        ).sort((a, b) => a.start - b.start)
-      );
-    }
+      if (!dragPreview || !draggedId) return;
 
-    setDraggedId(null);
-    setDragPreview(null);
-  }, [draggedId, dragPreview]);
-
-  // Resize handlers
-  const handleResize = useCallback((id: string, edge: 'left' | 'right', startX: number) => {
-    const item = schedule.find(i => i.id === id);
-    if (!item) return;
-
-    const resizeState = { id, edge, startX, originalItem: item };
-    setResizing(resizeState);
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!timelineRef.current) return;
-
-      const rect = timelineRef.current.getBoundingClientRect();
-      const deltaX = e.clientX - resizeState.startX;
-      const deltaMinutes = snapToInterval((deltaX / (rect.width - HOUR_MARKER_PADDING)) * MINUTES_PER_DAY);
-
-      let newStart = resizeState.originalItem.start;
-      let newDuration = resizeState.originalItem.duration;
-
-      if (resizeState.edge === 'left') {
-        const maxStartShift = resizeState.originalItem.duration - 15;
-        const actualShift = Math.min(deltaMinutes, maxStartShift);
-        newStart = Math.max(0, resizeState.originalItem.start + actualShift);
-        newDuration = resizeState.originalItem.duration - (newStart - resizeState.originalItem.start);
-      } else {
-        const maxEndPosition = MINUTES_PER_DAY;
-        const maxDuration = maxEndPosition - resizeState.originalItem.start;
-        newDuration = Math.max(15, Math.min(resizeState.originalItem.duration + deltaMinutes, maxDuration));
+      if (dragPreview.isValid) {
+        setSchedule((prev) =>
+          prev
+            .map((item) =>
+              item.id === draggedId
+                ? { ...item, start: dragPreview.start }
+                : item
+            )
+            .sort((a, b) => a.start - b.start)
+        );
       }
 
-      setSchedule(prev => prev.map(item => 
-        item.id === resizeState.id ? { ...item, start: newStart, duration: newDuration } : item
-      ));
-    };
+      setDraggedId(null);
+      setDragPreview(null);
+    },
+    [draggedId, dragPreview]
+  );
 
-    const handleMouseUp = () => {
-      setResizing(null);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
+  // Resize handlers
+  const handleResize = useCallback(
+    (id: string, edge: "left" | "right", startX: number) => {
+      const item = schedule.find((i) => i.id === id);
+      if (!item) return;
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [schedule]);
+      const resizeState = { id, edge, startX, originalItem: item };
+      setResizing(resizeState);
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!timelineRef.current) return;
+
+        const rect = timelineRef.current.getBoundingClientRect();
+        const deltaX = e.clientX - resizeState.startX;
+        const deltaMinutes = snapToInterval(
+          (deltaX / (rect.width - HOUR_MARKER_PADDING)) * MINUTES_PER_DAY
+        );
+
+        let newStart = resizeState.originalItem.start;
+        let newDuration = resizeState.originalItem.duration;
+
+        if (resizeState.edge === "left") {
+          const maxStartShift = resizeState.originalItem.duration - 15;
+          const actualShift = Math.min(deltaMinutes, maxStartShift);
+          newStart = Math.max(0, resizeState.originalItem.start + actualShift);
+          newDuration =
+            resizeState.originalItem.duration -
+            (newStart - resizeState.originalItem.start);
+        } else {
+          const maxEndPosition = MINUTES_PER_DAY;
+          const maxDuration = maxEndPosition - resizeState.originalItem.start;
+          newDuration = Math.max(
+            15,
+            Math.min(
+              resizeState.originalItem.duration + deltaMinutes,
+              maxDuration
+            )
+          );
+        }
+
+        setSchedule((prev) =>
+          prev.map((item) =>
+            item.id === resizeState.id
+              ? { ...item, start: newStart, duration: newDuration }
+              : item
+          )
+        );
+      };
+
+      const handleMouseUp = () => {
+        setResizing(null);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [schedule]
+  );
 
   // Generate hour markers
   const hourMarkers = Array.from({ length: 25 }, (_, hour) => ({
     hour,
-    left: (hour * 60 / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING) + HOUR_MARKER_PADDING / 2,
-    label: `${hour.toString().padStart(2, '0')}:00`
+    left:
+      ((hour * 60) / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING) +
+      HOUR_MARKER_PADDING / 2,
+    label: `${hour.toString().padStart(2, "0")}:00`,
   }));
 
   // Generate 15-minute grid lines
   const gridLines = Array.from({ length: 96 }, (_, index) => {
     const minutes = index * 15;
-    const left = (minutes / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING) + HOUR_MARKER_PADDING / 2;
+    const left =
+      (minutes / MINUTES_PER_DAY) * (TIMELINE_WIDTH - HOUR_MARKER_PADDING) +
+      HOUR_MARKER_PADDING / 2;
     const isHour = minutes % 60 === 0;
     return { minutes, left, isHour };
   });
@@ -477,7 +565,9 @@ const Scheduler: React.FC = () => {
   if (loading) {
     return (
       <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-3xl p-8">
-        <div className="text-center text-white font-bold">Loading study schedule...</div>
+        <div className="text-center text-white font-bold">
+          Loading study schedule...
+        </div>
       </div>
     );
   }
@@ -504,23 +594,33 @@ const Scheduler: React.FC = () => {
         <div
           ref={timelineRef}
           className="relative bg-white/95 rounded-3xl border border-white/60"
-          style={{ width: TIMELINE_WIDTH, height: 250, minWidth: TIMELINE_WIDTH }}
+          style={{
+            width: TIMELINE_WIDTH,
+            height: 250,
+            minWidth: TIMELINE_WIDTH,
+          }}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
           {/* Grid lines */}
           {gridLines.map(({ minutes, left, isHour }) => (
-            <div 
-              key={minutes} 
-              className={`absolute top-0 bottom-0 ${isHour ? 'w-0.5 bg-blue-400/50' : 'w-px bg-blue-300/20'}`} 
-              style={{ left }} 
+            <div
+              key={minutes}
+              className={`absolute top-0 bottom-0 ${
+                isHour ? "w-0.5 bg-blue-400/50" : "w-px bg-blue-300/20"
+              }`}
+              style={{ left }}
             />
           ))}
 
           {/* Hour markers */}
           {hourMarkers.map(({ hour, left, label }) => (
-            <div key={hour} className="absolute top-2 z-10" style={{ left: left - 20 }}>
+            <div
+              key={hour}
+              className="absolute top-2 z-10"
+              style={{ left: left - 20 }}
+            >
               <div className="bg-white/90 px-2 py-1 rounded text-xs font-semibold text-blue-900 shadow-sm">
                 {label}
               </div>
@@ -537,7 +637,7 @@ const Scheduler: React.FC = () => {
           )}
 
           {/* Schedule blocks */}
-          {schedule.map(item => (
+          {schedule.map((item) => (
             <ScheduleBlock
               key={item.id}
               item={item}
@@ -553,7 +653,8 @@ const Scheduler: React.FC = () => {
       <div className="text-center text-white/60 text-sm mt-4 space-y-1 font-bold">
         <div>← Scroll horizontally to view full timeline →</div>
         <div className="text-xs">
-          Drag blocks to move • Drag edges to resize • Snaps to 15-minute intervals
+          Drag blocks to move • Drag edges to resize • Snaps to 15-minute
+          intervals
         </div>
       </div>
     </div>

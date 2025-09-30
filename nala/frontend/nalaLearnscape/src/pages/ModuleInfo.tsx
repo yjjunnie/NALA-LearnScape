@@ -7,6 +7,7 @@ import ChatIcon from "@mui/icons-material/Chat";
 import QuizIcon from "@mui/icons-material/Quiz";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import QuizCustomizationModal from "../components/QuizCustomizationModal";
+import ThreadMap from "./ThreadMap";
 
 type Topic = {
   id: string;
@@ -33,8 +34,10 @@ export default function ModuleInfo() {
   };
 
   const handleStartQuiz = (numQuestions: number, selectedLevels: string[]) => {
-    const levelsParam = selectedLevels.join(',');
-    navigate(`/Modules/${moduleId}/quiz?type=custom&questions=${numQuestions}&levels=${levelsParam}`);
+    const levelsParam = selectedLevels.join(",");
+    navigate(
+      `/Modules/${moduleId}/quiz?type=custom&questions=${numQuestions}&levels=${levelsParam}`
+    );
     setQuizModalOpen(false);
   };
 
@@ -119,7 +122,9 @@ export default function ModuleInfo() {
               </ul>
             </div>
           ) : (
-            <p className="text-gray-500">No topics available for this module.</p>
+            <p className="text-gray-500">
+              No topics available for this module.
+            </p>
           )}
         </div>
 
@@ -148,7 +153,9 @@ export default function ModuleInfo() {
               <ChatIcon sx={{ fontSize: 32, color: "#004aad" }} />
             </div>
             <div className="text-center">
-              <h3 className="font-bold text-lg text-[#004aad]">Talk to Chatbot</h3>
+              <h3 className="font-bold text-lg text-[#004aad]">
+                Talk to Chatbot
+              </h3>
               <p className="text-sm text-gray-600">Get instant help</p>
             </div>
           </button>
@@ -165,7 +172,9 @@ export default function ModuleInfo() {
               <h3 className="font-bold text-lg text-[#004aad]">
                 Weekly Review Quiz
               </h3>
-              <p className="text-sm text-gray-600">Test your weekly knowledge</p>
+              <p className="text-sm text-gray-600">
+                Test your weekly knowledge
+              </p>
             </div>
           </button>
 
@@ -178,8 +187,12 @@ export default function ModuleInfo() {
               <QuizIcon sx={{ fontSize: 32, color: "#004aad" }} />
             </div>
             <div className="text-center">
-              <h3 className="font-bold text-lg text-[#004aad]">Quiz Yourself</h3>
-              <p className="text-sm text-gray-600">Customize your practice quiz</p>
+              <h3 className="font-bold text-lg text-[#004aad]">
+                Quiz Yourself
+              </h3>
+              <p className="text-sm text-gray-600">
+                Customize your practice quiz
+              </p>
             </div>
           </button>
         </div>

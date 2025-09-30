@@ -43,6 +43,7 @@ export default function Quiz() {
   const quizType = searchParams.get("type"); // "weekly" or "custom"
   const numQuestions = searchParams.get("questions");
   const levels = searchParams.get("levels");
+  const topics = searchParams.get("topics");
 
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,42 +54,44 @@ export default function Quiz() {
   const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
-        const fetchOrGenerateQuiz = async () => {
-          try {
-            setLoading(true);
-            setError(null);
-      
-            const studentId = "1"; // Hardcoded student ID
-      
-            if (quizType === "weekly") {
-              // Fetch weekly quiz from database
-              const response = await axios.get(`/api/module/${moduleId}/quiz/weekly/`, {
-                params: { student_id: studentId } // Pass student ID here
-              });
-              setQuizData(response.data);
-            } else if (quizType === "custom") {
-              // Generate custom quiz via LLM
-              const bloomLevels = levels ? levels.split(",") : ["Remember", "Understand"];
-              const response = await axios.post(`/api/module/${moduleId}/quiz/generate/`, {
-                num_questions: parseInt(numQuestions || "10"),
-                bloom_levels: bloomLevels,
-                student_id: studentId, // Pass student ID here
-              });
-              setQuizData(response.data);
+    const fetchOrGenerateQuiz = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+  
+        const studentId = "1"; // Hardcoded student ID
+        const topicIds = topics ? topics.split(",") : [];
+  
+        if (quizType === "weekly") {
+          const response = await axios.get(`/api/module/${moduleId}/quiz/weekly/`, {
+            params: { 
+              student_id: studentId,
+              topics: topicIds.length > 0 ? topicIds.join(',') : undefined
             }
-          } catch (err) {
-            console.error("Failed to fetch/generate quiz", err);
-            setError("Failed to load quiz. Please try again.");
-          } finally {
-            setLoading(false);
-          }
-        };
-      
-        if (moduleId && quizType) {
-          fetchOrGenerateQuiz();
+          });
+          setQuizData(response.data);
+        } else if (quizType === "custom") {
+          const bloomLevels = levels ? levels.split(",") : ["Remember", "Understand"];
+          const response = await axios.post(`/api/module/${moduleId}/quiz/generate/`, {
+            num_questions: parseInt(numQuestions || "10"),
+            bloom_levels: bloomLevels,
+            student_id: studentId,
+            topic_ids: topicIds,
+          });
+          setQuizData(response.data);
         }
-      }, [moduleId, quizType, numQuestions, levels]);
-      
+      } catch (err) {
+        console.error("Failed to fetch/generate quiz", err);
+        setError("Failed to load quiz. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    if (moduleId && quizType) {
+      fetchOrGenerateQuiz();
+    }
+  }, [moduleId, quizType, numQuestions, levels, topics]);
 
   const handleAnswerSelect = (answer: string) => {
     setSelectedAnswers((prev) => ({

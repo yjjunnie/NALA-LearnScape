@@ -25,7 +25,7 @@ urlpatterns = [
     path('api/percentage-learning-style/', views.percentage_learning_style, name="percentage-learningstyle"),
     path('api/taxonomy-progression/', views.taxonomy_progression, name="taxonomy-progression"),
 
-    # Quiz endpoints - FIXED
+    # Quiz endpoints
     path('api/module/<str:module_id>/quiz/weekly/', views.get_weekly_quiz, name='get_weekly_quiz'),
     path('api/module/<str:module_id>/quiz/generate/', views.generate_custom_quiz, name='generate_custom_quiz'),
     path('api/quiz/<int:quiz_history_id>/answer/', views.save_quiz_answer, name='save_quiz_answer'),

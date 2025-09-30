@@ -28,16 +28,22 @@ export default function ModuleInfo() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quizModalOpen, setQuizModalOpen] = useState(false);
+  const [selectedQuizType, setSelectedQuizType] = useState<"weekly" | "custom">("custom");
+
 
   const handleBackClick = () => {
     navigate(-1);
   };
 
-  const handleStartQuiz = (numQuestions: number, selectedLevels: string[]) => {
-    const levelsParam = selectedLevels.join(",");
-    navigate(
-      `/Modules/${moduleId}/quiz?type=custom&questions=${numQuestions}&levels=${levelsParam}`
-    );
+  const handleStartQuiz = (numQuestions: number, selectedLevels: string[], selectedTopicIds: string[], quizType: string) => {
+    const levelsParam = selectedLevels.join(',');
+    const topicsParam = selectedTopicIds.join(',');
+    
+    if (quizType === 'weekly') {
+      navigate(`/Modules/${moduleId}/quiz?type=weekly&topics=${topicsParam}`);
+    } else {
+      navigate(`/Modules/${moduleId}/quiz?type=custom&questions=${numQuestions}&levels=${levelsParam}&topics=${topicsParam}`);
+    }
     setQuizModalOpen(false);
   };
 
@@ -175,9 +181,12 @@ export default function ModuleInfo() {
 
           {/* Weekly Review Quiz Button */}
           <button
-            onClick={() => navigate(`/Modules/${moduleId}/quiz?type=weekly`)}
+            onClick={() => {
+                setSelectedQuizType("weekly");
+                setQuizModalOpen(true);
+            }}
             className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all flex flex-col items-center gap-3 border-2 border-transparent hover:border-[#004aad]"
-          >
+            >
             <div className="bg-[#cddcf7] rounded-full p-3">
               <AssignmentIcon sx={{ fontSize: 32, color: "#004aad" }} />
             </div>
@@ -193,9 +202,12 @@ export default function ModuleInfo() {
 
           {/* Quiz Yourself Button */}
           <button
-            onClick={() => setQuizModalOpen(true)}
+            onClick={() => {
+                setSelectedQuizType("custom");
+                setQuizModalOpen(true);
+            }}
             className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all flex flex-col items-center gap-3 border-2 border-transparent hover:border-[#004aad]"
-          >
+            >
             <div className="bg-[#cddcf7] rounded-full p-3">
               <QuizIcon sx={{ fontSize: 32, color: "#004aad" }} />
             </div>
@@ -216,7 +228,9 @@ export default function ModuleInfo() {
         open={quizModalOpen}
         onClose={() => setQuizModalOpen(false)}
         onStartQuiz={handleStartQuiz}
-      />
+        topics={module?.topics || []}
+        quizType={selectedQuizType}
+        />
     </div>
   );
 }

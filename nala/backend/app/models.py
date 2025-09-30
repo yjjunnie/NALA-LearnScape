@@ -14,7 +14,7 @@ class Module(models.Model):
 # === ThreadMap Nodes ===
 class Node(models.Model):
     id = models.CharField(primary_key=True, max_length=255)
-    name = models.CharField(max_length=255, blank=True, null=True)  # NOT unique
+    name = models.CharField(max_length=255, blank=True, null=True) 
     summary = models.TextField(blank=True, null=True)
     module = models.ForeignKey(Module, on_delete=models.CASCADE, blank=True, null=True)
     week_no = models.CharField(max_length=50, blank=True, null=True)

@@ -19,7 +19,7 @@ const LearningStyleOverview = () => {
         ); // Debug log
         setRawData(response.data.learningStyleBreakdown || {});
       } catch (error) {
-        console.error("Failed to fetch learning style", error);
+        console.error("Failed to fetch learning preference", error);
       } finally {
         setLoading(false);
       }
@@ -36,7 +36,7 @@ const LearningStyleOverview = () => {
     "Retrieval Practice": "#13338C",
   };
 
-  // Descriptions for each learning style
+  // Descriptions for each learning preference
   const descriptions = {
     Elaboration:
       "Connecting new ideas to existing knowledge to deepen understanding.",
@@ -70,7 +70,7 @@ const LearningStyleOverview = () => {
   if (data.length === 0) {
     return (
       <div className="p-4 border rounded">
-        <p>No learning style data available</p>
+        <p>No learning preference data available</p>
         <p>Raw data keys: {Object.keys(rawData).join(", ")}</p>
         <p>Raw data: {JSON.stringify(rawData)}</p>
       </div>
@@ -95,7 +95,7 @@ const LearningStyleOverview = () => {
     >
       <div className="mb-4">
         <h2 className="text-sm font-bold font-family-body tracking-wider uppercase text-[#4C73FF] mb-1">
-          Current Learning Style
+          Current Learning Preference
         </h2>
         <h1 className="font-bold font-['Fredoka'] text-3xl md:text-3xl text-[#4C73FF]">
           {currentStyle}

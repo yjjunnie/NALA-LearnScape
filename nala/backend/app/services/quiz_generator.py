@@ -74,7 +74,7 @@ def _normalise_question_payload(raw_questions: Iterable[Dict[str, Any]]) -> List
     return normalised_questions
 
 
-def generate_quiz(topic_name, module_name, bloom_levels, num_questions=5):
+def generate_quiz(topic_name, module_name, bloom_levels, num_questions=10):
     bloom_levels = _coerce_bloom_levels(bloom_levels)
     levels_str = ", ".join(bloom_levels)
     system_prompt = (

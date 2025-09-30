@@ -488,7 +488,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     originY: number;
   } | null>(null);
   const controlDraggedRef = useRef<boolean>(false);
-  const lastControlDragTimeRef = useRef<number>(0);
   const dragContextRef = useRef<{
     nodeId: string;
     offsets: Map<string, { dx: number; dy: number }>;
@@ -1997,9 +1996,9 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
       event.stopPropagation();
+      setShowInfoTooltip(false);
 
       controlDraggedRef.current = false;
-      lastControlDragTimeRef.current = 0;
       controlDragStartRef.current = {
         startX: event.clientX,
         startY: event.clientY,
@@ -2029,7 +2028,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
       Math.sqrt(deltaX * deltaX + deltaY * deltaY) > 4
     ) {
       controlDraggedRef.current = true;
-      setShowInfoTooltip(false);
     }
 
     const nextX = Math.max(12, Math.min(maxX, dragState.originX + deltaX));
@@ -2039,29 +2037,11 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
   }, []);
 
   const handleControlDragEnd = useCallback(() => {
-    if (controlDraggedRef.current) {
-      lastControlDragTimeRef.current = Date.now();
-    }
-    controlDraggedRef.current = false;
     setIsDraggingControl(false);
     controlDragStartRef.current = null;
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
   }, []);
-
-  const handleInfoButtonClick = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (Date.now() - lastControlDragTimeRef.current < 200) {
-        return;
-      }
-
-      setShowInfoTooltip((prev) => !prev);
-    },
-    [setShowInfoTooltip]
-  );
 
   const handleToggleEditMode = useCallback(() => {
     setIsEditMode((prev) => {
@@ -2168,6 +2148,17 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
     clearEdgeSelection();
     shouldRunSimulationRef.current = true;
   }, [clearEdgeSelection, isEditMode, selectedEdge]);
+
+  const handleInfoMouseEnter = useCallback(() => {
+    if (isDraggingControl) {
+      return;
+    }
+    setShowInfoTooltip(true);
+  }, [isDraggingControl]);
+
+  const handleInfoMouseLeave = useCallback(() => {
+    setShowInfoTooltip(false);
+  }, []);
 
   const handleDeleteSelection = useCallback(() => {
     if (!isEditMode) {
@@ -2643,6 +2634,8 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
             }}
           >
             <div
+              onMouseEnter={handleInfoMouseEnter}
+              onMouseLeave={handleInfoMouseLeave}
               style={{
                 position: "relative",
                 display: "inline-flex",
@@ -2651,7 +2644,6 @@ const ThreadMap: React.FC<ThreadMapProps> = ({ module_id }) => {
               <button
                 type="button"
                 onMouseDown={handleControlMouseDown}
-                onClick={handleInfoButtonClick}
                 aria-label="Threadmap information"
                 title="Threadmap information"
                 style={{

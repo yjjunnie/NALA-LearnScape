@@ -1,0 +1,6 @@
+[ 2025-10-01 05:43:08,422 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-10-01 05:43:08,427 ] 97 werkzeug - INFO -  * Debugger PIN: 928-213-346
+[ 2025-10-01 05:43:17,333 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:43:17] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 05:43:17,520 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:43:17] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 05:43:43,069 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:43:43] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 05:43:43,246 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 05:43:43] "GET /student/student456/topics HTTP/1.1" 200 -

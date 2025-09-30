@@ -161,14 +161,7 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
   };
 
   const bloomOrder = useMemo(
-    () => [
-      "Remember",
-      "Understand",
-      "Apply",
-      "Analyze",
-      "Evaluate",
-      "Create",
-    ],
+    () => ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"],
     []
   );
 
@@ -287,8 +280,11 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
           ? source.module
           : typeof source.module_name === "string"
           ? source.module_name
-          : typeof source.module_info === "object" && source.module_info !== null
-          ? ((source.module_info as Record<string, unknown>).name as string | undefined)
+          : typeof source.module_info === "object" &&
+            source.module_info !== null
+          ? ((source.module_info as Record<string, unknown>).name as
+              | string
+              | undefined)
           : undefined;
       const topicName =
         typeof source.topic === "string"
@@ -345,7 +341,9 @@ const TopicTaxonomyProgression: React.FC<TopicTaxonomyProgressionProps> = ({
           signal: controller.signal,
         });
         if (!response.ok) {
-          throw new Error(`Failed to fetch topic progression: ${response.status}`);
+          throw new Error(
+            `Failed to fetch topic progression: ${response.status}`
+          );
         }
 
         const payload = await response.json();

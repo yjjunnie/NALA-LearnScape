@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from django.db import transaction
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -770,6 +771,7 @@ def update_learning_preferences(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Sanitize the breakdown
         sanitized_breakdown = {}
         for key, value in breakdown.items():
             sanitized_key = str(key)
@@ -781,11 +783,13 @@ def update_learning_preferences(request):
                 except (TypeError, ValueError):
                     sanitized_breakdown[sanitized_key] = 0.0
 
+        # Check if a style code was explicitly provided
         style_code = data.get('learning_style')
         valid_styles = {choice[0] for choice in Student.LEARNING_STYLE_CHOICES}
         if style_code and style_code not in valid_styles:
             style_code = None
 
+        # If no explicit style code, determine from breakdown
         if not style_code:
             key_map = {
                 'Retrieval Practice': 'RETRIEVAL',
@@ -796,20 +800,23 @@ def update_learning_preferences(request):
                 'Spaced Practice': 'SPACED',
             }
 
+            # Find the style with the highest value (excluding total_user_messages)
             primary_key = None
             highest_value = float('-inf')
             for key, value in sanitized_breakdown.items():
                 if key == 'total_user_messages':
                     continue
+                # Skip keys that aren't in our map
                 if key not in key_map:
                     continue
                 if value > highest_value:
                     highest_value = value
                     primary_key = key
 
-            if primary_key:
+            if primary_key and highest_value > 0:
                 style_code = key_map[primary_key]
 
+        # Update the student record
         if style_code:
             student.learningStyle = style_code
 
@@ -827,6 +834,8 @@ def update_learning_preferences(request):
         )
 
     except Exception as e:
+        import traceback
+        traceback.print_exc() 
         return Response(
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -970,6 +979,105 @@ def get_bloom_progression(request):
         
     except Exception as e:
         print(f"Error in get_bloom_progression: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+def initialize_bloom_from_scenario(request):
+    """
+    Update Bloom taxonomy for a specific student when they load a conversation scenario.
+    
+    POST /api/bloom/initialize/
+    Body: {
+        "student_id": "1",
+        "module_id": "1", 
+        "chat_filepath": "app/services/chat_history/newconvohistoryposted.json"
+    }
+    """
+    try:
+        # Get data from request body
+        student_id = request.data.get('student_id', '1')  # Default to '1'
+        module_id = request.data.get('module_id', '1')
+        chat_filepath = request.data.get('chat_filepath')
+        
+        # Validate required fields
+        if not chat_filepath:
+            return Response(
+                {'error': 'chat_filepath is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        print(f"\n{'='*60}")
+        print(f"Bloom Update Request Received")
+        print(f"{'='*60}")
+        print(f"Student ID: {student_id}")
+        print(f"Module ID: {module_id}")
+        print(f"Chat filepath: {chat_filepath}")
+        print(f"{'='*60}\n")
+        
+        # Check if file exists
+        import os
+        if not os.path.exists(chat_filepath):
+            return Response(
+                {'error': f'Chat history file not found: {chat_filepath}'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get student
+        try:
+            student = Student.objects.get(id=student_id)
+        except Student.DoesNotExist:
+            return Response(
+                {'error': f'Student with ID {student_id} not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get module
+        try:
+            module = Module.objects.get(id=module_id)
+        except Module.DoesNotExist:
+            return Response(
+                {'error': f'Module with ID {module_id} not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Update Bloom taxonomy
+        try:
+            with transaction.atomic():
+                update_bloom_from_chathistory(student, module_id, chat_filepath)
+            
+            # Get updated bloom summary
+            record = StudentBloomRecord.objects.get(student=student, module=module)
+            
+            print(f"\n{'='*60}")
+            print("✓ Bloom taxonomy successfully updated!")
+            print(f"{'='*60}\n")
+            
+            return Response({
+                'success': True,
+                'message': f'Bloom taxonomy updated successfully for {student.name}',
+                'bloom_summary': record.bloom_summary,
+                'student_id': student_id,
+                'module_id': module_id
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"\nERROR during bloom update: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
+            return Response(
+                {'error': f'Failed to update Bloom taxonomy: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+    except Exception as e:
+        print(f"\nERROR in initialize_bloom_from_scenario: {str(e)}")
         import traceback
         traceback.print_exc()
         

@@ -360,10 +360,15 @@ export default function ChatbotDemo() {
             chat_filepath: scenario.file,
           }),
         });
-
+        
         if (!bloomResponse.ok) {
-          throw new Error("Bloom taxonomy classifier could not be triggered.");
+          const bloomError = await bloomResponse.json().catch(() => null);
+          const bloomErrorMsg = bloomError?.error || "Bloom taxonomy classifier could not be triggered.";
+          throw new Error(bloomErrorMsg);
         }
+        
+        const bloomResult = await bloomResponse.json();
+        console.log("Bloom taxonomy updated:", bloomResult);
 
         const learningPreferenceResponse = await fetch(
           `/api/learning-preferences/update/`,
@@ -376,9 +381,10 @@ export default function ChatbotDemo() {
             }),
           }
         );
-
+        
         if (!learningPreferenceResponse.ok) {
           const errorPayload = await learningPreferenceResponse.json().catch(() => null);
+          console.error("Learning preference error:", errorPayload);  // Add this
           const message =
             (errorPayload &&
               typeof errorPayload === "object" &&

@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from django.db import transaction
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -978,6 +979,105 @@ def get_bloom_progression(request):
         
     except Exception as e:
         print(f"Error in get_bloom_progression: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+def initialize_bloom_from_scenario(request):
+    """
+    Update Bloom taxonomy for a specific student when they load a conversation scenario.
+    
+    POST /api/bloom/initialize/
+    Body: {
+        "student_id": "1",
+        "module_id": "1", 
+        "chat_filepath": "app/services/chat_history/newconvohistoryposted.json"
+    }
+    """
+    try:
+        # Get data from request body
+        student_id = request.data.get('student_id', '1')  # Default to '1'
+        module_id = request.data.get('module_id', '1')
+        chat_filepath = request.data.get('chat_filepath')
+        
+        # Validate required fields
+        if not chat_filepath:
+            return Response(
+                {'error': 'chat_filepath is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        print(f"\n{'='*60}")
+        print(f"Bloom Update Request Received")
+        print(f"{'='*60}")
+        print(f"Student ID: {student_id}")
+        print(f"Module ID: {module_id}")
+        print(f"Chat filepath: {chat_filepath}")
+        print(f"{'='*60}\n")
+        
+        # Check if file exists
+        import os
+        if not os.path.exists(chat_filepath):
+            return Response(
+                {'error': f'Chat history file not found: {chat_filepath}'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get student
+        try:
+            student = Student.objects.get(id=student_id)
+        except Student.DoesNotExist:
+            return Response(
+                {'error': f'Student with ID {student_id} not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get module
+        try:
+            module = Module.objects.get(id=module_id)
+        except Module.DoesNotExist:
+            return Response(
+                {'error': f'Module with ID {module_id} not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Update Bloom taxonomy
+        try:
+            with transaction.atomic():
+                update_bloom_from_chathistory(student, module_id, chat_filepath)
+            
+            # Get updated bloom summary
+            record = StudentBloomRecord.objects.get(student=student, module=module)
+            
+            print(f"\n{'='*60}")
+            print("✓ Bloom taxonomy successfully updated!")
+            print(f"{'='*60}\n")
+            
+            return Response({
+                'success': True,
+                'message': f'Bloom taxonomy updated successfully for {student.name}',
+                'bloom_summary': record.bloom_summary,
+                'student_id': student_id,
+                'module_id': module_id
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"\nERROR during bloom update: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
+            return Response(
+                {'error': f'Failed to update Bloom taxonomy: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+    except Exception as e:
+        print(f"\nERROR in initialize_bloom_from_scenario: {str(e)}")
         import traceback
         traceback.print_exc()
         

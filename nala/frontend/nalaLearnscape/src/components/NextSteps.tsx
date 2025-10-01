@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const NextSteps = ({ studentId = "1" }) => {
+  const navigate = useNavigate();
   const [analytics, setAnalytics] = useState({
     performanceStatus: 'good',
     currentStudyMethod: 'Elaboration',
@@ -39,11 +41,25 @@ const NextSteps = ({ studentId = "1" }) => {
   }, [studentId]);
 
   const handleQuizClick = () => {
-    console.log('Navigate to quiz for:', analytics.weakestTopic.name);
+    // Navigate to quiz page with the topic
+    navigate(`/quiz/${encodeURIComponent(analytics.weakestTopic.name)}`, {
+      state: { 
+        topic: analytics.weakestTopic.name,
+        currentLevel: analytics.weakestTopic.currentLevel,
+        bloomScore: analytics.weakestTopic.bloomScore
+      }
+    });
   };
 
   const handleKnowledgeCapsuleClick = () => {
-    console.log('Navigate to knowledge capsule for:', analytics.weakestTopic.name);
+    // Navigate to knowledge capsule page with the topic
+    navigate(`/knowledge-capsule/${encodeURIComponent(analytics.weakestTopic.name)}`, {
+      state: { 
+        topic: analytics.weakestTopic.name,
+        currentLevel: analytics.weakestTopic.currentLevel,
+        bloomScore: analytics.weakestTopic.bloomScore
+      }
+    });
   };
 
   if (loading) {
@@ -175,7 +191,7 @@ const NextSteps = ({ studentId = "1" }) => {
           <div className="flex flex-col gap-2">
             <button
               onClick={handleQuizClick}
-              className="w-full text-white text-base font-['GlacialIndifference',sans-serif] font-semibold py-2.5 px-4 rounded-xl transition-all duration-200"
+              className="w-full text-white text-base font-['GlacialIndifference',sans-serif] font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 cursor-pointer"
               style={{
                 background: "linear-gradient(135deg, #4C73FF 0%, #2D4BB4 100%)",
                 boxShadow: "0 4px 12px rgba(76,115,255,0.3)"
@@ -194,7 +210,7 @@ const NextSteps = ({ studentId = "1" }) => {
             
             <button
               onClick={handleKnowledgeCapsuleClick}
-              className="w-full bg-white text-base font-['GlacialIndifference',sans-serif] font-semibold py-2.5 px-4 rounded-xl transition-all duration-200"
+              className="w-full bg-white text-base font-['GlacialIndifference',sans-serif] font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 cursor-pointer"
               style={{
                 border: "2px solid rgba(76,115,255,0.3)",
                 color: "#4C73FF"

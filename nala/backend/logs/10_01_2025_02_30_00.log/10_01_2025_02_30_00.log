@@ -1,0 +1,7 @@
+[ 2025-10-01 02:30:00,270 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-10-01 02:30:00,285 ] 97 werkzeug - INFO -  * Debugger PIN: 928-213-346
+[ 2025-10-01 02:30:58,054 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:30:58] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:30:58,335 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:30:58] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:34:23,527 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:34:23] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:34:23,799 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:34:23] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:36:31,136 ] 97 werkzeug - INFO -  * Detected change in 'C:\\Users\\holly\\OneDrive\\Documents\\NALA-LearnScape\\nala\\backend\\app\\services\\quiz_generator.py', reloading

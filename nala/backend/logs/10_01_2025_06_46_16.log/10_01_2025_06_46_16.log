@@ -1,0 +1,5 @@
+[ 2025-10-01 06:46:16,436 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-10-01 06:46:16,450 ] 97 werkzeug - INFO -  * Debugger PIN: 928-213-346
+[ 2025-10-01 06:46:55,053 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 06:46:55] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 06:46:55,273 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 06:46:55] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 06:59:39,608 ] 97 werkzeug - INFO -  * Detected change in 'C:\\Users\\holly\\OneDrive\\Documents\\NALA-LearnScape\\nala\\backend\\app\\views.py', reloading

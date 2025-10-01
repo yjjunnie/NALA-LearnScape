@@ -1,0 +1,29 @@
+[ 2025-10-01 02:36:34,424 ] 97 werkzeug - WARNING -  * Debugger is active!
+[ 2025-10-01 02:36:34,428 ] 97 werkzeug - INFO -  * Debugger PIN: 928-213-346
+[ 2025-10-01 02:52:04,506 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:52:04] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:52:04,754 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:52:04] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:54:02,464 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:54:02] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:54:02,755 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:54:02] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:56:34,390 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:56:34] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:56:34,659 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:56:34] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:57:02,053 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:57:02] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:57:02,335 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:57:02] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:57:08,814 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:57:08] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:57:09,065 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:57:09] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:59:36,918 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:59:36] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 02:59:37,194 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 02:59:37] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 03:00:03,499 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 03:00:03] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 03:00:03,805 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 03:00:03] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 03:12:21,037 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 03:12:21] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 03:12:21,257 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 03:12:21] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 03:25:21,998 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 03:25:21] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 03:25:22,223 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 03:25:22] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 03:35:34,506 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 03:35:34] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 03:35:34,789 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 03:35:34] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 03:35:53,220 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 03:35:53] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 03:35:53,453 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 03:35:53] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 03:55:10,248 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 03:55:10] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 03:55:10,526 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 03:55:10] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 04:02:17,929 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 04:02:17] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 04:02:18,130 ] 97 werkzeug - INFO - 127.0.0.1 - - [01/Oct/2025 04:02:18] "GET /student/student456/topics HTTP/1.1" 200 -
+[ 2025-10-01 04:37:43,704 ] 97 werkzeug - INFO -  * Detected change in 'C:\\Users\\holly\\OneDrive\\Documents\\NALA-LearnScape\\nala\\backend\\app\\views.py', reloading

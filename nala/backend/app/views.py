@@ -770,6 +770,7 @@ def update_learning_preferences(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Sanitize the breakdown
         sanitized_breakdown = {}
         for key, value in breakdown.items():
             sanitized_key = str(key)
@@ -781,11 +782,13 @@ def update_learning_preferences(request):
                 except (TypeError, ValueError):
                     sanitized_breakdown[sanitized_key] = 0.0
 
+        # Check if a style code was explicitly provided
         style_code = data.get('learning_style')
         valid_styles = {choice[0] for choice in Student.LEARNING_STYLE_CHOICES}
         if style_code and style_code not in valid_styles:
             style_code = None
 
+        # If no explicit style code, determine from breakdown
         if not style_code:
             key_map = {
                 'Retrieval Practice': 'RETRIEVAL',
@@ -796,20 +799,23 @@ def update_learning_preferences(request):
                 'Spaced Practice': 'SPACED',
             }
 
+            # Find the style with the highest value (excluding total_user_messages)
             primary_key = None
             highest_value = float('-inf')
             for key, value in sanitized_breakdown.items():
                 if key == 'total_user_messages':
                     continue
+                # Skip keys that aren't in our map
                 if key not in key_map:
                     continue
                 if value > highest_value:
                     highest_value = value
                     primary_key = key
 
-            if primary_key:
+            if primary_key and highest_value > 0:
                 style_code = key_map[primary_key]
 
+        # Update the student record
         if style_code:
             student.learningStyle = style_code
 
@@ -827,6 +833,8 @@ def update_learning_preferences(request):
         )
 
     except Exception as e:
+        import traceback
+        traceback.print_exc() 
         return Response(
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR

@@ -376,9 +376,10 @@ export default function ChatbotDemo() {
             }),
           }
         );
-
+        
         if (!learningPreferenceResponse.ok) {
           const errorPayload = await learningPreferenceResponse.json().catch(() => null);
+          console.error("Learning preference error:", errorPayload);  // Add this
           const message =
             (errorPayload &&
               typeof errorPayload === "object" &&
